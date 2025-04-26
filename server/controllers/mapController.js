@@ -1,23 +1,63 @@
 // controllers/mapController.js
-import cloudinary from 'cloudinary';
-
-cloudinary.v2.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
+import { v2 as cloudinary } from 'cloudinary';
 
 export async function uploadMapImage(req, res, next) {
   try {
-    const result = await cloudinary.v2.uploader.upload_stream(
-      { folder: 'maps' },
-      (error, result) => {
-        if (error) return next(error);
-        res.json({ url: result.secure_url });
-      }
-    );
+    if (!req.file) {
+      return res.status(400).json({ message: 'No file uploaded' });
+    }
 
-    req.pipe(result);
+    const uploadFromBuffer = (fileBuffer) => {
+      return new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+          {
+            folder: 'maps',
+            resource_type: 'auto'
+          },
+          (error, result) => {
+            if (error) return reject(error);
+            resolve(result);
+          }
+        );
+        uploadStream.end(fileBuffer);
+      });
+    };
+
+    const result = await uploadFromBuffer(req.file.buffer);
+
+    res.status(201).json({ 
+      success: true,
+      url: result.secure_url,
+      public_id: result.public_id
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+export async function getMapImages(req, res, next) {
+  try {
+    const { resources } = await cloudinary.search
+      .expression('folder:maps')
+      .sort_by('created_at','desc')
+      .max_results(30)
+      .execute();
+
+    const images = resources.map(file => ({
+      url: file.secure_url,
+      public_id: file.public_id
+    }));
+
+    res.json({ success: true, images });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function deleteMapImage(req, res, next) {
+  try {
+    const { public_id } = req.params;
+    await cloudinary.uploader.destroy(public_id);
+    res.json({ success: true, message: 'Image deleted successfully' });
   } catch (err) {
     next(err);
   }

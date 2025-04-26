@@ -1,11 +1,19 @@
 // routes/mapRoutes.js
 import express from 'express';
-import { uploadMapImage } from '../controllers/mapController.js';
-import multer from 'multer';
+import { 
+  uploadMapImage,
+  deleteMapImage,
+  getMapImages
+} from '../controllers/mapController.js';
+import { uploadSingle } from '../middlewares/uploadMiddleware.js'; 
 
 const router = express.Router();
-const upload = multer();
 
-router.post('/upload', upload.single('map'), uploadMapImage);
+router.route('/')
+  .post(uploadSingle('map'), uploadMapImage)
+  .get(getMapImages);
+
+router.route('/:public_id')
+  .delete(deleteMapImage);
 
 export default router;

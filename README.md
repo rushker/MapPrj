@@ -5,9 +5,9 @@ Bản đồ tương tác dùng Leaflet.js + React. Ảnh bản đồ được l�
 ## Tech Stack
 
 - Frontend: React + Tailwind CSS + Leaflet.js
-- Backend: Node.js + Express + MongoDB + Cloudinary
+- Backend: Node.js(Snippet – ES Modules (ESM)) + Express + MongoDB + Cloudinary
 - Hosting: Vercel (frontend), Render (backend)
-- Bản đồ: Google Earth Pro
+- Map: Google Earth Pro
 
 ## License
 MIT
