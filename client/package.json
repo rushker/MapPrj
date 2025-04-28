@@ -17,6 +17,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-leaflet": "^5.0.0",
+    "react-leaflet-draw": "^0.20.6",
     "react-router-dom": "^7.5.2"
   },
   "devDependencies": {
