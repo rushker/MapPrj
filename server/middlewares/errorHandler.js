@@ -7,12 +7,14 @@
       path: req.path,
       method: req.method,
       error: message,
-      stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+      stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
     });
   
     res.status(statusCode).json({
       success: false,
+      status: statusCode,
       message,
-      ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+      ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
     });
   }
+  

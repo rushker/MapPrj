@@ -1,23 +1,22 @@
-// tailwind.config.js
-module.exports = {
+export default  {
   content: [
     "./src/**/*.{js,jsx,ts,tsx}",
+    "./public/index.html"
   ],
   theme: {
     extend: {
       colors: {
-        primary: {
-          light: '#93C5FD',
-          DEFAULT: '#3B82F6',
-          dark: '#1D4ED8',
-        },
-        secondary: {
-          light: '#A5B4FC',
-          DEFAULT: '#6366F1',
-          dark: '#4338CA',
-        },
+        primary: 'rgb(var(--color-primary) / <alpha-value>)',
+        secondary: 'rgb(var(--color-secondary) / <alpha-value>)',
+        danger: 'rgb(var(--color-danger) / <alpha-value>)',
+      },
+      fontFamily: {
+        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
       },
     },
   },
-  plugins: [],
+  plugins: [
+    require('@tailwindcss/forms'),
+    require('@tailwindcss/typography'),
+  ],
 }
