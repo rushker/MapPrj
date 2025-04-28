@@ -2,11 +2,13 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import connectDB from './config/db.js';
-import cloudinary from './config/cloudinary.js'; // Already configured instance
+import { configureCloudinary } from './config/cloudinary.js';
+
 import mapRoutes from './routes/mapRoutes.js'; 
 
 dotenv.config();
 connectDB(); // Ensure the database is connected
+configureCloudinary();
 
 
 const app = express();

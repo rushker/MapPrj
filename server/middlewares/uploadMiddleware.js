@@ -1,19 +1,18 @@
 // middlewares/uploadMiddleware.js
 import multer from 'multer';
-import { CloudinaryStorage } from 'multer-storage-cloudinary';
-import cloudinary from '../config/cloudinary.js';
 
-const storage = new CloudinaryStorage({
-  cloudinary,
-  params: {
-    folder: 'mapUploads',
-    allowed_formats: ['jpg', 'jpeg', 'png', 'webp'], // added webp
-    transformation: [{ width: 1000, height: 1000, crop: 'limit' }],
-  },
-});
+const storage = multer.memoryStorage();
+
+const fileFilter = (req, file, cb) => {
+  const allowed = /jpe?g|png|gif/;
+  const ext = allowed.test(file.mimetype.toLowerCase());
+  if (ext) cb(null, true);
+  else cb(new Error('Images only!'));
+};
 
 const upload = multer({
   storage,
+  fileFilter,
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
 });
 
