@@ -9,7 +9,7 @@
       error: message,
       stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
     });
-  
+    
     res.status(statusCode).json({
       success: false,
       status: statusCode,

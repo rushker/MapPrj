@@ -10,7 +10,7 @@ import errorHandler from './middlewares/errorHandler.js';
 dotenv.config();
 
 // Connect Database
-await connectDB(); // <- important for async handling in ESM
+await connectDB(); 
 
 // Configure Cloudinary
 configureCloudinary();

@@ -1,10 +1,11 @@
-// controllers/mapController.js
+// server/controllers/mapController.js
 import MapArea from '../models/MapArea.js';
 
+// Upload area
 export const uploadArea = async (req, res) => {
   try {
     const { name, description, coordinates } = req.body;
-    const imageUrl = req.file?.path || null; // multer-storage-cloudinary attaches path
+    const imageUrl = req.file?.path || null;
 
     let parsedCoordinates = [];
     try {
@@ -27,6 +28,7 @@ export const uploadArea = async (req, res) => {
   }
 };
 
+// Get areas
 export const getAreas = async (req, res) => {
   try {
     const areas = await MapArea.find();
@@ -35,4 +37,3 @@ export const getAreas = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-
