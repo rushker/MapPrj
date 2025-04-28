@@ -1,23 +1,40 @@
 // src/components/MapView.jsx
-import { MapContainer, ImageOverlay } from 'react-leaflet';
+import { MapContainer, ImageOverlay, ZoomControl } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { useEffect, useState } from 'react';
 
-const bounds = [[21.05, 105.83], [21.01, 105.87]]; // chỉnh lại theo ảnh
+const MapView = ({ mapImageUrl }) => {
+  const [bounds, setBounds] = useState([
+    [21.05, 105.83], // Default bounds
+    [21.01, 105.87],
+  ]);
 
-export default function MapView() {
+  useEffect(() => {
+    // You can add logic here to calculate bounds based on the image
+  }, [mapImageUrl]);
+
   return (
-    <MapContainer
-      crs={L.CRS.EPSG4326}
-      bounds={bounds}
-      style={{ height: '100%', width: '100%' }}
-      zoom={1}
-      scrollWheelZoom={true}
-    >
-      <ImageOverlay
-        url="/map.png" // đặt ảnh bản đồ vào public/map.png
+    <div className="relative h-full w-full">
+      <MapContainer
+        crs={L.CRS.EPSG4326}
         bounds={bounds}
-      />
-    </MapContainer>
+        style={{ height: '100%', width: '100%' }}
+        zoom={12}
+        scrollWheelZoom={true}
+        zoomControl={false}
+        className="rounded-lg shadow-xl"
+      >
+        <ZoomControl position="topright" />
+        <ImageOverlay
+          url={mapImageUrl || '/map.png'}
+          bounds={bounds}
+          opacity={1}
+          zIndex={10}
+        />
+      </MapContainer>
+    </div>
   );
-}
+};
+
+export default MapView;

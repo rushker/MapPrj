@@ -1,64 +1,38 @@
 // controllers/mapController.js
-import { v2 as cloudinary } from 'cloudinary';
+import MapArea from '../models/MapArea.js';
 
-export async function uploadMapImage(req, res, next) {
+export const uploadArea = async (req, res) => {
   try {
-    if (!req.file) {
-      return res.status(400).json({ message: 'No file uploaded' });
+    const { name, description, coordinates } = req.body;
+    const imageUrl = req.file?.path || null; // multer-storage-cloudinary attaches path
+
+    let parsedCoordinates = [];
+    try {
+      parsedCoordinates = JSON.parse(coordinates);
+    } catch (err) {
+      return res.status(400).json({ message: 'Invalid coordinates format' });
     }
 
-    const uploadFromBuffer = (fileBuffer) => {
-      return new Promise((resolve, reject) => {
-        const uploadStream = cloudinary.uploader.upload_stream(
-          {
-            folder: 'maps',
-            resource_type: 'auto'
-          },
-          (error, result) => {
-            if (error) return reject(error);
-            resolve(result);
-          }
-        );
-        uploadStream.end(fileBuffer);
-      });
-    };
-
-    const result = await uploadFromBuffer(req.file.buffer);
-
-    res.status(201).json({ 
-      success: true,
-      url: result.secure_url,
-      public_id: result.public_id
+    const newArea = new MapArea({
+      name,
+      description,
+      coordinates: parsedCoordinates,
+      imageUrl,
     });
-  } catch (err) {
-    next(err);
+
+    await newArea.save();
+    res.status(201).json(newArea);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
-}
-export async function getMapImages(req, res, next) {
+};
+
+export const getAreas = async (req, res) => {
   try {
-    const { resources } = await cloudinary.search
-      .expression('folder:maps')
-      .sort_by('created_at','desc')
-      .max_results(30)
-      .execute();
-
-    const images = resources.map(file => ({
-      url: file.secure_url,
-      public_id: file.public_id
-    }));
-
-    res.json({ success: true, images });
-  } catch (err) {
-    next(err);
+    const areas = await MapArea.find();
+    res.status(200).json(areas);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
-}
+};
 
-export async function deleteMapImage(req, res, next) {
-  try {
-    const { public_id } = req.params;
-    await cloudinary.uploader.destroy(public_id);
-    res.json({ success: true, message: 'Image deleted successfully' });
-  } catch (err) {
-    next(err);
-  }
-}

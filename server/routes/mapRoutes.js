@@ -1,19 +1,11 @@
 // routes/mapRoutes.js
 import express from 'express';
-import { 
-  uploadMapImage,
-  deleteMapImage,
-  getMapImages
-} from '../controllers/mapController.js';
-import { uploadSingle } from '../middlewares/uploadMiddleware.js'; 
+import { uploadArea, getAreas } from '../controllers/mapController.js';
+import upload from '../middlewares/uploadMiddleware.js';
 
 const router = express.Router();
 
-router.route('/')
-  .post(uploadSingle('map'), uploadMapImage)
-  .get(getMapImages);
-
-router.route('/:public_id')
-  .delete(deleteMapImage);
+router.post('/', upload.single('image'), uploadArea);
+router.get('/', getAreas);
 
 export default router;

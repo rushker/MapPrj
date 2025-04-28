@@ -1,19 +1,20 @@
-//middlewares/uploadMiddleware.js
+// middlewares/uploadMiddleware.js
 import multer from 'multer';
+import { CloudinaryStorage } from 'multer-storage-cloudinary';
+import cloudinary from '../config/cloudinary.js';
 
-const fileFilter = (req, file, cb) => {
-  const allowedTypes = ['image/png', 'image/jpeg', 'application/pdf'];
-  if (allowedTypes.includes(file.mimetype)) {
-    cb(null, true);
-  } else {
-    cb(new Error('Invalid file type. Only PNG, JPEG, and PDF are allowed.'), false);
-  }
-};
-
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
-  fileFilter
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: 'mapUploads',
+    allowed_formats: ['jpg', 'jpeg', 'png', 'webp'], // added webp
+    transformation: [{ width: 1000, height: 1000, crop: 'limit' }],
+  },
 });
 
-export const uploadSingle = (fieldName) => upload.single(fieldName);
+const upload = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+});
+
+export default upload;
