@@ -1,39 +1,92 @@
 // server/controllers/mapController.js
-import MapArea from '../models/MapArea.js';
+import Map from '../models/Map.js';
+import { uploadToCloudinary } from '../utils/cloudinary.js';
 
-// Upload area
-export const uploadArea = async (req, res) => {
+// @desc    Create a new base map file (pdf, png, jpg)
+// @route   POST /api/maps
+// @access  Admin
+export const createMap = async (req, res, next) => {
   try {
-    const { name, description, coordinates } = req.body;
-    const imageUrl = req.file?.path || null;
+    if (!req.file) return res.status(400).json({ message: 'Map file is required' });
+    const { title, description, bounds } = req.body;
 
-    let parsedCoordinates = [];
-    try {
-      parsedCoordinates = JSON.parse(coordinates);
-    } catch (err) {
-      return res.status(400).json({ message: 'Invalid coordinates format' });
-    }
+    const result = await uploadToCloudinary(
+      req.file.buffer,
+      'maps',
+      `map_${Date.now()}`
+    );
 
-    const newArea = new MapArea({
-      name,
+    const map = await Map.create({
+      title,
       description,
-      coordinates: parsedCoordinates,
-      imageUrl,
+      fileUrl: result.secure_url,
+      bounds: JSON.parse(bounds || '[]')
     });
 
-    await newArea.save();
-    res.status(201).json(newArea);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(201).json(map);
+  } catch (err) {
+    next(err);
   }
 };
 
-// Get areas
-export const getAreas = async (req, res) => {
+// @desc    Get all maps
+// @route   GET /api/maps
+// @access  Public
+export const getMaps = async (req, res, next) => {
   try {
-    const areas = await MapArea.find();
-    res.status(200).json(areas);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+    const maps = await Map.find();
+    res.status(200).json(maps);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// @desc    Get a single map by ID
+// @route   GET /api/maps/:id
+// @access  Public
+export const getMapById = async (req, res, next) => {
+  try {
+    const map = await Map.findById(req.params.id);
+    if (!map) return res.status(404).json({ message: 'Map not found' });
+    res.json(map);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// @desc    Update an existing map
+// @route   PUT /api/maps/:id
+// @access  Admin
+export const updateMap = async (req, res, next) => {
+  try {
+    const updates = { ...req.body };
+    if (updates.bounds) updates.bounds = JSON.parse(updates.bounds);
+    if (req.file) {
+      const result = await uploadToCloudinary(
+        req.file.buffer,
+        'maps',
+        `map_${req.params.id}_${Date.now()}`
+      );
+      updates.fileUrl = result.secure_url;
+    }
+
+    const map = await Map.findByIdAndUpdate(req.params.id, updates, { new: true });
+    if (!map) return res.status(404).json({ message: 'Map not found' });
+    res.json(map);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// @desc    Delete a map
+// @route   DELETE /api/maps/:id
+// @access  Admin
+export const deleteMap = async (req, res, next) => {
+  try {
+    const map = await Map.findByIdAndDelete(req.params.id);
+    if (!map) return res.status(404).json({ message: 'Map not found' });
+    res.json({ message: 'Map deleted' });
+  } catch (err) {
+    next(err);
   }
 };

@@ -2,40 +2,44 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+
 import connectDB from './config/db.js';
-import { configureCloudinary } from './config/cloudinary.js';
+import './config/cloudinary.js'; // Configures Cloudinary on import
 import mapRoutes from './routes/mapRoutes.js';
+import areaRoutes from './routes/areaRoutes.js';
 import errorHandler from './middlewares/errorHandler.js';
 
+// Load environment variables
 dotenv.config();
 
-// Connect Database
-await connectDB(); 
+// Connect to MongoDB
+connectDB();
 
-// Configure Cloudinary
-configureCloudinary();
 
 const app = express();
 
 // Middleware
-app.use(express.json());
 app.use(cors({
-  origin: process.env.ALLOWED_ORIGINS?.split(',') || 'http://localhost:3000',
+  origin: process.env.ALLOWED_ORIGINS?.split(',') || '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
+app.use(express.json());
 
-// Routes
+// API Routes
 app.use('/api/maps', mapRoutes);
+app.use('/api/areas', areaRoutes);
 
-// Not Found
-app.use((req, res, next) => {
+// 404 Handler
+app.use((req, res) => {
   res.status(404).json({ message: 'Route not found' });
 });
 
-// Error Handler
+// Global Error Handler
 app.use(errorHandler);
 
 // Start Server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`🚀 Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+});
