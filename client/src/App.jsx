@@ -8,11 +8,19 @@ import AdminRedirect from './components/AdminRedirect';
 export default function App() {
   return (
     <Routes>
-      <Route path="/" element={<PublicMapPage />} />
+      {/* Redirect root to /map for clarity */}
+      <Route path="/" element={<Navigate to="/map" replace />} />
+      
+      {/* Public map page */}
       <Route path="/map" element={<PublicMapPage />} />
-      <Route path="/admin" element={<AdminRedirect><AdminDashboard /></AdminRedirect>} />
+
+      {/* Admin login and dashboard */}
       <Route path="/admin-login" element={<LoginPage />} />
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="/admin" element={<AdminRedirect><AdminDashboard /></AdminRedirect>} />
+      
+      {/* Catch-all route */}
+      <Route path="*" element={<Navigate to="/map" replace />} />
     </Routes>
   );
 }
+
