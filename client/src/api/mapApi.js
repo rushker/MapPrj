@@ -1,14 +1,13 @@
 //client/src/api/mapApi.js
 import axios from 'axios';
 
-const API = import.meta.env.VITE_BACKEND_URL + '/api/maps';
+const API = import.meta.env.VITE_BACKEND_URL + '/api';
 
-export const uploadArea = async (formData) => {
-  return await axios.post(API, formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  });
-};
+export const fetchMaps    = () => axios.get(`${API}/maps`);
+export const uploadMap    = formData => 
+  axios.post(`${API}/maps`, formData, { headers: {'Content-Type':'multipart/form-data'} });
 
-export const getAreas = async () => {
-  return await axios.get(API);
-};
+export const fetchAreas   = () => axios.get(`${API}/areas`);
+export const uploadArea   = formData =>
+  axios.post(`${API}/areas`, formData, { headers: {'Content-Type':'multipart/form-data'} });
+
