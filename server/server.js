@@ -1,15 +1,15 @@
 //server.js
+// server.js
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import connectDB from './config/db.js';
-import configureCloudinary from './config/cloudinary.js';
+import './config/cloudinary.js'; // ✅ just import it to initialize Cloudinary
 import mapRoutes from './routes/mapRoutes.js';
 
 const app = express();
 
-// Initialize configurations
-configureCloudinary();
+// Initialize DB
 await connectDB();
 
 // Middleware
@@ -36,15 +36,14 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 
-// Basic route
+// Routes
 app.get('/', (req, res) => {
   res.send('Map Project API');
 });
 app.use('/api/maps', mapRoutes);
 
-
 // Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });

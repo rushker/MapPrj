@@ -1,4 +1,6 @@
 // controllers/mapController.js
+import cloudinary from '../config/cloudinary.js';
+import fs from 'fs';
 import MapData from '../models/MapData.js';
 
 export const getMapData = async (req, res) => {
@@ -26,9 +28,19 @@ export const updateMapData = async (req, res) => {
   }
 };
 
-export const uploadImage = (req, res) => {
+export const uploadImage = async (req, res) => {
   const file = req.file;
-  if (!file || !file.path) return res.status(400).json({ error: 'No file uploaded or invalid file path' });
+  if (!file) return res.status(400).json({ error: 'No file uploaded' });
 
-  res.json({ imageUrl: file.path }); // ✅ Cloudinary URL
+  try {
+    const result = await cloudinary.uploader.upload(file.path, {
+      folder: 'map-images'
+    });
+
+    fs.unlinkSync(file.path); // Clean up temp file
+    res.json({ imageUrl: result.secure_url });
+  } catch (err) {
+    console.error('Cloudinary Upload Error:', err);
+    res.status(500).json({ error: 'Image upload failed' });
+  }
 };
