@@ -1,17 +1,16 @@
 // routes/mapRoutes.js
 import express from 'express';
-import multer from 'multer';
 import {
   getMapData,
   updateMapData,
   uploadImage
 } from '../controllers/mapController.js';
+import { uploader } from '../uploads/cloudinary.js'; // ✅ use this one
 
 const router = express.Router();
-const upload = multer({ dest: 'temp/' }); // Temp folder for uploads
 
 router.get('/:id', getMapData);
 router.put('/:id', updateMapData);
-router.post('/upload-image', upload.single('image'), uploadImage);
+router.post('/upload-image', uploader.single('image'), uploadImage); // ✅ actual usage
 
 export default router;
