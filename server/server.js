@@ -4,6 +4,7 @@ import express from 'express';
 import cors from 'cors';
 import connectDB from './config/db.js';
 import configureCloudinary from './config/cloudinary.js';
+import mapRoutes from './routes/mapRoutes.js';
 
 const app = express();
 
@@ -39,6 +40,8 @@ app.use(cors(corsOptions));
 app.get('/', (req, res) => {
   res.send('Map Project API');
 });
+app.use('/api/maps', mapRoutes);
+
 
 // Start server
 const PORT = process.env.PORT || 5000;
