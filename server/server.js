@@ -1,18 +1,18 @@
-require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
-const mongoose = require('mongoose');
+import 'dotenv/config';
+import express from 'express';
+import cors from 'cors';
+import connectDB from './config/db.js';
+import configureCloudinary from './config/cloudinary.js';
 
 const app = express();
+
+// Initialize configurations
+configureCloudinary();
+await connectDB();
 
 // Middleware
 app.use(cors());
 app.use(express.json());
-
-// MongoDB connection
-mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log('Connected to MongoDB'))
-  .catch(err => console.error('MongoDB connection error:', err));
 
 // Basic route
 app.get('/', (req, res) => {

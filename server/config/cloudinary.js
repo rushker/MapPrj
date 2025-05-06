@@ -1,5 +1,5 @@
 // server/config/cloudinary.js
-const cloudinary = require('cloudinary').v2;
+import { v2 as cloudinary } from 'cloudinary';
 
 const configureCloudinary = () => {
   cloudinary.config({
@@ -10,6 +10,7 @@ const configureCloudinary = () => {
   });
   
   console.log('Cloudinary configured successfully');
+  return cloudinary;
 };
 
-module.exports = configureCloudinary;
+export default configureCloudinary;
