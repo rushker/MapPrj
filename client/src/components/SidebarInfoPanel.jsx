@@ -1,7 +1,22 @@
 // src/components/SidebarInfoPanel.jsx
-import React from 'react';
+import React, { useState } from 'react';
 
 export default function SidebarInfoPanel({ polygon, markers, onDeleteMarker }) {
+  const [confirmDelete, setConfirmDelete] = useState(null); // Store marker index for confirmation
+
+  const handleDeleteClick = (idx) => {
+    setConfirmDelete(idx); // Set marker index to confirm deletion
+  };
+
+  const handleConfirmDelete = () => {
+    onDeleteMarker(confirmDelete);
+    setConfirmDelete(null); // Clear confirmation after deletion
+  };
+
+  const handleCancelDelete = () => {
+    setConfirmDelete(null); // Cancel deletion
+  };
+
   return (
     <aside className="w-72 bg-white shadow-lg p-4 overflow-y-auto h-full border-l border-gray-300">
       <h2 className="text-lg font-bold mb-4">Map Details</h2>
@@ -29,15 +44,35 @@ export default function SidebarInfoPanel({ polygon, markers, onDeleteMarker }) {
             {marker.imageUrl && (
               <img src={marker.imageUrl} alt="marker" className="w-full h-auto mt-1 rounded" />
             )}
-            <button
-              onClick={() => onDeleteMarker(idx)}
-              className="text-red-500 text-xs mt-1 hover:underline"
-            >
-              Delete
-            </button>
+
+            {/* Show confirmation if delete is requested */}
+            {confirmDelete === idx ? (
+              <div className="mt-2">
+                <button
+                  onClick={handleConfirmDelete}
+                  className="text-red-500 text-xs mr-2 hover:underline"
+                >
+                  Confirm Delete
+                </button>
+                <button
+                  onClick={handleCancelDelete}
+                  className="text-gray-500 text-xs hover:underline"
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => handleDeleteClick(idx)}
+                className="text-red-500 text-xs mt-1 hover:underline"
+              >
+                Delete
+              </button>
+            )}
           </div>
         ))}
       </section>
     </aside>
   );
 }
+

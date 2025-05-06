@@ -1,11 +1,11 @@
 //server.js
-// server.js
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import connectDB from './config/db.js';
 import './config/cloudinary.js'; // ✅ just import it to initialize Cloudinary
 import mapRoutes from './routes/mapRoutes.js';
+import mapAreaRoutes from './routes/mapAreaRoutes.js';
 
 const app = express();
 
@@ -42,6 +42,16 @@ app.get('/', (req, res) => {
 });
 app.use('/api/maps', mapRoutes);
 
+app.use('/api/map-areas', mapAreaRoutes);
+
+//error middleware
+app.use((err, req, res, next) => {
+  const status = err.status || 500;
+  res.status(status).json({
+    message: process.env.NODE_ENV === 'development' ? err.message : 'Server error',
+    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+  });
+});
 // Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

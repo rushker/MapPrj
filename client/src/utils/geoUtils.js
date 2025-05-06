@@ -1,13 +1,19 @@
 // src/utils/geoUtils.js
 import booleanPointInPolygon from '@turf/boolean-point-in-polygon';
 import { point, polygon } from '@turf/helpers';
+import turf from 'turf';
 
 /**
  * Check if a given latlng is inside a polygon
  */
 export function isPointInPolygon(latlng, geoPolygon) {
-  const pt = point([latlng.lng, latlng.lat]);
-  return booleanPointInPolygon(pt, geoPolygon);
+  try {
+    const pt = point([latlng.lng, latlng.lat]);
+    return booleanPointInPolygon(pt, geoPolygon);
+  } catch (error) {
+    console.error('Error in isPointInPolygon:', error);
+    return false; // Return false if there is an error
+  }
 }
 
 /**
@@ -27,10 +33,15 @@ export function getPolygonArea(geoPolygon) {
  * Validate polygon structure
  */
 export function isValidPolygon(geoPolygon) {
-  return (
-    geoPolygon &&
-    geoPolygon.type === 'Feature' &&
-    geoPolygon.geometry?.type === 'Polygon' &&
-    Array.isArray(geoPolygon.geometry.coordinates)
-  );
+  try {
+    return (
+      geoPolygon &&
+      geoPolygon.type === 'Feature' &&
+      geoPolygon.geometry?.type === 'Polygon' &&
+      Array.isArray(geoPolygon.geometry.coordinates)
+    );
+  } catch (e) {
+    console.error('Invalid polygon structure:', e);
+    return false;
+  }
 }

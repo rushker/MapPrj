@@ -1,37 +1,57 @@
 //src/App.jsx
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import './App.css'
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-draw/dist/leaflet.draw.css';
+import AdminDashboard from './pages/AdminDashboard';
+import EditMapPage from './pages/EditMapPage';
+import PublicMapPage from './pages/PublicMapPage';
+import PrivateMapPage from './pages/PrivateMapPage';
+import Navbar from './components/Navbar';
+import SidebarInfoPanel from './components/SidebarInfoPanel';
+import { getMapById } from './services/api';
+
 function App() {
-  const [count, setCount] = useState(0)
+  const [mapData, setMapData] = useState(null);
+  const [markers, setMarkers] = useState([]);
+  const [polygon, setPolygon] = useState(null);
+
+  useEffect(() => {
+    // Example to fetch a map (you can adjust the logic here to load based on params or any other context)
+    getMapById('someMapId') // Replace with actual map ID or handle dynamic fetching
+      .then((data) => {
+        setMapData(data);
+        setMarkers(data.markers || []);
+        setPolygon(data.polygon || null);
+      })
+      .catch((err) => console.error('Failed to fetch map:', err));
+  }, []);
+
+  const handleDeleteMarker = (idx) => {
+    setMarkers((prevMarkers) => prevMarkers.filter((_, index) => index !== idx));
+  };
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+    <Router>
+      <div className="min-h-screen flex flex-col bg-gray-100">
+        <Navbar />
+        <div className="flex flex-1">
+          <Routes>
+            <Route path="/" element={<PublicMapPage />} />
+            <Route path="/dashboard" element={<AdminDashboard />} />
+            <Route path="/edit/:id" element={<EditMapPage />} />
+            <Route path="/basemap" element={<PrivateMapPage />} />
+          </Routes>
+
+          <SidebarInfoPanel polygon={polygon} markers={markers} onDeleteMarker={handleDeleteMarker} />
+        </div>
+        <ToastContainer />
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    </Router>
+  );
 }
 
-export default App
+export default App;

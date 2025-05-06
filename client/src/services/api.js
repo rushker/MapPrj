@@ -1,4 +1,4 @@
-//services/api
+//src/services/api
 import axios from 'axios';
 
 const API = import.meta.env.VITE_BACKEND_URL;
@@ -12,4 +12,24 @@ export const uploadImage = async (file) => {
   formData.append('image', file);
   const res = await axios.post(`${API}/api/upload`, formData);
   return res.data.imageUrl;
+};
+
+export const getAllMaps = async () => {
+  try {
+    const res = await axios.get(`${API}/api/maps`);
+    return res.data;
+  } catch (err) {
+    console.error('Failed to fetch maps:', err);
+    throw new Error('Failed to fetch maps');
+  }
+};
+
+export const deleteMap = async (id) => {
+  try {
+    const res = await axios.delete(`${API}/api/maps/${id}`);
+    return res.data;
+  } catch (err) {
+    console.error('Failed to delete map:', err);
+    throw new Error('Failed to delete map');
+  }
 };
