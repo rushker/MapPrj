@@ -1,83 +1,123 @@
-//src/components/MapEditor.jsx
-import { useMap, MapContainer, TileLayer } from 'react-leaflet';
+// src/components/MapEditor.jsx
 import { useEffect, useRef, useState } from 'react';
+import {
+  MapContainer,
+  TileLayer,
+  Marker,
+  Popup,
+  useMap,
+} from 'react-leaflet';
+import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-draw/dist/leaflet.draw.css';
-import L from 'leaflet';
 import 'leaflet-draw';
-import MarkerFormModal from './MarkerFormModal';
 
-export default function MapEditor({ initialData, onSave }) {
-  const mapRef = useRef();
+import MarkerFormModal from './MarkerFormModal';
+import SidebarInfoPanel from './SidebarInfoPanel'; // Assuming you have this component
+
+export default function MapEditor({ initialData, onSave, updateMapData }) {
   const [markers, setMarkers] = useState(initialData.markers || []);
   const [polygon, setPolygon] = useState(initialData.polygon || null);
   const [modalData, setModalData] = useState(null);
+  const [mapName, setMapName] = useState(initialData.name || '');
 
-  const onMapCreated = (map) => {
-    const drawnItems = new L.FeatureGroup();
-    map.addLayer(drawnItems);
+  // Update parent if updateMapData is provided
+  useEffect(() => {
+    if (updateMapData) {
+      updateMapData({ name: mapName, polygon, markers });
+    }
+  }, [mapName, polygon, markers, updateMapData]);
 
-    const drawControl = new L.Control.Draw({
-      draw: {
-        polygon: true,
-        marker: true,
-        polyline: false,
-        rectangle: false,
-        circle: false,
-        circlemarker: false
-      },
-      edit: { featureGroup: drawnItems }
-    });
-    map.addControl(drawControl);
-
-    map.on(L.Draw.Event.CREATED, (e) => {
-      const { layerType, layer } = e;
-      if (layerType === 'polygon') {
-        setPolygon(layer.toGeoJSON());
-        drawnItems.clearLayers(); // Only allow one polygon
-        drawnItems.addLayer(layer);
-      }
-      if (layerType === 'marker') {
-        const latlng = layer.getLatLng();
-        setModalData({ latlng });
-      }
-    });
+  const handleMarkerSubmit = (marker) => {
+    const newMarkers = [...markers, marker];
+    setMarkers(newMarkers);
+    setModalData(null);
   };
 
   return (
-    <>
+    <div>
+      <input
+        type="text"
+        className="mb-4 p-2 border rounded"
+        placeholder="Map Name"
+        value={mapName}
+        onChange={(e) => setMapName(e.target.value)}
+      />
+
+      <SidebarInfoPanel
+        polygon={polygon}
+        markers={markers}
+        onDeleteMarker={(idx) => {
+          const updatedMarkers = markers.filter((_, i) => i !== idx);
+          setMarkers(updatedMarkers);
+        }}
+      />
+
       <MapContainer
         center={[0, 0]}
         zoom={2}
         style={{ height: '600px' }}
-        whenCreated={onMapCreated}
-        ref={mapRef}
+        whenCreated={(map) => setupMap(map, setPolygon, setModalData)}
       >
-        <SidebarInfoPanel
-            polygon={polygon}
-             markers={markers}
-             onDeleteMarker={(idx) => {
-             setMarkers(markers.filter((_, i) => i !== idx));
-             }}
-            />
-
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-        {/* Render existing polygon or markers */}
-        
+
+        {markers.map((marker, idx) => (
+          <Marker key={idx} position={marker.latlng}>
+            <Popup>
+              <strong>{marker.name}</strong><br />
+              {marker.type}<br />
+              {marker.description}
+            </Popup>
+          </Marker>
+        ))}
       </MapContainer>
 
       {modalData && (
         <MarkerFormModal
           latlng={modalData.latlng}
-          onSubmit={(marker) => {
-            setMarkers([...markers, marker]);
-            setModalData(null);
-          }}
+          onSubmit={handleMarkerSubmit}
           onClose={() => setModalData(null)}
         />
       )}
 
-      <button onClick={() => onSave({ polygon, markers })}>Save</button>
-    </>
+      <button
+        className="mt-4 px-4 py-2 bg-blue-600 text-white rounded"
+        onClick={() => onSave({ name: mapName, polygon, markers })}
+      >
+        Save
+      </button>
+    </div>
   );
+}
+
+function setupMap(map, setPolygon, setModalData) {
+  const drawnItems = new L.FeatureGroup();
+  map.addLayer(drawnItems);
+
+  const drawControl = new L.Control.Draw({
+    draw: {
+      polygon: true,
+      marker: true,
+      polyline: false,
+      rectangle: false,
+      circle: false,
+      circlemarker: false,
+    },
+    edit: { featureGroup: drawnItems },
+  });
+  map.addControl(drawControl);
+
+  map.on(L.Draw.Event.CREATED, (e) => {
+    const { layerType, layer } = e;
+    if (layerType === 'polygon') {
+      const geoJson = layer.toGeoJSON();
+      drawnItems.clearLayers(); // Ensure only one polygon
+      drawnItems.addLayer(layer);
+      setPolygon(geoJson);
+    }
+
+    if (layerType === 'marker') {
+      setModalData({ latlng: layer.getLatLng() });
+    }
+  });
 }

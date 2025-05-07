@@ -1,22 +1,19 @@
 // routes/mapRoutes.js
 import express from 'express';
-import multer from 'multer';
 import {
-  getMapData,
-  updateMapData,
+  getMap,
+  saveMap,
   uploadImage,
-  deleteMap,
+  deleteMapData,
+  updateMap,
 } from '../controllers/mapController.js';
 
 const router = express.Router();
-const upload = multer({
-  dest: 'temp/',
-  limits: { fileSize: 5 * 1024 * 1024 } // 5MB max
-}); // For parsing incoming files
 
-router.get('/:id', getMapData);
-router.put('/:id', updateMapData);
-router.post('/upload-image', upload.single('image'), uploadImage);
-router.delete('/:id', deleteMap);
+router.get('/:id', getMap);
+router.post('/', saveMap);
+router.post('/upload-image', uploadImage);
+router.put('/:id', updateMap); // ← ADD THIS
+router.delete('/:id', deleteMapData);
 
 export default router;

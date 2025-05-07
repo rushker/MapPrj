@@ -1,12 +1,8 @@
 // controllers/mapController.js
-import cloudinary from '../config/cloudinary.js';
-import fs from 'fs/promises';
 import MapData from '../models/MapData.js';
+import cloudinary from '../config/cloudinary.js';
 
-const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-
-export const getMapData = async (req, res) => {
+export const getMap = async (req, res) => {
   try {
     const map = await MapData.findById(req.params.id);
     if (!map) return res.status(404).json({ error: 'Map not found' });
@@ -16,65 +12,51 @@ export const getMapData = async (req, res) => {
   }
 };
 
-export const updateMapData = async (req, res) => {
+export const saveMap = async (req, res) => {
   try {
-    const { polygon, markers } = req.body;
-    const map = await MapData.findByIdAndUpdate(
+    const { name, polygon, markers, isFinalized } = req.body;
+    const newMap = new MapData({ name, polygon, markers, isFinalized });
+    await newMap.save();
+    res.status(201).json(newMap);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to save map' });
+  }
+};
+export const updateMap = async (req, res) => {
+  try {
+    const { name, polygon, markers, isFinalized } = req.body;
+    const updated = await MapData.findByIdAndUpdate(
       req.params.id,
-      { polygon, markers },
-      { new: true, runValidators: true }
+      { name, polygon, markers, isFinalized },
+      { new: true }
     );
-    if (!map) return res.status(404).json({ error: 'Map not found' });
-    res.json(map);
+    if (!updated) return res.status(404).json({ error: 'Map not found' });
+    res.json(updated);
   } catch (err) {
     res.status(500).json({ error: 'Failed to update map' });
   }
 };
 
 export const uploadImage = async (req, res) => {
-  const file = req.file;
-  if (!file) return res.status(400).json({ error: 'No file uploaded' });
-
-  // Validate type and size
-  if (!ALLOWED_TYPES.includes(file.mimetype)) {
-    return res.status(400).json({ error: 'Invalid file type' });
-  }
-  if (file.size > MAX_FILE_SIZE) {
-    return res.status(400).json({ error: 'File too large (max 5MB)' });
-  }
-
   try {
-    const result = await cloudinary.uploader.upload(file.path, {
-      folder: 'map-images'
+    const { image } = req.body;
+    const result = await cloudinary.uploader.upload(image, {
+      folder: 'map-images',
     });
-
-    // Clean up temp file
-    try {
-      await fs.unlink(file.path);
-    } catch (e) {
-      console.warn('Temp file already removed or inaccessible');
-    }
-
     res.json({ imageUrl: result.secure_url });
   } catch (err) {
-    console.error('Cloudinary Upload Error:', err);
-    res.status(500).json({
-      error:
-        process.env.NODE_ENV === 'development'
-          ? err.message
-          : 'Image upload failed'
-    });
+    res.status(500).json({ error: 'Image upload failed' });
   }
 };
-export const deleteMap = async (req, res) => {
+
+export const deleteMapData = async (req, res) => {
   try {
-    const map = await MapArea.findById(req.params.id);
+    const map = await MapData.findById(req.params.id);
     if (!map) return res.status(404).json({ error: 'Map not found' });
 
-    // Delete images from Cloudinary
     for (const marker of map.markers) {
       if (marker.imageUrl) {
-        const publicId = marker.imageUrl.split('/').pop().split('.')[0]; // get public ID
+        const publicId = marker.imageUrl.split('/').pop().split('.')[0];
         await cloudinary.uploader.destroy(`map-images/${publicId}`);
       }
     }
@@ -85,5 +67,3 @@ export const deleteMap = async (req, res) => {
     res.status(500).json({ error: 'Failed to delete map' });
   }
 };
-
-

@@ -3,25 +3,25 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import connectDB from './config/db.js';
-import './config/cloudinary.js'; // ✅ just import it to initialize Cloudinary
+import './config/cloudinary.js'; // Initialize Cloudinary
 import mapRoutes from './routes/mapRoutes.js';
 import mapAreaRoutes from './routes/mapAreaRoutes.js';
 
 const app = express();
 
-// Initialize DB
+// Connect to MongoDB
 await connectDB();
 
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// CORS configuration
+// CORS Setup
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:3000')
   .split(',')
   .map(origin => origin.trim());
 
-const corsOptions = {
+app.use(cors({
   origin: (origin, callback) => {
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
@@ -30,21 +30,21 @@ const corsOptions = {
     }
   },
   credentials: true,
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   optionsSuccessStatus: 200
-};
-app.use(cors(corsOptions));
+}));
+
+// Health Check
+app.get('/', (req, res) => {
+  res.send('🗺️ Map Project API is running.');
+});
 
 // Routes
-app.get('/', (req, res) => {
-  res.send('Map Project API');
-});
 app.use('/api/maps', mapRoutes);
-
 app.use('/api/map-areas', mapAreaRoutes);
 
-//error middleware
+// Global Error Handler
 app.use((err, req, res, next) => {
   const status = err.status || 500;
   res.status(status).json({
@@ -52,7 +52,8 @@ app.use((err, req, res, next) => {
     ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
   });
 });
-// Start server
+
+// Start Server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
