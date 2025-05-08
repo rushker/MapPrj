@@ -1,16 +1,23 @@
 // models/MarkerSchema.js
 import mongoose from 'mongoose';
 
-const MarkerSchema = new mongoose.Schema({
+export const MarkerSchema = new mongoose.Schema({
   latlng: {
-    lat: { type: Number, required: true },
-    lng: { type: Number, required: true }
+    type: { type: String, default: 'Point', enum: ['Point'] },
+    coordinates: {
+      type: [Number], // [lng, lat]
+      required: true,
+      validate: {
+        validator: arr => arr.length === 2,
+        message: "Coordinates must be [lng, lat]"
+      }
+    }
   },
-  name: { type: String, default: '' },
-  type: { type: String, default: '' },
-  number: { type: String, default: '' },
-  description: { type: String, default: '' },
-  imageUrl: { type: String }
+  name:        { type: String, trim: true, default: '' },
+  type:        { type: String, trim: true, default: '' },
+  number:      { type: String, trim: true, default: '' },
+  description: { type: String, trim: true, default: '' },
+  imageUrl:    { type: String, trim: true }
 }, { _id: false });
 
 export default MarkerSchema;

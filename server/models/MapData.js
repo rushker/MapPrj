@@ -1,18 +1,21 @@
 // models/MapData.js
 import mongoose from 'mongoose';
-import MarkerSchema from './MarkerSchema.js';
+import { MarkerSchema } from './MarkerSchema.js';
 
-const mapDataSchema = new mongoose.Schema({
+const MapDataSchema = new mongoose.Schema({
+  name:        { type: String, required: true, trim: true },
   polygon: {
-    type: Object, // Full GeoJSON Polygon
-    required: true
+    type: { type: String, enum: ['Polygon'], required: true },
+    coordinates: {
+      type: [[[Number]]], // [[[lng, lat], ...]]
+      required: true
+    }
   },
-  markers: { type: [MarkerSchema], default: [] },
-  createdAt: {
-    type: Date,
-    default: Date.now
-  }
+  markers:     { type: [MarkerSchema], default: [] }
+}, {
+  timestamps: true
 });
 
-const MapData = mongoose.model('MapData', mapDataSchema);
-export default MapData;
+MapDataSchema.index({ polygon: '2d sphere' });
+
+export default mongoose.model('MapData', MapDataSchema);

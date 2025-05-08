@@ -1,58 +1,112 @@
-// controllers/mapAreaController.js
+// backend/controllers/mapAreaController.js
 import MapArea from '../models/MapArea.js';
 import cloudinary from '../config/cloudinary.js';
 
-export const createMapArea = async (req, res) => {
+// Utility to extract Cloudinary public_id robustly
+const extractPublicId = (url) => {
   try {
-    const { name, polygon, markers } = req.body;
-    const newMap = new MapArea({ name, polygon, markers, isFinalized: true });
-    await newMap.save();
-    res.status(201).json(newMap);
+    // Remove query params, then strip off extension
+    const pathname = new URL(url).pathname; // e.g. /map-images/abc123.jpg
+    const withoutExt = pathname.replace(/\.[^/.]+$/, '');
+    return withoutExt.startsWith('/') ? withoutExt.slice(1) : withoutExt;
   } catch (err) {
-    res.status(500).json({ error: 'Failed to create finalized map' });
+    console.warn('Failed to parse publicId from URL:', url, err.message);
+    return null;
   }
 };
 
-export const getMapArea = async (req, res) => {
+// 1. CUT - Save a new map area (GeoJSON polygon)
+export const cutMapArea = async (req, res) => {
+  const { polygon } = req.body;
+  if (!polygon || !polygon.geometry || polygon.geometry.type !== 'Polygon') {
+    return res.status(400).json({ error: 'Invalid polygon data' });
+  }
+
   try {
-    const map = await MapArea.findById(req.params.id);
-    if (!map || !map.isFinalized) return res.status(404).json({ error: 'Map not found' });
-    res.json(map);
+    const newArea = await MapArea.create({
+      name: 'Untitled Area',
+      polygon,
+      isFinalized: false,
+    });
+    console.log(`Created MapArea ${newArea._id}`);
+    res.status(201).json({ id: newArea._id });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch public map' });
+    console.error('Error in cutMapArea:', err.message);
+    res.status(500).json({ error: 'Failed to cut map area' });
   }
 };
 
+// 2. UPDATE - Add metadata, markers, finalize
 export const updateMapArea = async (req, res) => {
+  const { id } = req.params;
+  const { name, markers, isFinalized } = req.body;
+
   try {
-    const { name, polygon, markers } = req.body;
     const updated = await MapArea.findByIdAndUpdate(
-      req.params.id,
-      { name, polygon, markers },
-      { new: true }
+      id,
+      { name, markers, isFinalized },
+      { new: true, runValidators: true }
     );
-    if (!updated) return res.status(404).json({ error: 'Map not found' });
-    res.json(updated);
+    if (!updated) {
+      return res.status(404).json({ error: 'Map area not found' });
+    }
+    console.log(`Updated MapArea ${id}`);
+    res.status(200).json(updated);
   } catch (err) {
+    console.error('Error in updateMapArea:', err.message);
     res.status(500).json({ error: 'Failed to update map area' });
   }
 };
 
-export const deleteMapArea = async (req, res) => {
+// 3. GET ONE for editing
+export const getMapAreaById = async (req, res) => {
   try {
-    const map = await MapArea.findById(req.params.id);
-    if (!map) return res.status(404).json({ error: 'Map not found' });
-
-    for (const marker of map.markers) {
-      if (marker.imageUrl) {
-        const publicId = marker.imageUrl.split('/').pop().split('.')[0];
-        await cloudinary.uploader.destroy(`map-images/${publicId}`);
-      }
+    const area = await MapArea.findById(req.params.id);
+    if (!area) {
+      return res.status(404).json({ error: 'Map area not found' });
     }
-
-    await map.deleteOne();
-    res.json({ message: 'Map deleted successfully' });
+    res.status(200).json(area);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to delete map' });
+    console.error('Error in getMapAreaById:', err.message);
+    res.status(500).json({ error: 'Failed to fetch map area' });
+  }
+};
+
+// 4. GET ALL for dashboard
+export const getAllMapAreas = async (req, res) => {
+  try {
+    const areas = await MapArea.find().sort({ createdAt: -1 });
+    res.status(200).json(areas);
+  } catch (err) {
+    console.error('Error in getAllMapAreas:', err.message);
+    res.status(500).json({ error: 'Failed to fetch map areas' });
+  }
+};
+
+// 5. DELETE with Cloudinary cleanup
+export const deleteMapArea = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const area = await MapArea.findById(id);
+    if (!area) {
+      return res.status(404).json({ error: 'Map area not found' });
+    }
+    // Delete images in parallel
+    await Promise.all(
+      area.markers.map(async (m) => {
+        if (m.imageUrl) {
+          const publicId = extractPublicId(m.imageUrl);
+          if (publicId) {
+            await cloudinary.uploader.destroy(publicId);
+          }
+        }
+      })
+    );
+    await area.remove();
+    console.log(`Deleted MapArea ${id}`);
+    res.status(200).json({ message: 'Map area deleted successfully' });
+  } catch (err) {
+    console.error('Error in deleteMapArea:', err.message);
+    res.status(500).json({ error: 'Failed to delete map area' });
   }
 };

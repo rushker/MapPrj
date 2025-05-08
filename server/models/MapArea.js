@@ -1,37 +1,23 @@
-    // models/MapArea.js
+// models/MapArea.js
 import mongoose from 'mongoose';
-import MarkerSchema from './MarkerSchema.js';
+import { MarkerSchema } from './MarkerSchema.js';
 
-const PolygonSchema = new mongoose.Schema({
-  type: {
-    type: String,
-    enum: ['Feature'],
-    required: true,
-    default: 'Feature'
-  },
-  geometry: {
-    type: {
-      type: String,
-      enum: ['Polygon'],
-      required: true
-    },
+const MapAreaSchema = new mongoose.Schema({
+  name:        { type: String, required: true, trim: true, default: 'Untitled Area' },
+  polygon: {
+    type: { type: String, enum: ['Polygon'], required: true },
     coordinates: {
-      type: [[[Number]]], // GeoJSON coordinates
+      type: [[[Number]]], // [[[lng, lat], ...]]
       required: true
     }
   },
-  properties: {
-    type: Object,
-    default: {}
-  }
-}, { _id: false });
-
-const MapAreaSchema = new mongoose.Schema({
-  name: { type: String, required: true, default: 'Untitled Area' },
-  polygon: { type: PolygonSchema, required: true },
-  markers: { type: [MarkerSchema], default: [] },
-  isFinalized: { type: Boolean, default: false },
-  createdAt: { type: Date, default: Date.now }
+  markers:     { type: [MarkerSchema], default: [] },
+  isFinalized: { type: Boolean, default: false }
+}, {
+  timestamps: true
 });
+
+// Create 2d sphere index for geo queries
+MapAreaSchema.index({ polygon: '2d sphere' });
 
 export default mongoose.model('MapArea', MapAreaSchema);
