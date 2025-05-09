@@ -4,7 +4,6 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import connectDB from './config/db.js';
 import errorHandler from './middleware/errorHandler.js';
-
 import mapRoutes from './routes/mapRoutes.js';
 import mapAreaRoutes from './routes/mapAreaRoutes.js';
 
@@ -13,42 +12,34 @@ connectDB();
 
 const app = express();
 
-// ======================
-// 🌐 CORS Configuration
-// ======================
+// 🌐 CORS setup
 const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [];
-
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
+      console.warn(`⛔️ Blocked by CORS: ${origin}`);
       callback(new Error('Not allowed by CORS'));
     }
   },
   credentials: true,
 }));
 
-// ======================
-// 🧩 Core Middleware
-// ======================
+// 🧩 Middlewares
 app.use(express.json());
 
-// ======================
-// 📦 Routes
-// ======================
+// 📦 API Routes
 app.use('/api/maps', mapRoutes);
 app.use('/api/map-areas', mapAreaRoutes);
 
-// ======================
-// ❌ Error Handling
-// ======================
+// ❌ Error Handling Middleware
 app.use(errorHandler);
 
-// ======================
-// 🚀 Server Start
-// ======================
+// 🚀 Start Server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`✅ Server running on port ${PORT}`);
+  console.log(`🌐 Allowed Origins: ${allowedOrigins.join(', ')}`);
+  console.log(`📍 API ready at: /api/maps, /api/map-areas`);
 });
