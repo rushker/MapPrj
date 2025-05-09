@@ -1,23 +1,15 @@
 // server/config/db.js
 import mongoose from 'mongoose';
 
-export const getMap = async (req, res) => {
+const connectDB = async () => {
   try {
-    const { id } = req.params;
-
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: 'Invalid map ID format.' });
-    }
-
-    const map = await MapData.findById(id);
-    if (!map) return res.status(404).json({ message: 'Map not found.' });
-
-    res.json(map);
+    const conn = await mongoose.connect(process.env.MONGO_URI);
+    console.log(`MongoDB connected: ${conn.connection.host}`);
   } catch (error) {
-    console.error('Error in getMap:', error);
-    res.status(500).json({ message: 'Server error.' });
+    console.error('MongoDB connection error:', error.message);
+    process.exit(1); // Exit process with failure
   }
 };
 
-
 export default connectDB;
+
