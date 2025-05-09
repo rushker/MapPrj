@@ -1,15 +1,17 @@
-// src/services/privateMapApi.js
+// src/services/mapAreaService.js
 import axios from 'axios';
 
-const baseURL = import.meta.env.VITE_BACKEND_URL?.replace(/\/+$/, '');
-const API = `${baseURL}/api/map-areas`;
+const API = axios.create({
+  baseURL: import.meta.env.VITE_BACKEND_URL?.replace(/\/+$/, '') + '/api/map-areas',
+  withCredentials: true,
+});
 
 // ==========================
-// 📂 Private Maps (MapArea) 
+// 📂 Private Maps (MapArea)
 // ==========================
 
-export const createMapArea = (polygon) => axios.post(API, { polygon });
-export const updateMapArea = (id, data) => axios.put(`${API}/${id}`, data);
-export const getMapAreaById = (id) => axios.get(`${API}/${id}`);
-export const getAllMapAreas = () => axios.get(API);
-export const deleteMapArea = (id) => axios.delete(`${API}/${id}`);
+export const createMapArea = (polygon) => API.post('/', { polygon });
+export const updateMapArea = (id, data) => API.put(`/${id}`, data);
+export const getMapAreaById = (id) => API.get(`/${id}`);
+export const getAllMapAreas = () => API.get('/');
+export const deleteMapArea = (id) => API.delete(`/${id}`);
