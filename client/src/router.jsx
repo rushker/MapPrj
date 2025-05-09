@@ -56,11 +56,7 @@ export default function AppRouter() {
         </Route>
 
         {/* Root: redirect to public viewer or admin as needed */}
-        <Route
-          path="/"
-          element={<Navigate to="/map/DEFAULT_ID" replace />} 
-          // replace DEFAULT_ID with a real fallback or dashboard
-        />
+        <Route path="/" element={<Navigate to="/admin" replace />} />
 
         {/* Catch-all 404 */}
         <Route path="*" element={<NotFoundPage />} />
