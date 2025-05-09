@@ -1,302 +1,142 @@
 // src/components/MapEditor.jsx
-import React, { useState, useEffect, useCallback } from 'react';
-import { MapContainer, TileLayer, Marker, Polygon, useMapEvents } from 'react-leaflet';
-import { EditControl } from 'react-leaflet-draw';
-import 'leaflet-draw/dist/leaflet.draw.css';
-import { v4 as uuidv4 } from 'uuid';
+import React, { useEffect, useRef, useState } from 'react';
+import { MapContainer, TileLayer, Polygon, Marker, Popup, useMapEvents } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import '@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css';
+import '@geoman-io/leaflet-geoman-free';
+import MarkerMetadataForm from './marker/MarkerMetadataForm';
 
-const MarkerMetadataForm = ({ marker, onChange, onClose }) => {
-  const [form, setForm] = useState(marker);
-  const [errors, setErrors] = useState({});
+/**
+ * MapEditor component
+ * Props:
+ *  - initialData: { name?, polygon?: GeoJSON, markers?: Array }
+ *  - onSave: function({ name, polygon, markers })
+ */
+export default function MapEditor({ initialData = {}, onSave }) {
+  const mapRef = useRef();
+  const [mapName, setMapName] = useState(initialData.name || '');
+  const [polygon, setPolygon] = useState(initialData.polygon || null);
+  const [markers, setMarkers] = useState(initialData.markers || []);
+  const [selectedMarkerIdx, setSelectedMarkerIdx] = useState(null);
+  const [markerMode, setMarkerMode] = useState(false);
 
+  // Initialize drawing controls
   useEffect(() => {
-    setForm(marker);
-  }, [marker]);
+    const map = mapRef.current;
+    if (!map) return;
 
-  const validateForm = () => {
-    const newErrors = {};
-    if (!form.name?.trim()) newErrors.name = 'Tên là bắt buộc';
-    if (!form.type?.trim()) newErrors.type = 'Loại là bắt buộc';
-    return newErrors;
-  };
+    map.pm.setPathOptions({ color: 'blue' });
+    map.pm.addControls({
+      position: 'topleft',
+      drawPolygon: !polygon,
+      editMode: !!polygon,
+      deleteMode: true,
+      drawMarker: false,
+    });
 
-  const handleSubmit = () => {
-    const errors = validateForm();
-    if (Object.keys(errors).length > 0) return setErrors(errors);
-    
-    onChange(form);
-    onClose();
-  };
+    map.on('pm:create', e => {
+      if (e.shape === 'Polygon') {
+        const geo = e.layer.toGeoJSON();
+        setPolygon(geo);
+        e.layer.addTo(map);
+      }
+    });
+    map.on('pm:edit', e => {
+      const layer = e.layer || e.target;
+      setPolygon(layer.toGeoJSON());
+    });
 
-  return (
-    <div className="p-4 bg-white rounded-lg shadow-lg mb-4">
-      <h3 className="text-lg font-semibold mb-3">Thông tin Marker</h3>
-      
-      <div className="space-y-3">
-        <div>
-          <label className="block text-sm font-medium mb-1">Tên *</label>
-          <input
-            value={form.name || ''}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
-            className={`w-full p-2 rounded border ${
-              errors.name ? 'border-red-500' : 'border-gray-300'
-            }`}
-          />
-          {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
-        </div>
+    return () => {
+      map.pm.removeControls();
+      map.off('pm:create');
+      map.off('pm:edit');
+    };
+  }, [mapRef.current, polygon]);
 
-        <div>
-          <label className="block text-sm font-medium mb-1">Loại *</label>
-          <select
-            value={form.type || ''}
-            onChange={(e) => setForm({ ...form, type: e.target.value })}
-            className="w-full p-2 rounded border border-gray-300"
-          >
-            <option value="">Chọn loại</option>
-            <option value="landmark">Địa danh</option>
-            <option value="warning">Cảnh báo</option>
-            <option value="info">Thông tin</option>
-          </select>
-          {errors.type && <p className="text-red-500 text-sm mt-1">{errors.type}</p>}
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-1">Hình ảnh URL</label>
-          <input
-            type="url"
-            value={form.image || ''}
-            onChange={(e) => setForm({ ...form, image: e.target.value })}
-            className="w-full p-2 rounded border border-gray-300"
-            placeholder="https://example.com/image.jpg"
-          />
-        </div>
-      </div>
-
-      <div className="mt-4 flex justify-end gap-2">
-        <button
-          onClick={onClose}
-          className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded"
-        >
-          Hủy
-        </button>
-        <button
-          onClick={handleSubmit}
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-        >
-          Lưu
-        </button>
-      </div>
-    </div>
-  );
-};
-
-const MapEditor = ({ updateMapData }) => {
-  const [mapName, setMapName] = useState('');
-  const [polygon, setPolygon] = useState(null);
-  const [markers, setMarkers] = useState([]);
-  const [selectedMarker, setSelectedMarker] = useState(null);
-  const [drawingMode, setDrawingMode] = useState(null);
-  const [mapKey, setMapKey] = useState(Date.now());
-
-  // Xử lý tạo polygon
-  const handleCreatePolygon = useCallback((e) => {
-    const newPolygon = e.layer.toGeoJSON().geometry;
-    setPolygon(newPolygon);
-  }, []);
-
-  // Xử lý click bản đồ để tạo marker
-  const handleMapClick = useCallback(
-    (e) => {
-      if (drawingMode !== 'marker') return;
-
-      const newMarker = {
-        id: uuidv4(),
-        geometry: {
-          type: 'Point',
-          coordinates: [e.latlng.lng, e.latlng.lat],
-        },
-        properties: {
-          name: '',
-          type: '',
-          image: '',
-        },
-      };
-
-      setMarkers((prev) => [...prev, newMarker]);
-      setSelectedMarker(newMarker);
-      setDrawingMode(null);
-    },
-    [drawingMode]
-  );
-
-  // Validate trước khi lưu
-  const validateBeforeSave = () => {
-    const errors = [];
-    
-    if (!mapName.trim()) errors.push('Tên khu vực là bắt buộc');
-    
-    if (!polygon || polygon.coordinates[0].length < 3) {
-      errors.push('Vui lòng vẽ khu vực hợp lệ (ít nhất 3 điểm)');
+  // Handle map clicks for adding markers
+  useMapEvents({
+    click(e) {
+      if (!markerMode) return;
+      const { lat, lng } = e.latlng;
+      const newMarker = { lat, lng, name: '', type: '', description: '', imageUrl: '' };
+      setMarkers(prev => [...prev, newMarker]);
+      setSelectedMarkerIdx(markers.length);
     }
+  });
 
-    const markerErrors = markers.filter(
-      (m) => !m.properties.name?.trim() || !m.properties.type?.trim()
-    );
-    
-    if (markerErrors.length > 0) {
-      errors.push(`${markerErrors.length} marker thiếu thông tin bắt buộc`);
-    }
-
-    return errors;
+  const handleMarkerChange = (updated) => {
+    setMarkers(prev => prev.map((m, i) => (i === selectedMarkerIdx ? updated : m)));
   };
 
   const handleSave = () => {
-    const errors = validateBeforeSave();
-    if (errors.length > 0) return alert(errors.join('\n'));
-
-    const featureCollection = {
-      type: 'FeatureCollection',
-      features: [
-        {
-          type: 'Feature',
-          geometry: polygon,
-          properties: { name: mapName },
-        },
-        ...markers.map((m) => ({
-          type: 'Feature',
-          geometry: m.geometry,
-          properties: m.properties,
-        })),
-      ],
-    };
-
-    updateMapData?.(featureCollection);
-    alert('Lưu thành công!');
-    resetMap();
-  };
-
-  const resetMap = () => {
-    setMapName('');
-    setPolygon(null);
-    setMarkers([]);
-    setSelectedMarker(null);
-    setMapKey(Date.now());
+    if (!mapName.trim()) return alert('Please enter a map name.');
+    if (!polygon) return alert('Please draw a polygon.');
+    if (markers.length === 0) return alert('Add at least one marker.');
+    onSave({ name: mapName, polygon, markers });
   };
 
   return (
-    <div className="flex flex-col md:flex-row gap-4 h-[calc(100vh-100px)]">
-      <div className="flex-1 relative">
-        <MapContainer
-          key={mapKey}
-          center={[10.762622, 106.660172]}
-          zoom={13}
-          className="h-full"
-        >
-          <TileLayer
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            attribution='&copy; OpenStreetMap contributors'
-          />
-
-          <EditControl
-            position="topright"
-            draw={{
-              polygon: {
-                allowIntersection: false,
-                showArea: true,
-              },
-              polyline: false,
-              rectangle: false,
-              circle: false,
-              marker: false,
-            }}
-            onCreated={handleCreatePolygon}
-          />
-
-          {polygon && (
-            <Polygon
-              positions={polygon.coordinates[0].map(([lng, lat]) => [lat, lng])}
-              color="blue"
-            />
-          )}
-
-          {markers.map((marker) => (
-            <Marker
-              key={marker.id}
-              position={[
-                marker.geometry.coordinates[1],
-                marker.geometry.coordinates[0],
-              ]}
-              eventHandlers={{
-                click: () => setSelectedMarker(marker),
-              }}
-            />
-          ))}
-
-          <MapClickHandler onMapClick={handleMapClick} />
-        </MapContainer>
-
-        <div className="absolute top-4 right-4 z-[1000] flex gap-2">
-          <button
-            onClick={() => setDrawingMode('polygon')}
-            className="px-4 py-2 bg-white shadow-md rounded"
-          >
-            📐 Vẽ khu vực
-          </button>
-          <button
-            onClick={() => setDrawingMode('marker')}
-            className="px-4 py-2 bg-white shadow-md rounded"
-          >
-            📍 Thêm marker
-          </button>
-        </div>
+    <div className="flex flex-col h-full">
+      {/* Name input */}
+      <div className="p-4 bg-white shadow">
+        <input
+          type="text"
+          value={mapName}
+          onChange={e => setMapName(e.target.value)}
+          placeholder="Map Name"
+          className="w-full p-2 border rounded focus:outline-none focus:ring"
+        />
       </div>
 
-      <div className="md:w-96 p-4 bg-white shadow-lg overflow-y-auto">
-        <h2 className="text-xl font-bold mb-4">Thông tin bản đồ</h2>
-        
-        <div className="mb-6">
-          <label className="block mb-2 font-medium">Tên khu vực *</label>
-          <input
-            type="text"
-            value={mapName}
-            onChange={(e) => setMapName(e.target.value)}
-            className="w-full p-2 border rounded"
-            placeholder="Nhập tên khu vực"
-          />
-        </div>
+      {/* Map & controls */}
+      <div className="flex-1 relative">
+        <MapContainer
+          whenCreated={mapInstance => (mapRef.current = mapInstance)}
+          center={[0, 0]}
+          zoom={2}
+          className="h-full w-full"
+        >
+          <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+          {polygon && (
+            <Polygon
+              positions={polygon.geometry.coordinates[0].map(([lng, lat]) => [lat, lng])}
+              pathOptions={{ color: 'blue' }}
+            />
+          )}
+          {markers.map((m, i) => (
+            <Marker key={i} position={[m.lat, m.lng]} eventHandlers={{ click: () => setSelectedMarkerIdx(i) }}>
+              <Popup>{m.name || 'Marker'}</Popup>
+            </Marker>
+          ))}
+        </MapContainer>
 
-        {selectedMarker && (
-          <MarkerMetadataForm
-            marker={selectedMarker}
-            onChange={(updated) =>
-              setMarkers((prev) =>
-                prev.map((m) => (m.id === updated.id ? updated : m))
-              )
+        {/* Bottom action bar */}
+        <div className="absolute bottom-4 left-4 flex space-x-2">
+          <button
+            onClick={() => setMarkerMode(!markerMode)}
+            className={
+              `px-4 py-2 rounded ${markerMode ? 'bg-red-500' : 'bg-green-500'} text-white`
             }
-            onClose={() => setSelectedMarker(null)}
-          />
-        )}
-
-        <div className="mt-6">
+          >
+            {markerMode ? 'Disable Marker' : 'Add Marker'}
+          </button>
           <button
             onClick={handleSave}
-            className="w-full py-3 bg-green-600 text-white rounded hover:bg-green-700"
+            className="px-4 py-2 bg-blue-600 text-white rounded"
           >
-            💾 Lưu bản đồ
+            Save Map
           </button>
         </div>
+
+        {/* Marker metadata panel */}
+        {selectedMarkerIdx !== null && (
+          <MarkerMetadataForm
+            initialData={markers[selectedMarkerIdx]}
+            onSubmit={data => { handleMarkerChange(data); setSelectedMarkerIdx(null); }}
+            onClose={() => setSelectedMarkerIdx(null)}
+          />
+        )}
       </div>
     </div>
   );
-};
-
-const MapClickHandler = ({ onMapClick }) => {
-  useMapEvents({
-    click(e) {
-      onMapClick(e);
-    },
-  });
-  return null;
-};
-
-export default MapEditor;
+}

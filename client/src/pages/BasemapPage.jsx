@@ -1,74 +1,71 @@
 // src/pages/BasemapPage.jsx
-import React, { useRef, useState, useEffect } from 'react';
-import { MapContainer, TileLayer, useMap } from 'react-leaflet';
-import '@geoman-io/leaflet-geoman-free';
-import '@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css';
-import 'leaflet/dist/leaflet.css';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import L from 'leaflet';
-import { createMap } from '../services/api'; // Thêm hàm createMap
-const GeomanControls = ({ onCreated }) => {
-  const map = useMap();
-
-  useEffect(() => {
-    // Add Geoman draw controls
-    map.pm.addControls({
-      position: 'topright',
-      drawMarker: false,
-      drawCircle: false,
-      drawPolyline: false,
-      drawRectangle: false,
-      drawCircleMarker: false,
-    });
-
-    // Handle polygon creation
-    const handleCreate = (e) => {
-      if (e.layer instanceof L.Polygon) {
-        const geojson = e.layer.toGeoJSON();
-        onCreated(geojson);
-      }
-    };
-
-    map.on('pm:create', handleCreate);
-
-    return () => {
-      map.off('pm:create', handleCreate);
-    };
-  }, [map, onCreated]);
-
-  return null;
-};
+import 'leaflet/dist/leaflet.css';
+import '@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css';
+import '@geoman-io/leaflet-geoman-free';
+import { createMapArea } from '../services/mapAreaService';
 
 const BasemapPage = () => {
-  const [polygon, setPolygon] = useState(null);
+  const mapRef = useRef(null);
+  const [drawnPolygon, setDrawnPolygon] = useState(null);
   const navigate = useNavigate();
 
-  const handlePolygonCreated = (geojson) => {
-    setPolygon(geojson);
-  };
+  useEffect(() => {
+    const map = L.map('map').setView([0, 0], 2);
+    mapRef.current = map;
 
-  const handleSave = async () => {
-    if (!polygon) return alert('Vui lòng vẽ đa giác trước');
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Enable draw mode
+    map.pm.addControls({
+      position: 'topleft',
+      drawCircle: false,
+      drawMarker: false,
+      drawPolyline: false,
+      drawCircleMarker: false,
+      drawRectangle: false
+    });
+
+    map.on('pm:create', (e) => {
+      // Remove previous if exists
+      if (drawnPolygon) {
+        map.removeLayer(drawnPolygon);
+      }
+
+      setDrawnPolygon(e.layer);
+    });
+
+    return () => map.remove();
+  }, []);
+
+  const handleSaveAndEdit = async () => {
+    if (!drawnPolygon) {
+      alert('Please draw a polygon first.');
+      return;
+    }
+
+    const geojson = drawnPolygon.toGeoJSON();
     try {
-      const newMap = await createMap({ polygon }); // Gọi API tạo map
-      navigate(`/edit/${newMap._id}`); // Chuyển hướng với ID
+      const response = await createMapArea(geojson);
+      navigate(`/edit/${response.id}`);
     } catch (err) {
-      alert('Lỗi khi lưu bản đồ');
+      console.error(err);
+      alert('Failed to save map area.');
     }
   };
 
   return (
-    <div className="h-screen">
-      <MapContainer center={[0, 0]} zoom={2} style={{ height: '100%' }}>
-        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-        <GeomanControls onCreated={handlePolygonCreated} />
-      </MapContainer>
-
+    <div className="h-screen w-screen relative">
+      <div id="map" className="h-full w-full"></div>
       <button
-        className="absolute bottom-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-md"
-        onClick={handleSave}
+        onClick={handleSaveAndEdit}
+        className="absolute bottom-4 left-4 bg-blue-600 text-white px-4 py-2 rounded shadow-lg z-[1000]"
       >
-        Lưu và Chỉnh sửa
+        Save & Edit
       </button>
     </div>
   );
