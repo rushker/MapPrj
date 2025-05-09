@@ -1,7 +1,8 @@
 // src/services/privateMapApi.js
 import axios from 'axios';
 
-const API = `${import.meta.env.VITE_BACKEND_URL}/api/map-areas`;
+const baseURL = import.meta.env.VITE_BACKEND_URL?.replace(/\/+$/, '');
+const API = `${baseURL}/api/map-areas`;
 
 // ==========================
 // 📂 Private Maps (MapArea) 
