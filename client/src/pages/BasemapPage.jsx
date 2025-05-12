@@ -17,6 +17,10 @@ const BasemapPage = () => {
 
   // Initialize Leaflet Map
   useEffect(() => {
+    
+    setDrawnPolygon(null);
+    setPolygonInfo(null);
+
     const leafletMap = L.map('map').setView([0, 0], 2);
     mapRef.current = leafletMap;
 
@@ -97,27 +101,34 @@ const BasemapPage = () => {
       <div id="map" className="h-full w-full flex-grow z-0"></div>
 
       {/* Polygon Info Sidebar */}
-      <div className="absolute top-4 right-4 bg-white shadow-lg rounded-xl p-4 w-64 z-[1000]">
-        <h2 className="text-lg font-semibold mb-2">Polygon Info</h2>
-        {polygonInfo ? (
-          <ul className="text-sm space-y-1">
-            <li>📍 Coordinates: {polygonInfo.coordinatesCount}</li>
-            <li>📐 Area: {polygonInfo.area} km²</li>
-          </ul>
-        ) : (
-          <p className="text-gray-500 text-sm">Draw a polygon to begin.</p>
-        )}
-
-        <button
-          onClick={handleSaveAndEdit}
-          disabled={!drawnPolygon}
-          className={`mt-4 w-full px-4 py-2 text-white rounded ${
-            drawnPolygon ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-400 cursor-not-allowed'
-          }`}
-        >
-          Save & Edit
-        </button>
+     <div className="absolute top-4 right-4 bg-white shadow-lg rounded-xl p-4 w-64 z-[1000]">
+  <h2 className="text-lg font-semibold mb-2 border-b pb-2">Polygon Info</h2>
+  {polygonInfo ? (
+    <div className="space-y-2">
+      <div className="flex items-center">
+        <span className="text-gray-500 mr-2">📍</span>
+        <span>Coordinates: {polygonInfo.coordinatesCount}</span>
       </div>
+      <div className="flex items-center">
+        <span className="text-gray-500 mr-2">📐</span>
+        <span>Area: {polygonInfo.area} km²</span>
+      </div>
+    </div>
+  ) : (
+    <p className="text-gray-500 text-sm italic">Draw a polygon to begin</p>
+  )}
+  <button
+    onClick={handleSaveAndEdit}
+    disabled={!drawnPolygon}
+    className={`mt-4 w-full px-4 py-2 rounded transition-all ${
+      drawnPolygon 
+        ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+        : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+    }`}
+  >
+    Save & Edit
+  </button>
+</div>
     </div>
   );
 };

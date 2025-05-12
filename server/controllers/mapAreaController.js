@@ -67,6 +67,13 @@ export const updateMapArea = async (req, res) => {
 // 3. GET ONE for editing
 export const getMapAreaById = async (req, res) => {
   try {
+    const { id } = req.params;
+    
+    // Add ID validation
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ error: 'Invalid ID format' });
+    }
+
     const area = await MapArea.findById(req.params.id);
     if (!area) {
       return res.status(404).json({ error: 'Map area not found' });
