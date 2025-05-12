@@ -78,6 +78,7 @@ const BasemapPage = () => {
     try {
       const geojson = drawnPolygon.toGeoJSON();
       const { data } = await createMapArea(geojson);
+      console.log('Saved map area:', data);
       toast.success('Map area saved!');
       navigate(`/edit/${data._id}`);
     } catch (err) {
@@ -91,7 +92,7 @@ const BasemapPage = () => {
       <div id="map" className="h-full w-full flex-grow z-0" />
 
       {/* Polygon Info Sidebar */}
-      <div className="absolute top-4 left-4 bg-white shadow-lg rounded-xl p-4 w-64 z-[1000]">
+      <div className="absolute top-4 left-[88px] bg-white shadow-lg rounded-xl p-4 w-64 z-[1000]">
         <h2 className="text-lg font-semibold mb-2">Polygon Info</h2>
         {polygonInfo ? (
           <ul className="text-sm space-y-1">
