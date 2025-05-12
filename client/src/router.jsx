@@ -19,7 +19,7 @@ const router = createBrowserRouter([
     element: <BasemapPage /> // Only accessible manually
   },
   {
-    path: '/editpage',
+    path: '/edit/:id',
     element: <EditMapPage /> // Only accessible after cutting
   },
 ]);

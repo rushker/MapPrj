@@ -12,10 +12,14 @@ const EditMapPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const mapRef = useRef(null);
-  const drawnPolygonLayerRef = useRef(null);
+  const polygonLayerRef = useRef(null);
   const leafletMarkersRef = useRef([]);
+
   const [markers, setMarkers] = useState([]);
   const [selectedMarkerIndex, setSelectedMarkerIndex] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const selectedMarker = markers[selectedMarkerIndex];
 
   useEffect(() => {
     const initMap = async () => {
@@ -38,19 +42,18 @@ const EditMapPage = () => {
           drawPolygon: false,
         });
 
-        // Draw and make polygon editable
-        const polygonLayer = L.geoJSON(data.polygon, {
-          pmIgnore: false,
-        }).addTo(map);
-        drawnPolygonLayerRef.current = polygonLayer;
+        // Draw editable polygon
+        const polygonLayer = L.geoJSON(data.polygon, { pmIgnore: false }).addTo(map);
         polygonLayer.pm.enable({ allowSelfIntersection: false });
         map.fitBounds(polygonLayer.getBounds());
+        polygonLayerRef.current = polygonLayer;
 
-        // Load and render markers
+        // Render initial markers
         const initialMarkers = data.markers || [];
         initialMarkers.forEach((marker, idx) => addMarkerToMap(marker, idx));
         setMarkers(initialMarkers);
 
+        // Handle map click to add marker
         map.on('click', (e) => {
           const newMarker = {
             type: 'Feature',
@@ -80,6 +83,8 @@ const EditMapPage = () => {
     return () => {
       mapRef.current?.off();
       mapRef.current?.remove();
+      leafletMarkersRef.current.forEach((m) => m.remove());
+      leafletMarkersRef.current = [];
     };
   }, [id]);
 
@@ -102,6 +107,9 @@ const EditMapPage = () => {
 
   const deleteSelectedMarker = () => {
     if (selectedMarkerIndex === null) return;
+    const confirmDelete = window.confirm('Delete this marker?');
+    if (!confirmDelete) return;
+
     leafletMarkersRef.current[selectedMarkerIndex]?.remove();
     leafletMarkersRef.current.splice(selectedMarkerIndex, 1);
     setMarkers((prev) => prev.filter((_, i) => i !== selectedMarkerIndex));
@@ -135,31 +143,28 @@ const EditMapPage = () => {
   };
 
   const handleSave = async () => {
+    setIsSaving(true);
     try {
-      const geojson = drawnPolygonLayerRef.current?.toGeoJSON();
-      if (!geojson) throw new Error('Polygon missing or invalid');
+      const geojson = polygonLayerRef.current?.toGeoJSON();
+      if (!geojson) throw new Error('Polygon is missing or invalid');
 
-      await updateMapArea(id, {
-        polygon: geojson,
-        markers,
-      });
-
+      await updateMapArea(id, { polygon: geojson, markers });
       alert('Map saved successfully!');
       navigate('/');
     } catch (err) {
-      console.error(err);
+      console.error('Save failed', err);
       alert('Error saving map.');
+    } finally {
+      setIsSaving(false);
     }
   };
-
-  const selectedMarker = markers[selectedMarkerIndex];
 
   return (
     <div className="relative h-screen w-screen">
       <div id="edit-map" className="h-full w-full" />
 
       {selectedMarker && (
-        <div className="absolute top-4 right-4 bg-white p-4 rounded shadow z-[1000] w-72">
+        <div className="absolute top-4 right-4 bg-white p-4 rounded shadow z-[1000] w-72 marker-edit-panel">
           <h2 className="font-bold mb-2">Edit Marker</h2>
           <input
             type="text"
@@ -199,9 +204,10 @@ const EditMapPage = () => {
 
       <button
         onClick={handleSave}
+        disabled={isSaving}
         className="absolute bottom-4 left-4 bg-green-600 text-white px-4 py-2 rounded shadow z-[1000]"
       >
-        Save Map
+        {isSaving ? 'Saving...' : 'Save Map'}
       </button>
     </div>
   );
