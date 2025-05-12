@@ -10,7 +10,15 @@ const API = axios.create({
 // 📂 Private Maps (MapArea)
 // ==========================
 
-export const createMapArea = (polygon) => API.post('/', { polygon });
+export const createMapArea = async (polygon) => {
+  const response = await API.post('/', { polygon });
+  
+  // Handle both response formats
+  const id = response.data?._id || response.data?.id;
+  if (!id) throw new Error('Missing ID in response');
+  
+  return { ...response, data: { ...response.data, _id: id } };
+};
 export const updateMapArea = (id, data) => API.put(`/${id}`, data);
 export const getMapAreaById = (id) => API.get(`/${id}`);
 export const getAllMapAreas = () => API.get('/');

@@ -28,8 +28,14 @@ export const cutMapArea = async (req, res) => {
       polygon,
       isFinalized: false,
     });
-    console.log(`Created MapArea ${newArea._id}`);
-    res.status(201).json({ id: newArea._id });
+    
+    // Return both id and _id for compatibility
+    res.status(201).json({ 
+      _id: newArea._id,
+      id: newArea._id,
+      message: 'Map area created successfully'
+    });
+    
   } catch (err) {
     console.error('Error in cutMapArea:', err.message);
     res.status(500).json({ error: 'Failed to cut map area' });

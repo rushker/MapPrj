@@ -70,28 +70,34 @@ const BasemapPage = () => {
 
   // Save polygon and redirect to edit page
   const handleSaveAndEdit = async () => {
-    if (!drawnPolygon) {
-      toast.error('Please draw a polygon first.');
-      return;
-    }
+  if (!drawnPolygon) {
+    toast.error('Please draw a polygon first.');
+    return;
+  }
 
-    try {
-      const geojson = drawnPolygon.toGeoJSON();
-      const { data } = await createMapArea(geojson);
-      toast.success('Map area saved!');
-      navigate(`/edit/${data._id}`);
-    } catch (err) {
-      console.error(err);
-      toast.error('Failed to save map area.');
+  try {
+    const geojson = drawnPolygon.toGeoJSON();
+    const { data } = await createMapArea(geojson);
+    
+    if (!data?._id) {
+      throw new Error('Server response missing area ID');
     }
-  };
+    
+    toast.success('Map area saved!');
+    navigate(`/edit/${data._id}`);
+    
+  } catch (err) {
+    console.error('Save error:', err);
+    toast.error(err.response?.data?.error || err.message || 'Failed to save map area');
+  }
+};
 
   return (
    <div className="h-screen w-screen relative flex">
       <div id="map" className="h-full w-full flex-grow z-0"></div>
 
       {/* Polygon Info Sidebar */}
-      <div className="absolute top-4 left-4 bg-white shadow-lg rounded-xl p-4 w-64 z-[1000]">
+      <div className="absolute top-4 right-4 bg-white shadow-lg rounded-xl p-4 w-64 z-[1000]">
         <h2 className="text-lg font-semibold mb-2">Polygon Info</h2>
         {polygonInfo ? (
           <ul className="text-sm space-y-1">
