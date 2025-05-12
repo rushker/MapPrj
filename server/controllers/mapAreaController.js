@@ -18,8 +18,24 @@ const extractPublicId = (url) => {
 // 1. CUT - Save a new map area (GeoJSON polygon)
 export const cutMapArea = async (req, res) => {
   const { polygon } = req.body;
-  if (!polygon || !polygon.geometry || polygon.geometry.type !== 'Polygon') {
-    return res.status(400).json({ error: 'Invalid polygon data' });
+  console.log("Received polygon:", polygon); // Debug log
+  
+  if (!polygon) {
+    return res.status(400).json({ error: 'Missing polygon data' });
+  }
+  
+  if (!polygon.type || polygon.type !== 'Polygon') {
+    return res.status(400).json({ 
+      error: `Invalid polygon type: ${polygon.type}`,
+      expected: 'Polygon'
+    });
+  }
+  
+  if (!polygon.coordinates || !Array.isArray(polygon.coordinates)) {
+    return res.status(400).json({ 
+      error: 'Invalid coordinates format',
+      details: 'Expected array of coordinate arrays'
+    });
   }
 
   try {
