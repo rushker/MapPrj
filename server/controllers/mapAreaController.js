@@ -18,20 +18,24 @@ const extractPublicId = (url) => {
 // 1. CUT - Save a new map area (GeoJSON polygon)
 export const cutMapArea = async (req, res) => {
   const { polygon } = req.body;
-  console.log("Received polygon:", polygon); // Debug log
+  console.log("Full request body:", req.body);
   
   if (!polygon) {
     return res.status(400).json({ error: 'Missing polygon data' });
   }
-  
-  if (!polygon.type || polygon.type !== 'Polygon') {
+
+  // Validate the polygon structure
+  if (typeof polygon !== 'object' || !polygon.type || polygon.type !== 'Polygon') {
     return res.status(400).json({ 
-      error: `Invalid polygon type: ${polygon.type}`,
-      expected: 'Polygon'
+      error: `Invalid polygon format`,
+      details: {
+        expected: { type: 'Polygon', coordinates: 'Array' },
+        received: polygon
+      }
     });
   }
-  
-  if (!polygon.coordinates || !Array.isArray(polygon.coordinates)) {
+
+  if (!Array.isArray(polygon.coordinates) || !polygon.coordinates[0] || !Array.isArray(polygon.coordinates[0])) {
     return res.status(400).json({ 
       error: 'Invalid coordinates format',
       details: 'Expected array of coordinate arrays'
@@ -41,11 +45,13 @@ export const cutMapArea = async (req, res) => {
   try {
     const newArea = await MapArea.create({
       name: 'Untitled Area',
-      polygon,
+      polygon: {
+        type: 'Polygon',
+        coordinates: polygon.coordinates
+      },
       isFinalized: false,
     });
     
-    // Return both id and _id for compatibility
     res.status(201).json({ 
       _id: newArea._id,
       id: newArea._id,
@@ -53,8 +59,11 @@ export const cutMapArea = async (req, res) => {
     });
     
   } catch (err) {
-    console.error('Error in cutMapArea:', err.message);
-    res.status(500).json({ error: 'Failed to cut map area' });
+    console.error('Error in cutMapArea:', err);
+    res.status(500).json({ 
+      error: 'Failed to cut map area',
+      details: err.message 
+    });
   }
 };
 

@@ -16,8 +16,6 @@ const app = express();
 // In server.js
 const allowedOrigins = [
   'https://map-prj.vercel.app',
-  '/^https:\/\/map-.*-rushkers-projects\.vercel\.app$/', // Regex for dynamic URLs
-  '/^https:\/\/map-prj-git-.*-rushkers-projects\.vercel\.app$/' // For PR previews
 ];
 
 app.use(cors({

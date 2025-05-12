@@ -69,7 +69,6 @@ const BasemapPage = () => {
   };
 
   // Save polygon and redirect to edit page
-  // Updated handleSaveAndEdit function in BasemapPage.jsx
 const handleSaveAndEdit = async () => {
   if (!drawnPolygon) {
     toast.error('Please draw a polygon first.');
@@ -79,15 +78,17 @@ const handleSaveAndEdit = async () => {
   try {
     const geojson = drawnPolygon.toGeoJSON();
     
-    // Ensure we're sending properly formatted polygon data
-    const polygonData = {
-      type: "Polygon",
-      coordinates: geojson.geometry.coordinates
+    // Create properly structured data for backend
+    const requestData = {
+      polygon: {
+        type: "Polygon",
+        coordinates: geojson.geometry.coordinates
+      }
     };
 
-    console.log("Sending polygon data:", polygonData); // Debug log
-    
-    const { data } = await createMapArea({ polygon: polygonData });
+    console.log("Request payload:", requestData); // Debug log
+
+    const { data } = await createMapArea(requestData);
     console.log('Saved map area:', data);
     toast.success('Map area saved!');
     navigate(`/edit/${data._id}`);
