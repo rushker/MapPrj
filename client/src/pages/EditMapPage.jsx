@@ -10,88 +10,118 @@ import { uploadImage } from '../services/mapService';
 
 const EditMapPage = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const mapRef = useRef(null);
-  const drawnPolygonRef = useRef(null);
+  const drawnPolygonLayerRef = useRef(null);
+  const leafletMarkersRef = useRef([]);
   const [markers, setMarkers] = useState([]);
   const [selectedMarkerIndex, setSelectedMarkerIndex] = useState(null);
-  const navigate = useNavigate();
 
   useEffect(() => {
     const initMap = async () => {
-      const { data } = await getMapAreaById(id);
-      const map = L.map('edit-map').setView([0, 0], 2);
-      mapRef.current = map;
+      try {
+        const { data } = await getMapAreaById(id);
+        if (mapRef.current) return;
 
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors'
-      }).addTo(map);
+        const map = L.map('edit-map').setView([0, 0], 2);
+        mapRef.current = map;
 
-      map.pm.addControls({
-        drawCircle: false,
-        drawPolyline: false,
-        drawCircleMarker: false,
-        drawRectangle: false,
-        drawPolygon: false
-      });
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; OpenStreetMap contributors',
+        }).addTo(map);
 
-      // Draw saved polygon
-      const polygonLayer = L.geoJSON(data.polygon).addTo(map);
-      map.fitBounds(polygonLayer.getBounds());
-      drawnPolygonRef.current = data.polygon;
-
-      // Load existing markers
-      if (data.markers?.length) {
-        data.markers.forEach(marker => {
-          addMarkerToMap(marker);
+        map.pm.addControls({
+          drawCircle: false,
+          drawPolyline: false,
+          drawCircleMarker: false,
+          drawRectangle: false,
+          drawPolygon: false,
         });
-      }
 
-      map.on('click', (e) => {
-        const newMarker = {
-          type: 'Feature',
-          geometry: {
-            type: 'Point',
-            coordinates: [e.latlng.lng, e.latlng.lat]
-          },
-          properties: {
-            name: '',
-            type: '',
-            imageUrl: ''
-          }
-        };
-        setMarkers(prev => [...prev, newMarker]);
-        addMarkerToMap(newMarker, markers.length);
-      });
+        // Draw and make polygon editable
+        const polygonLayer = L.geoJSON(data.polygon, {
+          pmIgnore: false,
+        }).addTo(map);
+        drawnPolygonLayerRef.current = polygonLayer;
+        polygonLayer.pm.enable({ allowSelfIntersection: false });
+        map.fitBounds(polygonLayer.getBounds());
+
+        // Load and render markers
+        const initialMarkers = data.markers || [];
+        initialMarkers.forEach((marker, idx) => addMarkerToMap(marker, idx));
+        setMarkers(initialMarkers);
+
+        map.on('click', (e) => {
+          const newMarker = {
+            type: 'Feature',
+            geometry: {
+              type: 'Point',
+              coordinates: [e.latlng.lng, e.latlng.lat],
+            },
+            properties: {
+              name: '',
+              type: '',
+              imageUrl: '',
+            },
+          };
+          setMarkers((prev) => {
+            const updated = [...prev, newMarker];
+            addMarkerToMap(newMarker, updated.length - 1);
+            return updated;
+          });
+        });
+      } catch (err) {
+        console.error('Failed to load map area', err);
+      }
     };
 
     initMap();
-  }, []);
 
-  const addMarkerToMap = (marker, index = markers.length) => {
+    return () => {
+      mapRef.current?.off();
+      mapRef.current?.remove();
+    };
+  }, [id]);
+
+  const addMarkerToMap = (marker, index) => {
     const [lng, lat] = marker.geometry.coordinates;
     const leafletMarker = L.marker([lat, lng], { draggable: true }).addTo(mapRef.current);
 
     leafletMarker.on('click', () => setSelectedMarkerIndex(index));
     leafletMarker.on('dragend', (e) => {
-      const newCoords = e.target.getLatLng();
+      const { lat, lng } = e.target.getLatLng();
       setMarkers((prev) => {
         const updated = [...prev];
-        updated[index].geometry.coordinates = [newCoords.lng, newCoords.lat];
+        updated[index].geometry.coordinates = [lng, lat];
         return updated;
       });
     });
+
+    leafletMarkersRef.current[index] = leafletMarker;
+  };
+
+  const deleteSelectedMarker = () => {
+    if (selectedMarkerIndex === null) return;
+    leafletMarkersRef.current[selectedMarkerIndex]?.remove();
+    leafletMarkersRef.current.splice(selectedMarkerIndex, 1);
+    setMarkers((prev) => prev.filter((_, i) => i !== selectedMarkerIndex));
+    setSelectedMarkerIndex(null);
   };
 
   const handleMetaChange = (field, value) => {
-    setMarkers(prev => {
+    setMarkers((prev) => {
       const updated = [...prev];
-      updated[selectedMarkerIndex].properties[field] = value;
+      if (updated[selectedMarkerIndex]) {
+        updated[selectedMarkerIndex].properties[field] = value;
+      }
       return updated;
     });
   };
 
   const handleImageUpload = async (e) => {
-    const file = e.target.files[0];
+    const file = e.target.files?.[0];
+    if (!file) return;
+
     const reader = new FileReader();
     reader.onloadend = async () => {
       try {
@@ -101,16 +131,20 @@ const EditMapPage = () => {
         console.error('Image upload failed', err);
       }
     };
-    if (file) reader.readAsDataURL(file);
+    reader.readAsDataURL(file);
   };
 
   const handleSave = async () => {
     try {
+      const geojson = drawnPolygonLayerRef.current?.toGeoJSON();
+      if (!geojson) throw new Error('Polygon missing or invalid');
+
       await updateMapArea(id, {
-        polygon: drawnPolygonRef.current,
-        markers
+        polygon: geojson,
+        markers,
       });
-      alert('Map saved.');
+
+      alert('Map saved successfully!');
       navigate('/');
     } catch (err) {
       console.error(err);
@@ -118,23 +152,26 @@ const EditMapPage = () => {
     }
   };
 
+  const selectedMarker = markers[selectedMarkerIndex];
+
   return (
     <div className="relative h-screen w-screen">
       <div id="edit-map" className="h-full w-full" />
-      {selectedMarkerIndex !== null && (
+
+      {selectedMarker && (
         <div className="absolute top-4 right-4 bg-white p-4 rounded shadow z-[1000] w-72">
           <h2 className="font-bold mb-2">Edit Marker</h2>
           <input
             type="text"
             placeholder="Name"
-            value={markers[selectedMarkerIndex]?.properties.name || ''}
+            value={selectedMarker.properties?.name || ''}
             onChange={(e) => handleMetaChange('name', e.target.value)}
             className="w-full mb-2 p-1 border"
           />
           <input
             type="text"
             placeholder="Type"
-            value={markers[selectedMarkerIndex]?.properties.type || ''}
+            value={selectedMarker.properties?.type || ''}
             onChange={(e) => handleMetaChange('type', e.target.value)}
             className="w-full mb-2 p-1 border"
           />
@@ -144,15 +181,22 @@ const EditMapPage = () => {
             onChange={handleImageUpload}
             className="w-full mb-2"
           />
-          {markers[selectedMarkerIndex]?.properties.imageUrl && (
+          {selectedMarker.properties?.imageUrl && (
             <img
-              src={markers[selectedMarkerIndex].properties.imageUrl}
+              src={selectedMarker.properties.imageUrl}
               alt="Preview"
               className="w-full h-32 object-cover"
             />
           )}
+          <button
+            onClick={deleteSelectedMarker}
+            className="bg-red-500 text-white px-2 py-1 rounded mt-2 w-full"
+          >
+            Delete Marker
+          </button>
         </div>
       )}
+
       <button
         onClick={handleSave}
         className="absolute bottom-4 left-4 bg-green-600 text-white px-4 py-2 rounded shadow z-[1000]"

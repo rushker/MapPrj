@@ -15,3 +15,11 @@ export const updateMapArea = (id, data) => API.put(`/${id}`, data);
 export const getMapAreaById = (id) => API.get(`/${id}`);
 export const getAllMapAreas = () => API.get('/');
 export const deleteMapArea = (id) => API.delete(`/${id}`);
+export const safeGetMapAreaById = async (id) => {
+  try {
+    return await API.get(`/${id}`);
+  } catch (err) {
+    console.error('Failed to fetch map area', err);
+    throw err;
+  }
+};

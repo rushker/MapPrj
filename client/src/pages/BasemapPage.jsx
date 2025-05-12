@@ -15,14 +15,28 @@ const BasemapPage = () => {
   const [polygonInfo, setPolygonInfo] = useState(null);
   const navigate = useNavigate();
 
+  // Initialize Leaflet Map
   useEffect(() => {
-    const map = L.map('map').setView([0, 0], 2);
-    mapRef.current = map;
+    const leafletMap = L.map('map').setView([0, 0], 2);
+    mapRef.current = leafletMap;
 
+    addTileLayer(leafletMap);
+    enableDrawingControls(leafletMap);
+
+    leafletMap.on('pm:create', (e) => handlePolygonDraw(e, leafletMap));
+
+    return () => leafletMap.remove(); // Cleanup map instance on unmount
+  }, []);
+
+  // Add base OSM tile layer
+  const addTileLayer = (map) => {
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
+  };
 
+  // Enable drawing controls with only polygon tool
+  const enableDrawingControls = (map) => {
     map.pm.addControls({
       position: 'topleft',
       drawCircle: false,
@@ -31,42 +45,41 @@ const BasemapPage = () => {
       drawCircleMarker: false,
       drawRectangle: false
     });
+  };
 
-    map.on('pm:create', (e) => {
-      if (drawnPolygon) {
-        map.removeLayer(drawnPolygon);
-      }
+  // Handle polygon draw event
+  const handlePolygonDraw = (e, map) => {
+    if (drawnPolygon) {
+      map.removeLayer(drawnPolygon);
+    }
 
-      const layer = e.layer;
-      setDrawnPolygon(layer);
+    const layer = e.layer;
+    setDrawnPolygon(layer);
 
-      const geojson = layer.toGeoJSON();
-      const areaSqKm = turf.area(geojson) / 1e6;
-      const coords = geojson.geometry.coordinates[0];
+    const geojson = layer.toGeoJSON();
+    const areaSqKm = turf.area(geojson) / 1e6;
+    const coords = geojson.geometry.coordinates?.[0] || [];
 
-      setPolygonInfo({
-        area: areaSqKm.toFixed(2),
-        coordinatesCount: coords.length
-      });
-
-      toast.success('Polygon selected!');
+    setPolygonInfo({
+      area: areaSqKm.toFixed(2),
+      coordinatesCount: coords.length
     });
 
-    return () => map.remove();
-  }, []);
+    toast.success('Polygon selected!');
+  };
 
+  // Save polygon and redirect to edit page
   const handleSaveAndEdit = async () => {
     if (!drawnPolygon) {
       toast.error('Please draw a polygon first.');
       return;
     }
 
-    const geojson = drawnPolygon.toGeoJSON();
-
     try {
-      const res = await createMapArea(geojson);
+      const geojson = drawnPolygon.toGeoJSON();
+      const { data } = await createMapArea(geojson);
       toast.success('Map area saved!');
-      navigate(`/edit/${res.data._id}`);
+      navigate(`/edit/${data._id}`);
     } catch (err) {
       console.error(err);
       toast.error('Failed to save map area.');
@@ -75,9 +88,9 @@ const BasemapPage = () => {
 
   return (
     <div className="h-screen w-screen relative flex">
-      <div id="map" className="h-full w-full flex-grow z-0"></div>
+      <div id="map" className="h-full w-full flex-grow z-0" />
 
-      {/* Sidebar Info */}
+      {/* Polygon Info Sidebar */}
       <div className="absolute top-4 left-4 bg-white shadow-lg rounded-xl p-4 w-64 z-[1000]">
         <h2 className="text-lg font-semibold mb-2">Polygon Info</h2>
         {polygonInfo ? (
@@ -88,6 +101,7 @@ const BasemapPage = () => {
         ) : (
           <p className="text-gray-500 text-sm">Draw a polygon to begin.</p>
         )}
+
         <button
           onClick={handleSaveAndEdit}
           disabled={!drawnPolygon}
