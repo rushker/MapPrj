@@ -13,21 +13,25 @@ connectDB();
 const app = express();
 
 // 🌐 CORS setup
+// In server.js
 const allowedOrigins = [
-  ...new Set([ // Remove duplicates
-    ...process.env.ALLOWED_ORIGINS?.split(',').map(url => url.trim()) || [],
-    'https://map-prj.vercel.app',
-    'https://map-24rqknbxa-rushkers-projects.vercel.app'
-  ].filter(Boolean))
+  'https://map-prj.vercel.app',
+  '/^https:\/\/map-.*-rushkers-projects\.vercel\.app$/', // Regex for dynamic URLs
+  '/^https:\/\/map-prj-git-.*-rushkers-projects\.vercel\.app$/' // For PR previews
 ];
 
 app.use(cors({
   origin: (origin, callback) => {
-    const isAllowed = !origin || allowedOrigins.some(allowed => 
-      origin === allowed || 
-      origin.startsWith(allowed) ||
-      origin.includes(allowed.replace(/https?:\/\//, ''))
-    );
+    if (!origin) return callback(null, true); // Allow non-browser requests
+    
+    const isAllowed = allowedOrigins.some(allowed => {
+      if (typeof allowed === 'string') {
+        return origin === allowed;
+      } else if (allowed instanceof RegExp) {
+        return allowed.test(origin);
+      }
+      return false;
+    });
     
     if (isAllowed) {
       callback(null, true);
