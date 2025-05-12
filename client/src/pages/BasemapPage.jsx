@@ -70,22 +70,25 @@ const BasemapPage = () => {
 
   // Save polygon and redirect to edit page
   const handleSaveAndEdit = async () => {
-    if (!drawnPolygon) {
-      toast.error('Please draw a polygon first.');
-      return;
-    }
+  if (!drawnPolygon) {
+    toast.error('Please draw a polygon first.');
+    return;
+  }
 
-    try {
-      const geojson = drawnPolygon.toGeoJSON();
-      const { data } = await createMapArea(geojson);
-      console.log('Saved map area:', data);
-      toast.success('Map area saved!');
-      navigate(`/edit/${data._id}`);
-    } catch (err) {
-      console.error(err);
-      toast.error('Failed to save map area.');
-    }
-  };
+  try {
+    const geojson = drawnPolygon.toGeoJSON();
+    // Extract the geometry from the Feature
+    const polygonData = geojson.geometry; // This will be the Polygon geometry
+    
+    const { data } = await createMapArea(polygonData); // Send just the geometry
+    console.log('Saved map area:', data);
+    toast.success('Map area saved!');
+    navigate(`/edit/${data._id}`);
+  } catch (err) {
+    console.error(err);
+    toast.error('Failed to save map area.');
+  }
+};
 
   return (
     <div className="h-screen w-screen relative flex">
