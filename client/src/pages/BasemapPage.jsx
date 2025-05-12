@@ -88,7 +88,7 @@ const BasemapPage = () => {
 
   return (
     <div className="h-screen w-screen relative flex">
-      <div id="map" className="h-full w-full flex-grow z-0" />
+      <div id="map" className="h-full w-full flex-grow z-0" >
 
       {/* Polygon Info Sidebar */}
       <div className="absolute top-4 left-4 bg-white shadow-lg rounded-xl p-4 w-64 z-[1000]">
@@ -111,6 +111,7 @@ const BasemapPage = () => {
         >
           Save & Edit
         </button>
+      </div>
       </div>
     </div>
   );
