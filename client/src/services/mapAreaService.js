@@ -10,24 +10,25 @@ const API = axios.create({
 // 📂 Private Maps (MapArea)
 // ==========================
 
-export const createMapArea = async (polygon) => {
-  const response = await API.post('/', { polygon });
-  
-  // Handle both response formats
+export const createMapArea = async (data) => {
+  const response = await API.post('/', data);
+
   const id = response.data?._id || response.data?.id;
-  if (!id) throw new Error('Missing ID in response');
-  
+  if (!id) throw new Error('Missing ID in createMapArea response');
+
   return { ...response, data: { ...response.data, _id: id } };
 };
+
 export const updateMapArea = (id, data) => API.put(`/${id}`, data);
 export const getMapAreaById = (id) => API.get(`/${id}`);
 export const getAllMapAreas = () => API.get('/');
 export const deleteMapArea = (id) => API.delete(`/${id}`);
+
 export const safeGetMapAreaById = async (id) => {
   try {
-    return await API.get(`/${id}`);
-  } catch (err) {
-    console.error('Failed to fetch map area', err);
-    throw err;
+    return await getMapAreaById(id);
+  } catch (error) {
+    console.error('Failed to fetch map area:', error);
+    throw error;
   }
 };

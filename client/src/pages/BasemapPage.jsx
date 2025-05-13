@@ -68,6 +68,12 @@ const BasemapPage = () => {
     toast.success('Polygon selected!');
   };
 
+  console.log("Sending to backend:", {
+  polygon: polygonGeoJSON,
+  markers: [],
+});
+
+
   // Save polygon and redirect to edit page
 const handleSaveAndEdit = async () => {
   if (!drawnPolygon) {
@@ -77,27 +83,28 @@ const handleSaveAndEdit = async () => {
 
   try {
     const geojson = drawnPolygon.toGeoJSON();
-    
-    // Create properly structured data for backend
+
     const requestData = {
       polygon: {
-        type: "Polygon",
-        coordinates: geojson.geometry.coordinates
-      }
+        type: 'Polygon',
+        coordinates: geojson.geometry.coordinates,
+      },
     };
 
-    console.log("Request payload:", requestData); // Debug log
+    console.log('Request payload:', requestData);
 
     const { data } = await createMapArea(requestData);
+
     console.log('Saved map area:', data);
     toast.success('Map area saved!');
     navigate(`/edit/${data._id}`);
-  } catch (err) {
-    console.error("Full error:", err);
-    console.error("Error response:", err.response?.data);
-    toast.error('Failed to save map area. See console for details.');
+  } catch (error) {
+    console.error('Full error:', error);
+    console.error('Error response:', error.response?.data);
+    toast.error('Failed to save map area. Check console for details.');
   }
 };
+
 
   return (
     <div className="h-screen w-screen relative flex">

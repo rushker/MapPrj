@@ -1,6 +1,7 @@
 // backend/controllers/mapAreaController.js
 import MapArea from '../models/MapArea.js';
 import cloudinary from '../config/cloudinary.js';
+import mongoose from 'mongoose';
 
 // Utility to extract Cloudinary public_id robustly
 const extractPublicId = (url) => {
