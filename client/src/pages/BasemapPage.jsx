@@ -68,10 +68,8 @@ const BasemapPage = () => {
     toast.success('Polygon selected!');
   };
 
-  console.log("Sending to backend:", {
-  polygon: polygonGeoJSON,
-  markers: [],
-});
+  
+
 
 
   // Save polygon and redirect to edit page
