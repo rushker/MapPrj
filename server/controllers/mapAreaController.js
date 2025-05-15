@@ -1,4 +1,4 @@
-// backend/controllers/mapAreaController.js
+// server(backend)/controllers/mapAreaController.js
 import MapArea from '../models/MapArea.js';
 import cloudinary from '../config/cloudinary.js';
 import mongoose from 'mongoose';
@@ -70,25 +70,27 @@ export const cutMapArea = async (req, res) => {
 
 // 2. UPDATE - Add metadata, markers, finalize
 export const updateMapArea = async (req, res) => {
-  const { id } = req.params;
-  const { name, markers, isFinalized } = req.body;
-
   try {
-    const updated = await MapArea.findByIdAndUpdate(
-      id,
-      { name, markers, isFinalized },
-      { new: true, runValidators: true }
-    );
-    if (!updated) {
-      return res.status(404).json({ error: 'Map area not found' });
+    const { id } = req.params;
+    const mapArea = await MapArea.findById(id);
+
+    if (!mapArea) {
+      return res.status(404).json({ message: 'Map area not found' });
     }
-    console.log(`Updated MapArea ${id}`);
-    res.status(200).json(updated);
+
+    mapArea.title = req.body.title || mapArea.title;
+    mapArea.description = req.body.description || mapArea.description;
+    mapArea.markers = req.body.markers || [];
+    mapArea.polygons = req.body.polygons || [];
+
+    await mapArea.save();
+    res.status(200).json(mapArea);
   } catch (err) {
-    console.error('Error in updateMapArea:', err.message);
-    res.status(500).json({ error: 'Failed to update map area' });
+    console.error('Error updating map area:', err);
+    res.status(500).json({ message: 'Server error updating map area' });
   }
 };
+
 
 // 3. GET ONE for editing
 export const getMapAreaById = async (req, res) => {

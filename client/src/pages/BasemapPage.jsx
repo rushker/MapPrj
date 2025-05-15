@@ -15,40 +15,47 @@ const BasemapPage = () => {
   const [polygonInfo, setPolygonInfo] = useState(null);
   const navigate = useNavigate();
 
+  // Bounding box (limited visible area for masking)
+  const boundingBox = [
+    [-10, -10], // Southwest
+    [10, 10]    // Northeast
+  ];
+
   // Initialize Leaflet Map
   useEffect(() => {
-    const leafletMap = L.map('map').setView([0, 0], 2);
+    const leafletMap = L.map('map').setView([0, 0], 3);
     mapRef.current = leafletMap;
 
     addTileLayer(leafletMap);
     enableDrawingControls(leafletMap);
 
-    leafletMap.on('pm:create', (e) => handlePolygonDraw(e, leafletMap));
+    leafletMap.on('pm:create', (e) => handleRectangleDraw(e, leafletMap));
 
-    return () => leafletMap.remove(); // Cleanup map instance on unmount
+    // Limit panning
+    leafletMap.setMaxBounds(boundingBox);
+
+    return () => leafletMap.remove();
   }, []);
 
-  // Add base OSM tile layer
   const addTileLayer = (map) => {
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
   };
 
-  // Enable drawing controls with only polygon tool
   const enableDrawingControls = (map) => {
     map.pm.addControls({
       position: 'topleft',
-      drawCircle: false,
+      drawPolygon: false,
       drawMarker: false,
       drawPolyline: false,
+      drawCircle: false,
       drawCircleMarker: false,
-      drawRectangle: false
+      drawRectangle: true
     });
   };
 
-  // Handle polygon draw event
-  const handlePolygonDraw = (e, map) => {
+  const handleRectangleDraw = (e, map) => {
     if (drawnPolygon) {
       map.removeLayer(drawnPolygon);
     }
@@ -65,44 +72,52 @@ const BasemapPage = () => {
       coordinatesCount: coords.length
     });
 
-    toast.success('Polygon selected!');
+    toast.success('Area selected!');
+
+    // Add masking effect
+    const bounds = turf.bboxPolygon([
+      boundingBox[0][1], boundingBox[0][0], boundingBox[1][1], boundingBox[1][0]
+    ]);
+
+    const outer = bounds.geometry.coordinates[0];
+    const hole = coords;
+
+    const masked = L.polygon([outer, hole], {
+      color: '#000',
+      weight: 0,
+      fillColor: 'black',
+      fillOpacity: 0.5,
+      interactive: false
+    });
+
+    masked.addTo(map);
   };
 
-  
+  const handleSaveAndEdit = async () => {
+    if (!drawnPolygon) {
+      toast.error('Please draw a rectangle first.');
+      return;
+    }
 
+    try {
+      const geojson = drawnPolygon.toGeoJSON();
 
+      const requestData = {
+        polygon: {
+          type: 'Polygon',
+          coordinates: geojson.geometry.coordinates
+        }
+      };
 
-  // Save polygon and redirect to edit page
-const handleSaveAndEdit = async () => {
-  if (!drawnPolygon) {
-    toast.error('Please draw a polygon first.');
-    return;
-  }
-
-  try {
-    const geojson = drawnPolygon.toGeoJSON();
-
-    const requestData = {
-      polygon: {
-        type: 'Polygon',
-        coordinates: geojson.geometry.coordinates,
-      },
-    };
-
-    console.log('Request payload:', requestData);
-
-    const { data } = await createMapArea(requestData);
-
-    console.log('Saved map area:', data);
-    toast.success('Map area saved!');
-    navigate(`/edit/${data._id}`);
-  } catch (error) {
-    console.error('Full error:', error);
-    console.error('Error response:', error.response?.data);
-    toast.error('Failed to save map area. Check console for details.');
-  }
-};
-
+      const { data } = await createMapArea(requestData);
+      toast.success('Map area saved!');
+      navigate(`/edit/${data._id}`);
+    } catch (error) {
+      console.error('Full error:', error);
+      console.error('Error response:', error.response?.data);
+      toast.error('Failed to save map area. Check console for details.');
+    }
+  };
 
   return (
     <div className="h-screen w-screen relative flex">
@@ -110,14 +125,14 @@ const handleSaveAndEdit = async () => {
 
       {/* Polygon Info Sidebar */}
       <div className="absolute top-4 left-[88px] bg-white shadow-lg rounded-xl p-4 w-64 z-[1000]">
-        <h2 className="text-lg font-semibold mb-2">Polygon Info</h2>
+        <h2 className="text-lg font-semibold mb-2">Area Info</h2>
         {polygonInfo ? (
           <ul className="text-sm space-y-1">
             <li>📍 Coordinates: {polygonInfo.coordinatesCount}</li>
             <li>📐 Area: {polygonInfo.area} km²</li>
           </ul>
         ) : (
-          <p className="text-gray-500 text-sm">Draw a polygon to begin.</p>
+          <p className="text-gray-500 text-sm">Draw a rectangle to begin.</p>
         )}
 
         <button
