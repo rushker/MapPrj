@@ -1,78 +1,52 @@
 // server.js
 import express from 'express';
-import dotenv from 'dotenv';
 import cors from 'cors';
+import config from './config/index.js';
 import connectDB from './config/db.js';
+import cloudinary from './config/cloudinary.js';
+import projectRoutes from './routes/projectRoutes.js';
+import areaRoutes from './routes/areaRoutes.js';
+import viewmapRoutes from './routes/viewmapRoutes.js';
 import errorHandler from './middleware/errorHandler.js';
-import mapRoutes from './routes/mapRoutes.js';
-import mapAreaRoutes from './routes/mapAreaRoutes.js';
 
-dotenv.config();
+// Connect to MongoDB
 connectDB();
 
 const app = express();
 
-// 🌐 CORS setup
-// In server.js
-const allowedOrigins = [
-  'https://map-prj.vercel.app',
-];
-
-app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin) return callback(null, true); // Allow non-browser requests
-    
-    const isAllowed = allowedOrigins.some(allowed => {
-      if (typeof allowed === 'string') {
-        return origin === allowed;
-      } else if (allowed instanceof RegExp) {
-        return allowed.test(origin);
+// CORS setup
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      if (config.allowedOrigins.includes(origin)) {
+        return callback(null, true);
       }
-      return false;
-    });
-    
-    if (isAllowed) {
-      callback(null, true);
-    } else {
-      console.warn(`⛔️ Blocked by CORS: ${origin}`);
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true,
-}));
+      return callback(new Error('Not allowed by CORS'));
+    },
+    credentials: true,
+  })
+);
 
-// 🧩 Middlewares
-app.use(express.json({ limit: '10mb' })); // For GeoJSON data
+// Body parser
+app.use(express.json({ limit: '10mb' }));
 
-// 📦 API Routes
-app.use('/api/maps', mapRoutes);
-app.use('/api/map-areas', mapAreaRoutes);
+// API Routes
+app.use('/api/projects', projectRoutes);
+app.use('/api/projects/:projectId/areas', areaRoutes);
+app.use('/api/projects/:projectId/view', viewmapRoutes);
 
-// Health check endpoint
-app.get('/health', (req, res) => res.status(200).json({ status: 'healthy' }));
+// Health check
+app.get('/health', (_req, res) => res.status(200).json({ status: 'healthy' }));
 
-// ❌ Error Handling Middleware
+// Error handler
 app.use(errorHandler);
 
-// 🚀 Start Server
-const PORT = process.env.PORT || 5000;
-const baseFrontendUrl = allowedOrigins[0] || 'https://map-prj.vercel.app';
+export default app;
 
-app.listen(PORT, () => {
-  console.log('\n=== Server Startup Information ===');
-  console.log(`✅ Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🔌 Port: ${PORT}`);
-  console.log(`🌍 Base URL: ${process.env.BASE_URL || `http://localhost:${PORT}`}`);
-  
-  console.log('\n=== Frontend Pages on Vercel ===');
-  console.log(`🖥️  Homepage: ${baseFrontendUrl}`);
-  console.log(`🗺️ Basemap: ${baseFrontendUrl}/basemap`);
-  console.log(`✏️ Editor: ${baseFrontendUrl}/edit`);
-  console.log(`👨‍💻 Admin: ${baseFrontendUrl}/admin`);
-  
-  console.log('\n=== API Endpoints ===');
-  console.log(`📍 /api/maps`);
-  console.log(`📍 /api/map-areas`);
-  console.log('\n🔒 Allowed Origins:');
-  allowedOrigins.forEach(origin => console.log(`- ${origin}`));
-});
+// Start server if not in test env
+if (config.nodeEnv !== 'test') {
+  app.listen(config.port, () => {
+    console.log(`Server running in ${config.nodeEnv} mode on port ${config.port}`);
+  });
+}
