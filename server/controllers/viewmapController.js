@@ -1,6 +1,6 @@
 // controllers/viewmapController.js
 import Project from '../models/Project.js';
-import turf from '@turf/turf';
+import * as turf from '@turf/turf';
 import mongoose from 'mongoose';
 
 const isValidId = id => mongoose.Types.ObjectId.isValid(id);

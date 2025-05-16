@@ -35,7 +35,14 @@ app.use(express.json({ limit: '10mb' }));
 app.use('/api/projects', projectRoutes);
 app.use('/api/projects/:projectId/areas', areaRoutes);
 app.use('/api/projects/:projectId/view', viewmapRoutes);
-
+// Handle CORS errors more gracefully
+app.use(
+  cors({
+    origin: config.allowedOrigins,
+    credentials: true,
+    optionsSuccessStatus: 200
+  })
+);
 // Health check
 app.get('/health', (_req, res) => res.status(200).json({ status: 'healthy' }));
 
