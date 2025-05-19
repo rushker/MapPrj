@@ -1,72 +1,80 @@
 // controllers/areaController.js
-import Project from '../models/Project.js';
-import mongoose from 'mongoose';
+import Area from '../models/Area.js';
+import { cloneAreaFromCut } from '../utils/cut/cloneAreaFromCut.js';
 
-// Utility to validate ObjectId
-const isValidId = id => mongoose.Types.ObjectId.isValid(id);
-
-// Add a new area to project
 export const createArea = async (req, res) => {
-  const { projectId } = req.params;
-  const { polygon, title } = req.body;
-  if (!isValidId(projectId)) return res.status(400).json({ error: 'Invalid projectId' });
-
   try {
-    const project = await Project.findById(projectId);
-    if (!project) return res.status(404).json({ error: 'Project not found' });
-
-    const areaId = new mongoose.Types.ObjectId().toString();
-    const newArea = { areaId, title, polygon, subPolygons: [], markers: [], isPublished: false };
-
-    project.areas.push(newArea);
-    await project.save();
+    const newArea = new Area({ ...req.body, projectId: req.params.projectId });
+    await newArea.save();
     res.status(201).json(newArea);
   } catch (err) {
-    console.error('createArea error:', err);
-    res.status(500).json({ error: 'Failed to create area' });
+    res.status(400).json({ message: 'Failed to create area' });
   }
 };
 
-// Update area metadata or entities
-export const updateArea = async (req, res) => {
-  const { projectId, areaId } = req.params;
-  const updates = req.body; // expect { title?, polygon?, subPolygons?, markers?, isPublished? }
-
-  if (!isValidId(projectId)) return res.status(400).json({ error: 'Invalid projectId' });
-
+export const getAreaById = async (req, res) => {
   try {
-    const project = await Project.findById(projectId);
-    if (!project) return res.status(404).json({ error: 'Project not found' });
-
-    const area = project.areas.id(areaId);
-    if (!area) return res.status(404).json({ error: 'Area not found' });
-
-    Object.assign(area, updates);
-    await project.save();
-    res.status(200).json(area);
+    const area = await Area.findOne({ _id: req.params.areaId, projectId: req.projectId });
+    if (!area) return res.status(404).json({ message: 'Area not found' });
+    res.json(area);
   } catch (err) {
-    console.error('updateArea error:', err);
-    res.status(500).json({ error: 'Failed to update area' });
+    res.status(500).json({ message: 'Failed to fetch area' });
   }
 };
 
-// Delete an area
-export const deleteArea = async (req, res) => {
-  const { projectId, areaId } = req.params;
-  if (!isValidId(projectId)) return res.status(400).json({ error: 'Invalid projectId' });
-
+export const updateArea = async (req, res) => {
   try {
-    const project = await Project.findById(projectId);
-    if (!project) return res.status(404).json({ error: 'Project not found' });
+    const area = await Area.findOneAndUpdate(
+      { _id: req.params.areaId, projectId: req.projectId },
+      req.body,
+      { new: true }
+    );
+    res.json(area);
+  } catch (err) {
+    res.status(400).json({ message: 'Failed to update area' });
+  }
+};
 
-    const area = project.areas.id(areaId);
-    if (!area) return res.status(404).json({ error: 'Area not found' });
+export const updatePolygon = async (req, res) => {
+  try {
+    const area = await Area.findOne({ _id: req.params.areaId, projectId: req.projectId });
+    if (!area) return res.status(404).json({ message: 'Area not found' });
 
-    area.remove();
-    await project.save();
+    area.polygon = req.body.polygon;
+    await area.save();
+    res.json(area);
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to update polygon' });
+  }
+};
+
+export const deleteArea = async (req, res) => {
+  try {
+    await Area.findOneAndDelete({ _id: req.params.areaId, projectId: req.projectId });
     res.status(200).json({ message: 'Area deleted' });
   } catch (err) {
-    console.error('deleteArea error:', err);
-    res.status(500).json({ error: 'Failed to delete area' });
+    res.status(500).json({ message: 'Failed to delete area' });
+  }
+};
+
+export const publishArea = async (req, res) => {
+  try {
+    const area = await Area.findById(req.params.areaId);
+    if (!area) return res.status(404).json({ message: 'Area not found' });
+
+    area.isPublished = true;
+    await area.save();
+    res.json(area);
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to publish area' });
+  }
+};
+
+export const cutAndCloneArea = async (req, res) => {
+  try {
+    const newArea = await cloneAreaFromCut(req.projectId, req.params.areaId, req.body);
+    res.status(201).json(newArea);
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to cut area', error: err.message });
   }
 };

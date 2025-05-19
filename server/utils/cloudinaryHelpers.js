@@ -1,3 +1,4 @@
+//utils/cloudinaryHelpers.js
 export const extractPublicId = (url) => {
   try {
     const pathname = new URL(url).pathname;
