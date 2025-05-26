@@ -1,6 +1,6 @@
 // src/components/sidebars/SidebarContainer.jsx
 import { lazy, Suspense, useContext, memo } from 'react';
-import { useSidebarContext } from '../../context/useSidebarContext';
+import { useSidebarContext } from '../../context/SidebarContext';
 
 const KhuASidebar = lazy(() => import('./KhuASidebar'));
 const KhuCSidebar = lazy(() => import('./KhuCSidebar'));
