@@ -9,10 +9,11 @@ import {
 
 const router = express.Router({ mergeParams: true });
 
-// CRUD entity (marker / khu C)
-router.get('/:areaId', getEntitiesByArea);     // GET /entities/:areaId
-router.post('/:areaId', createEntity);         // POST /entities/:areaId
-router.put('/update/:entityId', updateEntity); // PUT /entities/update/:entityId
-router.delete('/:entityId', deleteEntity);     // DELETE /entities/:entityId
+// Đường dẫn gốc: /projects/:projectId/areas/:areaId/entities
+
+router.get('/', getEntitiesByArea);        // Lấy tất cả entities trong Khu A
+router.post('/', createEntity);             // Tạo entity mới (Khu C hoặc Marker)
+router.put('/:entityId', updateEntity);     // Cập nhật entity
+router.delete('/:entityId', deleteEntity);  // Xóa entity
 
 export default router;

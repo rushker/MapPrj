@@ -1,14 +1,17 @@
 // src/App.jsx
-import { RouterProvider } from 'react-router-dom';
-import router from './router';
-import { Toaster } from 'react-hot-toast';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import PostMapPage from './pages/PostMapPage';
+import ViewMapPage from './pages/ViewMapPage';
 
-export default function App() {
+function App() {
   return (
-    <>
-      <RouterProvider router={router} />
-      <Toaster position="top-right" />
-    </>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/projects/:projectId/areas/:areaId/edit" element={<PostMapPage />} />
+        <Route path="/projects/:projectId/areas/:areaId/view" element={<ViewMapPage />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 
+export default App;

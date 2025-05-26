@@ -1,39 +1,73 @@
 // controllers/entityController.js
 import Entity from '../models/Entity.js';
+import mongoose from 'mongoose';
+import { handleError, handleNotFound } from '../utils/errorHandler.js';
 
 export const createEntity = async (req, res) => {
   try {
-    const newEntity = new Entity({ ...req.body, areaId: req.params.areaId });
-    await newEntity.save();
-    res.status(201).json(newEntity);
+    const { areaId } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(areaId)) {
+      return handleError(res, 'Invalid areaId', null, 400);
+    }
+
+    const { name, type, geometry, metadata = {}, images = [] } = req.body;
+    if (!name || !type || !geometry?.type || !geometry?.coordinates) {
+      return handleError(res, 'Missing required fields', null, 400);
+    }
+
+    const entity = new Entity({ name, type, geometry, metadata, images, areaId });
+    await entity.save();
+    res.status(201).json({ success: true, data: entity });
   } catch (err) {
-    res.status(400).json({ message: 'Failed to create entity' });
+    handleError(res, 'Failed to create entity', err);
   }
 };
 
 export const updateEntity = async (req, res) => {
   try {
-    const updated = await Entity.findByIdAndUpdate(req.params.entityId, req.body, { new: true });
-    res.json(updated);
+    const { entityId } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(entityId)) {
+      return handleError(res, 'Invalid entityId', null, 400);
+    }
+
+    const updated = await Entity.findByIdAndUpdate(entityId, req.body, {
+      new: true,
+      runValidators: true,
+    });
+
+    if (!updated) return handleNotFound(res, 'Entity');
+    res.json({ success: true, data: updated });
   } catch (err) {
-    res.status(400).json({ message: 'Failed to update entity' });
+    handleError(res, 'Failed to update entity', err, 400);
   }
 };
 
 export const deleteEntity = async (req, res) => {
   try {
-    await Entity.findByIdAndDelete(req.params.entityId);
-    res.status(200).json({ message: 'Entity deleted' });
+    const { entityId } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(entityId)) {
+      return handleError(res, 'Invalid entityId', null, 400);
+    }
+
+    const deleted = await Entity.findByIdAndDelete(entityId);
+    if (!deleted) return handleNotFound(res, 'Entity');
+
+    res.json({ success: true, message: 'Entity deleted' });
   } catch (err) {
-    res.status(500).json({ message: 'Failed to delete entity' });
+    handleError(res, 'Failed to delete entity', err);
   }
 };
 
 export const getEntitiesByArea = async (req, res) => {
   try {
-    const entities = await Entity.find({ areaId: req.params.areaId });
-    res.json(entities);
+    const { areaId } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(areaId)) {
+      return handleError(res, 'Invalid areaId', null, 400);
+    }
+
+    const entities = await Entity.find({ areaId });
+    res.json({ success: true, data: entities });
   } catch (err) {
-    res.status(500).json({ message: 'Failed to fetch entities' });
+    handleError(res, 'Failed to fetch entities', err);
   }
 };

@@ -4,15 +4,24 @@ import Entity from '../../models/Entity.js';
 import { pointInPolygon } from './filterMarkersInsidePolygon.js';
 
 export const cloneAreaFromCut = async (projectId, areaId, body) => {
+  // Thêm validate projectId
   const oldArea = await Area.findOne({ _id: areaId, projectId });
   if (!oldArea) throw new Error('Original area not found');
 
-  const entities = await Entity.find({ areaId });
+  // Sửa thành geometry.coordinates
+  const filtered = entities.filter(e => {
+  const [lng, lat] = e.geometry.coordinates; // GeoJSON format
+  return pointInPolygon([lng, lat], body.polygon);
+  });
 
-  const filtered = entities.filter(e => pointInPolygon(e.location, body.polygon));
+  // Thêm logic clone metadata
   const newArea = new Area({
+    ...oldArea.toObject(),
+    _id: undefined,
     ...body,
-    projectId,
+    isPublished: false,
+    createdAt: new Date(),
+    updatedAt: new Date()
   });
   await newArea.save();
 

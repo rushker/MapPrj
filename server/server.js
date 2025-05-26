@@ -3,6 +3,7 @@ import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import connectDB from './config/db.js';
+import { ROUTES } from './utils/routes.js';
 
 import projectRoutes from './routes/projects.js';
 import areaRoutes from './routes/areas.js';
@@ -22,7 +23,7 @@ app.use(express.json({ limit: '10mb' }));
 // Routes
 app.use('/api/projects', projectRoutes);
 app.use('/api/projects/:projectId/areas', areaRoutes);
-app.use('/api/areas/:areaId/entities', entityRoutes);
+app.use('/api/projects/:projectId/areas/:areaId/entities', entityRoutes);
 app.use('/api/media', mediaRoutes);
 
 // Middleware xử lý route không tồn tại (404)
@@ -44,8 +45,10 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 5000;
-const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
 
 app.listen(PORT, () => {
-  console.log(`Server running at ${BASE_URL}`);
+  console.log(`✅ Server running on http://localhost:${PORT}`);
+  console.log(`🛠️ Post Map URL (example): ${ROUTES.POST_MAP('<projectId>', '<areaId>')}`);
+  console.log(`📁 Manager URL: ${ROUTES.MANAGER_PAGE}`);
 });
+

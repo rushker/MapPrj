@@ -1,88 +1,110 @@
 // src/pages/PostMapPage.jsx
-import { useEffect, useRef, useState } from 'react';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
-import '@geoman-io/leaflet-geoman-free';
-import { createArea } from '../services/areaService';
-import { createEntity } from '../services/entityService';
+import { useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { SidebarProvider, useSidebar } from '../context/SidebarContext';
+import MapWrapper from '../components/postmap/MapWrapper';
+import SidebarContainer from '../components/sidebars/SidebarContainer';
 
-export default function PostMapPage() {
-  const mapRef = useRef(null);
-  const [polygon, setPolygon] = useState(null);
-  const [markers, setMarkers] = useState([]);
+import useKhuA from '../hooks/useKhuA';
+import useMapEntities from '../hooks/useMapEntities';
+
+// Tách ra component con để dùng useSidebar hook
+function PostMapContent({ projectId, areaId }) {
+  const navigate = useNavigate();
+
+  const {
+    khuA,
+    loading: loadingA,
+    error: errorA,
+    saveKhuA,
+    removeKhuA,
+    setKhuA,
+  } = useKhuA(projectId, areaId);
+
+  const {
+    entities,
+    khuCs,
+    markers,
+    loading: loadingE,
+    createEntity,
+    updateEntity,
+    deleteEntity,
+    refresh,
+  } = useMapEntities(projectId, areaId);
 
   useEffect(() => {
-    const map = L.map('map').setView([21.0285, 105.8542], 13); // Hà Nội
-    mapRef.current = map;
+    if (khuA?._id) refresh();
+  }, [khuA, refresh]);
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap',
-    }).addTo(map);
+  const {
+    editingEntity,
+    openSidebar,
+  } = useSidebar();
 
-    map.pm.addControls({
-      position: 'topleft',
-      drawCircle: false,
-      drawMarker: false,
-      drawPolyline: false,
-      drawRectangle: false,
-    });
+  if (loadingA || loadingE) return <div>Đang tải...</div>;
+  if (errorA) return <div>Lỗi: {errorA.message}</div>;
 
-    map.on('pm:create', (e) => {
-      if (e.shape === 'Polygon') {
-        if (polygon) {
-          map.removeLayer(polygon);
-        }
-        setPolygon(e.layer);
-      }
-    });
-
-    map.on('click', (e) => {
-      if (polygon) {
-        const marker = L.marker(e.latlng).addTo(map);
-        setMarkers((prev) => [...prev, marker]);
-      }
-    });
-
-    return () => {
-      map.remove();
-    };
-  }, []);
-
-  const handleSave = async () => {
-    if (!polygon) return alert('Vui lòng vẽ một khu vực!');
-
-    const polygonGeoJSON = polygon.toGeoJSON().geometry;
-    const area = await createArea({
-      name: 'Khu A demo',
-      type: 'demo',
-      geometry: polygonGeoJSON,
-    });
-
-    await Promise.all(
-      markers.map(async (m, i) => {
-        const geo = m.toGeoJSON().geometry;
-        await createEntity({
-          name: `Khu C ${i + 1}`,
-          type: 'marker',
-          geometry: geo,
-          parentAreaId: area._id,
-        });
-      })
-    );
-
-    alert('Lưu thành công!');
-  };
+  // Nút chuyển sang ViewMap chỉ hiển thị khi có khuA (areaId)
+  const canViewMap = Boolean(khuA?._id);
 
   return (
-    <div className="w-full h-screen relative">
-      <div id="map" className="w-full h-full"></div>
-      <button
-        className="absolute top-4 left-4 bg-blue-600 text-white px-4 py-2 rounded"
-        onClick={handleSave}
-      >
-        Lưu Khu A + C
-      </button>
+    <div className="flex h-screen relative">
+      {/* Nút chuyển sang chế độ xem bản đồ */}
+      {canViewMap && (
+        <div className="absolute top-4 right-4 z-[1000]">
+          <button
+            onClick={() => navigate(`/areas/${khuA._id}/view`)}
+            className="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700 transition"
+            title="Chuyển sang chế độ xem bản đồ"
+          >
+            Xem bản đồ
+          </button>
+        </div>
+      )}
+
+      <MapWrapper
+        center={[21.0278, 105.8342]}
+        zoom={13}
+        enableDraw={!khuA}
+        drawShape="Rectangle"
+        onCreateKhuA={(coords) =>
+          setKhuA({ ...khuA, coordinates: coords })
+        }
+        onSaveKhuA={saveKhuA}
+        onDeleteKhuA={removeKhuA}
+        khuA={khuA}
+        entities={entities}
+        selectedEntityId={editingEntity?._id || null}
+        onSelectEntity={(id) => {
+          const entity = entities.find(e => e._id === id);
+          if (entity) openSidebar(entity.type, entity);
+        }}
+        onUpdateEntity={(id, data) => updateEntity(id, data)}
+        onDeleteEntity={(id) => deleteEntity(id)}
+        onCreateEntity={(entity) => createEntity(entity.type, entity)}
+      />
+
+      <SidebarContainer
+        khuA={khuA}
+        onSaveKhuA={saveKhuA}
+        onDeleteKhuA={removeKhuA}
+        khuCs={khuCs}
+        markers={markers}
+        onSaveEntity={(id, data) =>
+          id ? updateEntity(id, data) : createEntity(data.type, data)
+        }
+        onDeleteEntity={(id) => deleteEntity(id)}
+      />
     </div>
   );
 }
 
+export default function PostMapPage() {
+  const { projectId, areaId } = useParams();
+
+  return (
+    <SidebarProvider>
+      <PostMapContent projectId={projectId} areaId={areaId} />
+    </SidebarProvider>
+  );
+}

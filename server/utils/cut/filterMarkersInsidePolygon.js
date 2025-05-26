@@ -4,10 +4,20 @@ import { point } from '@turf/helpers';
 
 /**
  * Kiểm tra xem một điểm có nằm trong polygon hay không
- * @param {Object} markerLocation { lat, lng }
- * @param {Object} polygon GeoJSON Polygon (Leaflet format)
+ * @param {Object} markerLocation - Vị trí marker dạng { lat, lng }
+ * @param {Array} polygon - Tọa độ polygon theo định dạng GeoJSON ([[[lng, lat], ...]])
+ * @returns {boolean} - Trả về true nếu điểm nằm trong polygon
  */
 export const pointInPolygon = (markerLocation, polygon) => {
+  // Tạo GeoJSON Point từ tọa độ marker
   const turfPoint = point([markerLocation.lng, markerLocation.lat]);
-  return booleanPointInPolygon(turfPoint, polygon);
+  
+  // Tạo GeoJSON Polygon
+  const turfPolygon = {
+    type: 'Polygon',
+    coordinates: polygon
+  };
+  
+  // Kiểm tra điểm có nằm trong polygon không
+  return booleanPointInPolygon(turfPoint, turfPolygon);
 };
