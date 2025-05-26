@@ -1,6 +1,6 @@
 // src/components/sidebars/SidebarContainer.jsx
 import { lazy, Suspense, useContext, memo } from 'react';
-import { SidebarContext } from '../../context/SidebarContext';
+import { useSidebarContext } from '../../context/useSidebarContext';
 
 const KhuASidebar = lazy(() => import('./KhuASidebar'));
 const KhuCSidebar = lazy(() => import('./KhuCSidebar'));
@@ -19,7 +19,7 @@ function SidebarContainer() {
     setEditingEntity,
     handleSave,
     handleDelete,
-  } = useContext(SidebarContext);
+  } = useContext(useSidebarContext);
 
   const SidebarComponent = sidebarMap[activeTab];
 
