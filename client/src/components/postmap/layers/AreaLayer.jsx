@@ -1,15 +1,30 @@
-// components/postmap/layers/AreaLayer.jsx
 import { Polygon } from 'react-leaflet';
 
-const normalizeLatlngs = (polygon) => {
-  if (!Array.isArray(polygon)) return null;
-  return polygon.map(([lat, lng]) => ({ lat, lng }));
+/**
+ * Chuẩn hóa GeoJSON Polygon coordinates ([[[lng, lat], ...]])
+ * sang mảng [{lat, lng}, ...] để React-Leaflet vẽ.
+ */
+const normalizeLatlngs = (geoJsonCoords) => {
+  // geoJsonCoords phải là mảng chứa ít nhất một linear ring
+  if (!Array.isArray(geoJsonCoords) || !Array.isArray(geoJsonCoords[0])) {
+    return null;
+  }
+  // Dùng ring đầu tiên
+  return geoJsonCoords[0].map(([lng, lat]) => ({ lat, lng }));
 };
 
-const AreaLayer = ({ area, showLabel }) => {
-  if (!area || !Array.isArray(area.coordinates)) return null;
+const AreaLayer = ({ area }) => {
+  // Kiểm tra area.polygon.coordinates tồn tại và là mảng
+  if (
+    !area ||
+    !area.polygon ||
+    !Array.isArray(area.polygon.coordinates)
+  ) {
+    return null;
+  }
 
-  const latlngs = normalizeLatlngs(area.coordinates);
+  const latlngs = normalizeLatlngs(area.polygon.coordinates);
+  if (!latlngs) return null;
 
   const style = {
     color: '#FF5733',
@@ -21,4 +36,3 @@ const AreaLayer = ({ area, showLabel }) => {
 };
 
 export default AreaLayer;
-
