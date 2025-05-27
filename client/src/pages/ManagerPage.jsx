@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
+import { ROUTES } from '../routes';
 import {
   getAllProjects,
   createProject,
@@ -10,6 +11,7 @@ import {
 } from '../services/projects';
 import {
   getAreasByProject,
+  createArea,
   deleteArea,
 } from '../services/areas';
 
@@ -37,7 +39,7 @@ const ManagerPage = () => {
 
   const handleSelectProject = async (projectId) => {
     setSelectedProjectId(projectId);
-    setAreas([]); // reset area list ngay khi chọn project mới
+    setAreas([]);
     try {
       const data = await getAreasByProject(projectId);
       setAreas(data);
@@ -48,10 +50,11 @@ const ManagerPage = () => {
   };
 
   const handleCreateProject = async () => {
-    if (!newProjectName.trim()) return;
+    const name = newProjectName.trim();
+    if (!name) return;
     try {
-      const newProject = await createProject({ name: newProjectName });
-      setProjects([...projects, newProject]);
+      const newProject = await createProject({ name });
+      setProjects((prev) => [...prev, newProject]);
       setNewProjectName('');
       toast.success('Tạo project thành công');
     } catch (err) {
@@ -61,14 +64,11 @@ const ManagerPage = () => {
   };
 
   const handleDeleteProject = async (projectId, e) => {
-    if (e) {
-      e.stopPropagation();
-      e.preventDefault();
-    }
+    if (e) e.stopPropagation();
     if (!window.confirm('Bạn có chắc muốn xoá project này?')) return;
     try {
       await deleteProject(projectId);
-      setProjects(projects.filter((p) => p._id !== projectId));
+      setProjects((prev) => prev.filter((p) => p._id !== projectId));
       if (selectedProjectId === projectId) {
         setSelectedProjectId(null);
         setAreas([]);
@@ -80,16 +80,31 @@ const ManagerPage = () => {
     }
   };
 
+  const handleCreateArea = async () => {
+    if (!selectedProjectId) return;
+    try {
+      const newArea = await createArea(selectedProjectId, {
+        name: '', // default name, cho phép đặt sau
+        type: 'khuA',
+        polygon: { coordinates: [] },
+      });
+      // Điều hướng đến trang edit area mới
+      navigate(ROUTES.POST_MAP(selectedProjectId, newArea._id));
+    } catch (err) {
+      console.error(err);
+      toast.error('Không thể tạo khu vực');
+    }
+  };
+
   const handleDeleteArea = async (areaId) => {
-    if (!selectedProjectId) return; // tránh lỗi nếu chưa chọn project
     if (!window.confirm('Xác nhận xoá khu vực này?')) return;
     try {
       await deleteArea(selectedProjectId, areaId);
-      setAreas(areas.filter((a) => a._id !== areaId));
-      toast.success('Đã xoá area');
+      setAreas((prev) => prev.filter((a) => a._id !== areaId));
+      toast.success('Đã xoá khu vực');
     } catch (err) {
       console.error(err);
-      toast.error('Lỗi xoá area');
+      toast.error('Lỗi xoá khu vực');
     }
   };
 
@@ -114,7 +129,6 @@ const ManagerPage = () => {
         </button>
       </div>
 
-      {/* Danh sách projects + areas */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Project List */}
         <div>
@@ -144,30 +158,36 @@ const ManagerPage = () => {
         {selectedProjectId && (
           <div>
             <h2 className="text-xl font-semibold mb-3">Các khu vực (Area)</h2>
-            {areas.length === 0 && (
+            <button
+              onClick={handleCreateArea}
+              className="mb-4 bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600"
+            >
+              Tạo khu vực mới
+            </button>
+
+            {areas.length === 0 ? (
               <p className="text-gray-500 italic">Chưa có khu vực nào</p>
+            ) : (
+              areas.map((area) => (
+                <div
+                  key={area._id}
+                  className="p-3 border rounded mb-2 bg-gray-50 flex justify-between items-center"
+                >
+                  <span
+                    onClick={() => navigate(ROUTES.POST_MAP(selectedProjectId, area._id))}
+                    className="cursor-pointer text-blue-600 hover:underline"
+                  >
+                    {area.name || 'Khu chưa đặt tên'}
+                  </span>
+                  <button
+                    onClick={() => handleDeleteArea(area._id)}
+                    className="text-red-500 hover:underline"
+                  >
+                    Xoá
+                  </button>
+                </div>
+              ))
             )}
-            {areas.map((area) => (
-              <div
-                key={area._id}
-                className="p-3 border rounded mb-2 bg-gray-50 flex justify-between items-center"
-              >
-                <span
-                  onClick={() =>
-                    navigate(`/post/${selectedProjectId}/${area._id}`)
-                  }
-                  className="cursor-pointer text-blue-600 hover:underline"
-                >
-                  {area.name || 'Khu chưa đặt tên'}
-                </span>
-                <button
-                  onClick={() => handleDeleteArea(area._id)}
-                  className="text-red-500 hover:underline"
-                >
-                  Xoá
-                </button>
-              </div>
-            ))}
           </div>
         )}
       </div>
@@ -176,5 +196,3 @@ const ManagerPage = () => {
 };
 
 export default ManagerPage;
-
-
