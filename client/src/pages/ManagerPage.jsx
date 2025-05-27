@@ -23,6 +23,7 @@ const ManagerPage = () => {
 
   const navigate = useNavigate();
 
+  // Load projects một lần khi mount
   useEffect(() => {
     fetchProjects();
   }, []);
@@ -39,7 +40,7 @@ const ManagerPage = () => {
 
   const handleSelectProject = async (projectId) => {
     setSelectedProjectId(projectId);
-    setAreas([]);
+    setAreas([]); // reset list tạm thời
     try {
       const data = await getAreasByProject(projectId);
       setAreas(data);
@@ -57,6 +58,7 @@ const ManagerPage = () => {
       setProjects((prev) => [...prev, newProject]);
       setNewProjectName('');
       toast.success('Tạo project thành công');
+      // **KHÔNG navigate**, để user chọn project rồi tạo area
     } catch (err) {
       console.error(err);
       toast.error('Không thể tạo project');
@@ -64,7 +66,10 @@ const ManagerPage = () => {
   };
 
   const handleDeleteProject = async (projectId, e) => {
-    if (e) e.stopPropagation();
+    if (e) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
     if (!window.confirm('Bạn có chắc muốn xoá project này?')) return;
     try {
       await deleteProject(projectId);
@@ -80,15 +85,16 @@ const ManagerPage = () => {
     }
   };
 
+  // Chỉ được gọi khi user nhấn nút "Tạo khu vực mới"
   const handleCreateArea = async () => {
     if (!selectedProjectId) return;
     try {
       const newArea = await createArea(selectedProjectId, {
-        name: '', // default name, cho phép đặt sau
-        type: 'khuA',
+        name: '',       // Tên để user đặt sau
+        type: 'khuA',   // hoặc giá trị phù hợp với code backend
         polygon: { coordinates: [] },
       });
-      // Điều hướng đến trang edit area mới
+      // Điều hướng đến trang edit của area mới
       navigate(ROUTES.POST_MAP(selectedProjectId, newArea._id));
     } catch (err) {
       console.error(err);
@@ -129,6 +135,7 @@ const ManagerPage = () => {
         </button>
       </div>
 
+      {/* Danh sách projects + areas */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Project List */}
         <div>
@@ -158,6 +165,8 @@ const ManagerPage = () => {
         {selectedProjectId && (
           <div>
             <h2 className="text-xl font-semibold mb-3">Các khu vực (Area)</h2>
+
+            {/* Nút tạo khu vực mới */}
             <button
               onClick={handleCreateArea}
               className="mb-4 bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600"
@@ -170,11 +179,13 @@ const ManagerPage = () => {
             ) : (
               areas.map((area) => (
                 <div
-                  key={area._id}
+                  key={area._1d}
                   className="p-3 border rounded mb-2 bg-gray-50 flex justify-between items-center"
                 >
                   <span
-                    onClick={() => navigate(ROUTES.POST_MAP(selectedProjectId, area._id))}
+                    onClick={() =>
+                      navigate(ROUTES.POST_MAP(selectedProjectId, area._id))
+                    }
                     className="cursor-pointer text-blue-600 hover:underline"
                   >
                     {area.name || 'Khu chưa đặt tên'}
