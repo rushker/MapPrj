@@ -1,6 +1,8 @@
 // controllers/projectController.js
-
 import Project from '../models/Project.js';
+import Area from '../models/Area.js';
+import Entity from '../models/Entity.js';
+import { handleError, handleNotFound } from '../utils/errorHandler.js';
 
 export const getAllProjects = async (req, res) => {
   try {
@@ -22,19 +24,20 @@ export const createProject = async (req, res) => {
 
 export const deleteProject = async (req, res) => {
   try {
-    const project = await Project.findById(req.params.projectId);
+    const { projectId } = req.params;
+    const project = await Project.findById(projectId);
     if (!project) return handleNotFound(res, 'Project');
 
-    // Xóa tất cả Areas thuộc Project
-    await Area.deleteMany({ projectId: project._id });
-    
-    // Xóa tất cả Entities trong các Areas đó
+    // 1) Delete all entities belonging to project's areas
     await Entity.deleteMany({ areaId: { $in: project.areas } });
 
-    // Xóa Project
-    await Project.findByIdAndDelete(req.params.projectId);
-    
-    res.json({ success: true, message: 'Project and related data deleted' });
+    // 2) Delete all areas under the project
+    await Area.deleteMany({ projectId });
+
+    // 3) Delete the project itself
+    await Project.findByIdAndDelete(projectId);
+
+    return res.json({ success: true, message: 'Project and related data deleted' });
   } catch (err) {
     handleError(res, 'Failed to delete project', err);
   }
