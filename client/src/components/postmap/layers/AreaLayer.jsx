@@ -7,9 +7,9 @@ const normalizeLatlngs = (polygon) => {
 };
 
 const AreaLayer = ({ area, showLabel }) => {
-  if (!area || !Array.isArray(area.polygon)) return null;
+  if (!area || !Array.isArray(area.coordinates)) return null;
 
-  const latlngs = normalizeLatlngs(area.polygon);
+  const latlngs = normalizeLatlngs(area.coordinates);
 
   const style = {
     color: '#FF5733',
@@ -21,3 +21,4 @@ const AreaLayer = ({ area, showLabel }) => {
 };
 
 export default AreaLayer;
+
