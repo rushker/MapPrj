@@ -4,6 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { SidebarProvider, useSidebarContext } from '../context/SidebarContext';
 import MapWrapper from '../components/postmap/MapWrapper';
 import SidebarContainer from '../components/sidebars/SidebarContainer';
+import { ROUTES } from '../routes'
 
 import useKhuA from '../hooks/useKhuA';
 import useMapEntities from '../hooks/useMapEntities';
@@ -53,7 +54,7 @@ function PostMapContent({ projectId, areaId }) {
       {canViewMap && (
         <div className="absolute top-4 right-4 z-[1000]">
           <button
-            onClick={() => navigate(`/areas/${khuA._id}/view`)}
+            onClick={() => navigate(ROUTES.VIEW_MAP(projectId, khuA._id))}
             className="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700 transition"
             title="Chuyển sang chế độ xem bản đồ"
           >

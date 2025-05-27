@@ -40,11 +40,7 @@ const AreaSchema = new mongoose.Schema({
     },
     coordinates: {
       type: [[[Number]]],
-      required: true,
-      validate: {
-        validator: coords => Array.isArray(coords) && coords.length > 0,
-        message: 'Polygon coordinates must be a non-empty array',
-      },
+      default: [],      
     },
   },
   minZoom: {
