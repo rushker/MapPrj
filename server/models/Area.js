@@ -11,6 +11,7 @@ const AreaSchema = new mongoose.Schema({
     type: String,
     required: true,
     trim: true,
+    default: 'Khu chưa đặt tên',  // Default placeholder name
   },
   description: {
     type: String,
@@ -40,7 +41,7 @@ const AreaSchema = new mongoose.Schema({
     },
     coordinates: {
       type: [[[Number]]],
-      default: [],      
+      default: [],  // Allow empty, user will draw later
     },
   },
   minZoom: {
@@ -62,7 +63,8 @@ const AreaSchema = new mongoose.Schema({
 }, {
   timestamps: true,
 });
-AreaSchema.index({ projectId: 1 }); // Index cho query theo project
-AreaSchema.index({ polygon: '2dsphere' }); // Geospatial index cho polygon
+
+AreaSchema.index({ projectId: 1 });           // Index for queries
+AreaSchema.index({ polygon: '2dsphere' });     // Geospatial index
 
 export default mongoose.model('Area', AreaSchema);
