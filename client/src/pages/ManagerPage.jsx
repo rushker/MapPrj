@@ -29,17 +29,20 @@ const ManagerPage = () => {
     try {
       const data = await getAllProjects();
       setProjects(data);
-    } catch {
+    } catch (err) {
+      console.error(err);
       toast.error('Lỗi khi tải danh sách project');
     }
   };
 
   const handleSelectProject = async (projectId) => {
     setSelectedProjectId(projectId);
+    setAreas([]); // reset area list ngay khi chọn project mới
     try {
       const data = await getAreasByProject(projectId);
       setAreas(data);
-    } catch {
+    } catch (err) {
+      console.error(err);
       toast.error('Lỗi khi tải danh sách khu vực');
     }
   };
@@ -51,12 +54,17 @@ const ManagerPage = () => {
       setProjects([...projects, newProject]);
       setNewProjectName('');
       toast.success('Tạo project thành công');
-    } catch {
+    } catch (err) {
+      console.error(err);
       toast.error('Không thể tạo project');
     }
   };
 
-  const handleDeleteProject = async (projectId) => {
+  const handleDeleteProject = async (projectId, e) => {
+    if (e) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
     if (!window.confirm('Bạn có chắc muốn xoá project này?')) return;
     try {
       await deleteProject(projectId);
@@ -66,18 +74,21 @@ const ManagerPage = () => {
         setAreas([]);
       }
       toast.success('Đã xoá project');
-    } catch {
+    } catch (err) {
+      console.error(err);
       toast.error('Lỗi xoá project');
     }
   };
 
   const handleDeleteArea = async (areaId) => {
+    if (!selectedProjectId) return; // tránh lỗi nếu chưa chọn project
     if (!window.confirm('Xác nhận xoá khu vực này?')) return;
     try {
       await deleteArea(selectedProjectId, areaId);
       setAreas(areas.filter((a) => a._id !== areaId));
       toast.success('Đã xoá area');
-    } catch {
+    } catch (err) {
+      console.error(err);
       toast.error('Lỗi xoá area');
     }
   };
@@ -119,10 +130,7 @@ const ManagerPage = () => {
               <div className="flex justify-between">
                 <span>{project.name}</span>
                 <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDeleteProject(project._id);
-                  }}
+                  onClick={(e) => handleDeleteProject(project._id, e)}
                   className="text-red-500 hover:underline"
                 >
                   Xoá
@@ -168,4 +176,5 @@ const ManagerPage = () => {
 };
 
 export default ManagerPage;
+
 
