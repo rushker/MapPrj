@@ -1,14 +1,14 @@
 // src/pages/PostMapPage.jsx
 import { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { SidebarProvider, useSidebar } from '../context/SidebarContext';
+import { SidebarProvider, useSidebarContext } from '../context/SidebarContext';
 import MapWrapper from '../components/postmap/MapWrapper';
 import SidebarContainer from '../components/sidebars/SidebarContainer';
 
 import useKhuA from '../hooks/useKhuA';
 import useMapEntities from '../hooks/useMapEntities';
 
-// Tách ra component con để dùng useSidebar hook
+// Tách ra component con để dùng useSidebarContext hook
 function PostMapContent({ projectId, areaId }) {
   const navigate = useNavigate();
 
@@ -39,7 +39,7 @@ function PostMapContent({ projectId, areaId }) {
   const {
     editingEntity,
     openSidebar,
-  } = useSidebar();
+  } = useSidebarContext();
 
   if (loadingA || loadingE) return <div>Đang tải...</div>;
   if (errorA) return <div>Lỗi: {errorA.message}</div>;
