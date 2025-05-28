@@ -1,6 +1,6 @@
 // src/routes.js
 export const ROUTES = {
-  POST_MAP: (projectId, areaId) => `/projects/${projectId}/areas/${areaId}/edit`,
-  MANAGER_PAGE: '/projects',
-  VIEW_MAP: (projectId, areaId) => `/projects/${projectId}/areas/${areaId}/view`,
+  POST_MAP: ( areaId) => `/areas/edit/${areaId}`,
+  MANAGER_PAGE: '/',
+  VIEW_MAP: (areaId) => `areas/${areaId}/view`,
 };

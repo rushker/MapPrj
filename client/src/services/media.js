@@ -1,4 +1,5 @@
 // services/media.js
+import axios from './axiosInstance';
 export const uploadImage = async (file) => {
   try {
     const formData = new FormData();

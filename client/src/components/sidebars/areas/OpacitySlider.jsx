@@ -1,4 +1,4 @@
-// components/sidebars/OpacitySlider.jsx
+// components/sidebars/areas/OpacitySlider.jsx
 export default function OpacitySlider({ value = 0.2, onChange }) {
   return (
     <div className="mt-4">

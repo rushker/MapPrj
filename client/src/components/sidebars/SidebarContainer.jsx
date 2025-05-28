@@ -2,7 +2,7 @@
 import { lazy, Suspense, useContext, memo } from 'react';
 import { useSidebarContext } from '../../context/SidebarContext';
 
-const KhuASidebar = lazy(() => import('./KhuASidebar'));
+const KhuASidebar = lazy(() => import('./areas/KhuASidebar'));
 const KhuCSidebar = lazy(() => import('./KhuCSidebar'));
 const MarkerSidebar = lazy(() => import('./MarkerSidebar'));
 

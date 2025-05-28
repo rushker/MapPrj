@@ -10,13 +10,19 @@ export const createEntity = async (req, res) => {
       return handleError(res, 'Invalid areaId', null, 400);
     }
 
-    const { name, type, geometry, metadata = {}, images = [] } = req.body;
+    const { name, type, geometry, metadata = {} } = req.body;
+
     if (!name || !type || !geometry?.type || !geometry?.coordinates) {
       return handleError(res, 'Missing required fields', null, 400);
     }
 
-    const entity = new Entity({ name, type, geometry, metadata, images, areaId });
+    if (metadata.images && !Array.isArray(metadata.images)) {
+      return handleError(res, '`metadata.images` must be an array', null, 400);
+    }
+
+    const entity = new Entity({ name, type, geometry, metadata, areaId });
     await entity.save();
+
     res.status(201).json({ success: true, data: entity });
   } catch (err) {
     handleError(res, 'Failed to create entity', err);
@@ -30,6 +36,10 @@ export const updateEntity = async (req, res) => {
       return handleError(res, 'Invalid entityId', null, 400);
     }
 
+    if (req.body.metadata?.images && !Array.isArray(req.body.metadata.images)) {
+      return handleError(res, '`metadata.images` must be an array', null, 400);
+    }
+
     const updated = await Entity.findByIdAndUpdate(entityId, req.body, {
       new: true,
       runValidators: true,
@@ -38,7 +48,7 @@ export const updateEntity = async (req, res) => {
     if (!updated) return handleNotFound(res, 'Entity');
     res.json({ success: true, data: updated });
   } catch (err) {
-    handleError(res, 'Failed to update entity', err, 400);
+    handleError(res, 'Failed to update entity', err);
   }
 };
 

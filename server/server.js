@@ -1,11 +1,10 @@
-//server.js
+// server.js
 import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import connectDB from './config/db.js';
 import { ROUTES } from './utils/routes.js';
 
-import projectRoutes from './routes/projects.js';
 import areaRoutes from './routes/areas.js';
 import entityRoutes from './routes/entities.js';
 import mediaRoutes from './routes/media.js';
@@ -16,39 +15,33 @@ connectDB();
 const app = express();
 
 app.use(cors({
-  origin: process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : '*',
+  origin: process.env.ALLOWED_ORIGINS?.split(',') || '*',
 }));
 app.use(express.json({ limit: '10mb' }));
 
-// Routes
-app.use('/api/projects', projectRoutes);
-app.use('/api/projects/:projectId/areas', areaRoutes);
-app.use('/api/projects/:projectId/areas/:areaId/entities', entityRoutes);
+// API routes
+app.use('/api/areas', areaRoutes);
+app.use('/api/areas/:areaId/entities', entityRoutes);
 app.use('/api/media', mediaRoutes);
 
-// Middleware xử lý route không tồn tại (404)
-app.use((req, res, next) => {
+// 404 handler
+app.use((req, res) => {
   res.status(404).json({ success: false, message: 'API route not found' });
 });
 
-// Middleware xử lý lỗi toàn cục
+// Global error handler
 app.use((err, req, res, next) => {
-  console.error(err.stack);
   const statusCode = err.statusCode || 500;
   const message = err.message || 'Internal Server Error';
   res.status(statusCode).json({
     success: false,
     message,
-    // Có thể thêm stack khi đang dev:
     ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
   });
 });
 
 const PORT = process.env.PORT || 5000;
-
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);
-  console.log(`🛠️ Post Map URL (example): ${ROUTES.POST_MAP('<projectId>', '<areaId>')}`);
-  console.log(`📁 Manager URL: ${ROUTES.MANAGER_PAGE}`);
+  console.log(`📌 Example POST_MAP: ${ROUTES.POST_MAP('<areaId>')}`);
 });
-

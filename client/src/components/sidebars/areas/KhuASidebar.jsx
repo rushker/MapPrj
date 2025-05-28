@@ -1,8 +1,8 @@
-// src/components/sidebars/KhuASidebar.jsx
+// components/sidebars/areas/KhuASidebar.jsx
 import { useState } from 'react';
 import { toast } from 'react-hot-toast';
 import OpacitySlider from './OpacitySlider';
-import useLocalArea from '../../hooks/useLocalArea';
+import useLocalArea from '../../../hooks/useLocalArea';
 import { Info } from 'lucide-react';
 
 export default function KhuASidebar({ entity, onChange, onSave, onDelete }) {

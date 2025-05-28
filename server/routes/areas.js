@@ -7,20 +7,18 @@ import {
   deleteArea,
   updatePolygon,
   publishArea,
-  cutAndCloneArea,
-  getAreasByProject,
+  getAllAreas,
   searchAreas
 } from '../controllers/areaController.js';
 
 const router = express.Router({ mergeParams: true });
 
-// Đường dẫn gốc: /projects/:projectId/areas
-
+// Đường dẫn gốc: /areas
 router.route('/')
-  .post(createArea)          // Tạo Khu A mới
-  .get(getAreasByProject);   // Lấy danh sách Khu A theo project
+  .post(createArea)        // Tạo mới Khu A
+  .get(getAllAreas);       // Lấy toàn bộ Khu A
 
-router.get('/search', searchAreas);  // Tìm kiếm nâng cao (đặt trước /:areaId để tránh conflict)
+router.get('/search', searchAreas);  // Tìm kiếm nâng cao
 
 router.route('/:areaId')
   .get(getAreaById)          // Lấy chi tiết 1 Khu A
@@ -30,7 +28,5 @@ router.route('/:areaId')
 // Các route đặc biệt:
 router.put('/:areaId/polygon', updatePolygon);     // Cập nhật polygon
 router.put('/:areaId/publish', publishArea);       // Publish Khu A
-router.post('/:areaId/cut', cutAndCloneArea);      // Cắt & nhân bản thành Khu C
-
 
 export default router;

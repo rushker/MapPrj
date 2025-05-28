@@ -1,10 +1,23 @@
 // models/Entity.js
 import mongoose from 'mongoose';
 
+const metadataSchema = new mongoose.Schema({
+  description: { type: String, default: '' },
+  images: {
+    type: [String],
+    default: [],
+    validate: {
+      validator: arr =>
+        arr.every(url => /^https?:\/\/.+\.(jpg|jpeg|png|gif|webp)$/i.test(url)),
+      message: 'One or more image URLs are invalid',
+    },
+  },
+}, { _id: false });
+
 const entitySchema = new mongoose.Schema({
   name: {
     type: String,
-    required: [true, 'Entity name is required'],
+    required: true,
     trim: true,
   },
   type: {
@@ -37,25 +50,18 @@ const entitySchema = new mongoose.Schema({
     },
   },
   metadata: {
-    type: mongoose.Schema.Types.Mixed,
-    default: {},
-  },
-  images: {
-    type: [String],
-    default: [],
-    validate: {
-      validator: arr =>
-        arr.every(url => /^https?:\/\/.+\.(jpg|jpeg|png|gif|webp)$/i.test(url)),
-      message: 'One or more image URLs are invalid',
-    },
+    type: metadataSchema,
+    default: () => ({}),
   },
   areaId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Area',
-    required: [true, 'Area ID is required'],
+    required: true,
   },
 }, {
   timestamps: true,
 });
-entitySchema.index({ geometry: '2dsphere' }); 
+
+entitySchema.index({ geometry: '2dsphere' });
+
 export default mongoose.model('Entity', entitySchema);

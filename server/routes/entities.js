@@ -4,16 +4,15 @@ import {
   createEntity,
   updateEntity,
   deleteEntity,
-  getEntitiesByArea
+  getEntitiesByArea,
 } from '../controllers/entityController.js';
 
 const router = express.Router({ mergeParams: true });
 
-// Đường dẫn gốc: /projects/:projectId/areas/:areaId/entities
-
-router.get('/', getEntitiesByArea);        // Lấy tất cả entities trong Khu A
-router.post('/', createEntity);             // Tạo entity mới (Khu C hoặc Marker)
-router.put('/:entityId', updateEntity);     // Cập nhật entity
-router.delete('/:entityId', deleteEntity);  // Xóa entity
+// /areas/:areaId/entities
+router.get('/', getEntitiesByArea);
+router.post('/', createEntity);
+router.put('/:entityId', updateEntity);
+router.delete('/:entityId', deleteEntity);
 
 export default router;
