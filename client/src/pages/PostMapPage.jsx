@@ -6,8 +6,8 @@ import MapWrapper from '../components/postmap/MapWrapper';
 import SidebarContainer from '../components/sidebars/SidebarContainer';
 import { ROUTES } from '../routes'
 
-import useKhuA from '../hooks/useKhuA';
-import useMapEntities from '../hooks/useMapEntities';
+import useKhuA from '../hooks/use/useKhuA';
+import useMapEntities from '../hooks/use/useMapEntities';
 
 // Tách ra component con để dùng useSidebarContext hook
 function PostMapContent({ projectId, areaId }) {
