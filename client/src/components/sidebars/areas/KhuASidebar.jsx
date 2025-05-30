@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { toast } from 'react-hot-toast';
 import OpacitySlider from './OpacitySlider';
-import useLocalArea from '../../../hooks/useLocalArea';
+import useAreaMetadata from '../../../hooks/local/metadatas/useAreaMetadata';
 import { Info } from 'lucide-react';
 
 export default function KhuASidebar({ entity, onChange, onSave, onDelete }) {
@@ -16,7 +16,7 @@ export default function KhuASidebar({ entity, onChange, onSave, onDelete }) {
     handleInputChange,
     handleCheckboxChange,
     handleOpacityChange,
-  } = useLocalArea(entity, onChange);
+  } = useAreaMetadata(entity, onChange);
 
   if (!entity) return <div className="p-4">Chưa chọn Khu A</div>;
 

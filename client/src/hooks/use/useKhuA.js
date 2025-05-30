@@ -5,7 +5,7 @@ import {
   getAreaById,
   updateArea,
   deleteArea,
-} from '../services/areas';
+} from '../../services/areas';
 
 export default function useKhuA(projectId, areaId) {
   const [khuA, setKhuA]     = useState(null);

@@ -1,4 +1,5 @@
 // services/areas.js
+//API cho Khu A
 import axios from './axiosInstance';
 
 /* ========= DÙNG CHUNG ========= */

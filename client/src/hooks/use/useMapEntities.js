@@ -5,8 +5,8 @@ import {
   createEntity,
   updateEntity,
   deleteEntity,
-} from '../services/entities';
-import { deleteImage } from '../services/media';
+} from '../../services/entities';
+import { deleteImage } from '../../services/media';
 import { toast } from 'react-hot-toast';
 
 export default function useMapEntities(projectId, areaId) {

@@ -1,4 +1,6 @@
 // services/entities.js
+//API cho entity (Khu C / Marker)
+
 import axios from './axiosInstance';
 
 // Lấy tất cả entity của 1 area
