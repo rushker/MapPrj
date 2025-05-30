@@ -2,7 +2,7 @@
 // ✅ Kiểm tra / tạo areaId tạm nhưng không redirect sang route có areaId
 
 import { useEffect } from 'react';
-import { getAreaById, createArea } from '../services/areas';
+import { getAreaById, createArea } from '../../services/areas';
 import toast from 'react-hot-toast';
 import { useTempAreaId } from '../../hooks/local/useTempAreaId';
 

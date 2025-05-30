@@ -2,7 +2,7 @@
 // Quản lý metadata tạm của Khu A
 import { useState, useEffect, useMemo } from 'react';
 
-export function useAreaMetadata(area, onChange) {
+export default function useAreaMetadata(area, onChange) {
   const [errors, setErrors] = useState({});
   const [initialArea, setInitialArea] = useState(null);
 
@@ -28,9 +28,13 @@ export function useAreaMetadata(area, onChange) {
     onChange({ ...area, [field]: e.target.checked });
   };
 
+  const handleOpacityChange = (value) => {
+    onChange({ ...area, opacity: value });
+  };
+
   const isUnchanged = useMemo(() => {
     if (!initialArea) return false;
-    return ['name', 'type', 'description', 'lockedZoom'].every(
+    return ['name', 'type', 'description', 'opacity', 'lockedZoom'].every(
       (key) => area?.[key] === initialArea?.[key]
     );
   }, [area, initialArea]);
@@ -46,5 +50,7 @@ export function useAreaMetadata(area, onChange) {
     isUnchanged,
     handleInputChange,
     handleCheckboxChange,
+    handleOpacityChange,
   };
 }
+

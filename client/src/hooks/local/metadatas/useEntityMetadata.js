@@ -7,8 +7,8 @@ export function useEntityMetadata(entity, onChange) {
   const [initialEntity, setInitialEntity] = useState(null);
 
   useEffect(() => {
-    setErrors({});
     setInitialEntity(entity);
+    setErrors({});
   }, [entity]);
 
   const validate = () => {
@@ -21,7 +21,18 @@ export function useEntityMetadata(entity, onChange) {
 
   const handleInputChange = (field) => (e) => {
     const value = e?.target?.value ?? e;
-    onChange({ ...entity, [field]: value });
+
+    const updated = { ...entity };
+    if (field.startsWith('metadata.')) {
+      updated.metadata = {
+        ...updated.metadata,
+        [field.split('.')[1]]: value,
+      };
+    } else {
+      updated[field] = value;
+    }
+
+    onChange(updated);
   };
 
   const handleCheckboxChange = (field) => (e) => {
@@ -30,8 +41,12 @@ export function useEntityMetadata(entity, onChange) {
 
   const isUnchanged = useMemo(() => {
     if (!initialEntity) return false;
-    return ['name', 'type', 'description'].every(
-      (key) => entity?.[key] === initialEntity?.[key]
+    return ['name', 'type', 'metadata.description'].every(
+      (key) => {
+        const keys = key.split('.');
+        const getVal = (obj) => keys.reduce((o, k) => o?.[k], obj);
+        return getVal(entity) === getVal(initialEntity);
+      }
     );
   }, [entity, initialEntity]);
 
