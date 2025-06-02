@@ -1,8 +1,7 @@
-// src/components/postmap/LeafletMap.jsx
-import useGeomanEvents from './draw/useGeomanEvents';
+// src/components/postmap/draw/LeafletMap.jsx
+import useGeomanEvents from './useGeomanEvents';
 import AreaLayer from './layers/AreaLayer';
-import PolygonLayer from './shapes/PolygonLayer';
-import MarkerLayer from './shapes/MarkerLayer';
+import EntityLayer from './layers/EntityLayer'; // ✅ dùng EntityLayer mới đã refactor
 
 export default function LeafletMap({
   mapRef,
@@ -41,15 +40,8 @@ export default function LeafletMap({
       {/* Vẽ Khu A nếu có */}
       {khuA && <AreaLayer area={khuA} />}
 
-      {/* Vẽ các khu C */}
-      <PolygonLayer
-        entities={entities}
-        selectedEntityId={selectedEntityId}
-        onSelectEntity={onSelectEntity}
-      />
-
-      {/* Vẽ các marker */}
-      <MarkerLayer
+      {/* Vẽ các khu C + marker thông qua EntityLayer */}
+      <EntityLayer
         entities={entities}
         selectedEntityId={selectedEntityId}
         onSelectEntity={onSelectEntity}

@@ -1,4 +1,4 @@
-// components/AreaInitializer.jsx
+// components/postmap/AreaInitializer.jsx
 // ✅ Kiểm tra / tạo areaId tạm nhưng không redirect sang route có areaId
 
 import { useEffect } from 'react';

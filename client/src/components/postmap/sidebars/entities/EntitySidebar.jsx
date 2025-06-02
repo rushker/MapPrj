@@ -1,17 +1,24 @@
 // components/sidebars/entities/EntitySidebar.jsx
 import { SIDEBAR_CONFIG } from './SIDEBAR_CONFIG';
 import ImageUploader from './ImageUploader';
-import { uploadImage, deleteImage } from '../../../services/media';
-import { useEntityMetadata } from '../../../hooks/local/metadata/useEntityMetadata';
+import { uploadImage, deleteImage } from '../../../../services/media';
+import { useEntityMetadata } from '../../../../hooks/local/metadata/useEntityMetadata';
+import { useState } from 'react';
+import { toast } from 'react-hot-toast';
 
 export default function EntitySidebar({ entity, onChange, onSave, onDelete, onClose }) {
-  if (!entity) return null;
+  const [isLoading, setIsLoading] = useState(false);
+  const config = SIDEBAR_CONFIG[entity?.type] || {};
 
-  const config = SIDEBAR_CONFIG[entity.type] || {};
   const {
     metadata,
+    validate,
+    isValid,
+    isUnchanged,
     handleInputChange,
   } = useEntityMetadata(entity, onChange);
+
+  if (!entity) return null;
 
   const handleImageUpload = async (file) => {
     const { url } = await uploadImage(file);
@@ -22,15 +29,31 @@ export default function EntitySidebar({ entity, onChange, onSave, onDelete, onCl
   const handleImageDelete = async (url) => {
     const publicId = url.split('/').pop().split('.')[0];
     await deleteImage(publicId);
-    const updatedImages = (metadata.images || []).filter(img => img !== url);
+    const updatedImages = (metadata.images || []).filter((img) => img !== url);
     handleInputChange('images')(updatedImages);
   };
+
+  const handleSaveClick = async () => {
+    if (!validate()) return;
+    setIsLoading(true);
+    try {
+      await onSave(metadata);
+      toast.success('Đã lưu entity thành công');
+    } catch (err) {
+      console.error(err);
+      toast.error('Lưu thất bại. Vui lòng thử lại.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const saveDisabled = !isValid || isUnchanged || isLoading;
 
   return (
     <div className="sidebar p-4 w-80 bg-white border shadow-lg rounded-lg">
       <h2 className="text-xl font-semibold mb-4">{config.title || 'Entity'}</h2>
 
-      {/* Name Field */}
+      {/* Name */}
       <label className="block text-sm font-medium mb-1">Tên</label>
       <input
         className="w-full border px-2 py-1 rounded mb-3"
@@ -39,7 +62,7 @@ export default function EntitySidebar({ entity, onChange, onSave, onDelete, onCl
         placeholder="Nhập tên"
       />
 
-      {/* Description Field */}
+      {/* Description */}
       <label className="block text-sm font-medium mb-1">Mô tả</label>
       <textarea
         className="w-full border px-2 py-1 rounded mb-3"
@@ -55,13 +78,18 @@ export default function EntitySidebar({ entity, onChange, onSave, onDelete, onCl
         onDelete={handleImageDelete}
       />
 
-      {/* Action Buttons */}
+      {/* Buttons */}
       <div className="flex justify-between mt-4">
-        <button className="btn btn-danger" onClick={onDelete}>Xóa</button>
-        <button className="btn btn-secondary" onClick={onClose}>Đóng</button>
-        <button className="btn btn-primary" onClick={() => onSave(metadata)}>Lưu</button>
+        <button className="btn btn-danger" onClick={onDelete} disabled={isLoading}>Xóa</button>
+        <button className="btn btn-secondary" onClick={onClose} disabled={isLoading}>Đóng</button>
+        <button
+          className={`btn btn-primary ${saveDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+          onClick={handleSaveClick}
+          disabled={saveDisabled}
+        >
+          {isLoading ? 'Đang lưu...' : 'Lưu'}
+        </button>
       </div>
     </div>
   );
 }
-

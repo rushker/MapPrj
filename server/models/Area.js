@@ -30,9 +30,9 @@ const AreaSchema = new mongoose.Schema({
     max: 1,
   },
   lockedZoom: {
-    type: Boolean,
-    default: false,
-  },
+  type: Boolean,
+  default: false,
+},
   polygon: {
     type: {
       type: String,

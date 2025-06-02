@@ -1,12 +1,13 @@
 // hooks/local/useAutoSave.js
 import { useEffect, useRef } from 'react';
+import { saveFullAreaData } from '../../services/areas'; // API gộp lưu toàn bộ
+import toast from 'react-hot-toast';
 
-const AUTO_SAVE_KEY = 'autosaveAreaState';
+const DEBOUNCE_INTERVAL = 20000; // 20s
 
 /**
  * useAutoSave
- * - Lưu định kỳ metadata khu A và entityList mỗi 20 giây vào localStorage
- * - Dùng để khôi phục nếu trình duyệt reload hoặc crash
+ * - Tự động gọi API lưu toàn bộ metadata (khu A + entities + polygon) sau 20s không thay đổi
  *
  * @param {string} areaId
  * @param {object} areaMetadata
@@ -14,53 +15,38 @@ const AUTO_SAVE_KEY = 'autosaveAreaState';
  */
 export default function useAutoSave(areaId, areaMetadata, entityList) {
   const prevSnapshotRef = useRef('');
+  const debounceTimeoutRef = useRef(null);
 
   useEffect(() => {
     if (!areaId) return;
 
-    const interval = setInterval(() => {
-      const snapshot = JSON.stringify({ areaMetadata, entityList });
+    const snapshot = JSON.stringify({ areaMetadata, entityList });
 
-      // Nếu dữ liệu không đổi → bỏ qua lưu
-      if (prevSnapshotRef.current === snapshot) return;
+    // Nếu không thay đổi dữ liệu => không làm gì
+    if (prevSnapshotRef.current === snapshot) return;
 
-      prevSnapshotRef.current = snapshot;
+    prevSnapshotRef.current = snapshot;
 
-      const payload = {
-        areaId,
-        tempAreaData: areaMetadata,
-        tempEntities: entityList,
-        lastSaved: new Date().toISOString(),
-      };
+    // Nếu có thay đổi → reset debounce
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+    }
 
+    debounceTimeoutRef.current = setTimeout(async () => {
       try {
-        localStorage.setItem(AUTO_SAVE_KEY, JSON.stringify(payload));
-        console.log('[AutoSave] Đã lưu tạm dữ liệu vào localStorage');
+        await saveFullAreaData(areaId, {
+          metadata: areaMetadata,
+          entities: entityList,
+        });
+
+        console.log('[AutoSave] ✅ Đã lưu toàn bộ dữ liệu lên backend');
+        toast.success('Đã tự động lưu bản nháp');
       } catch (err) {
-        console.warn('[AutoSave] Không thể lưu:', err);
+        console.error('[AutoSave] ❌ Lỗi khi lưu:', err);
+        toast.error('Tự động lưu thất bại');
       }
-    }, 20000); // mỗi 20 giây
+    }, DEBOUNCE_INTERVAL);
 
-    return () => clearInterval(interval);
+    return () => clearTimeout(debounceTimeoutRef.current);
   }, [areaId, areaMetadata, entityList]);
-}
-
-/**
- * Hàm tiện ích: Lấy lại dữ liệu autosave nếu có
- */
-export function getAutoSavedData() {
-  try {
-    const data = localStorage.getItem(AUTO_SAVE_KEY);
-    return data ? JSON.parse(data) : null;
-  } catch (err) {
-    console.warn('[AutoSave] Không thể đọc dữ liệu:', err);
-    return null;
-  }
-}
-
-/**
- * Hàm tiện ích: Xóa dữ liệu autosave thủ công nếu cần
- */
-export function clearAutoSavedData() {
-  localStorage.removeItem(AUTO_SAVE_KEY);
 }

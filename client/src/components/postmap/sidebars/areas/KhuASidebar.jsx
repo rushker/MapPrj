@@ -2,8 +2,8 @@
 import { useState } from 'react';
 import { toast } from 'react-hot-toast';
 import OpacitySlider from './OpacitySlider';
-import useAreaMetadata from '../../../hooks/local/metadatas/useAreaMetadata';
-import { Info } from 'lucide-react';
+import useAreaMetadata from '../../../../hooks/local/metadata/useAreaMetadata';
+
 
 export default function KhuASidebar({ entity, onChange, onSave, onDelete }) {
   const [isLoading, setIsLoading] = useState(false);
@@ -14,7 +14,6 @@ export default function KhuASidebar({ entity, onChange, onSave, onDelete }) {
     isUnchanged,
     isValid,
     handleInputChange,
-    handleCheckboxChange,
     handleOpacityChange,
   } = useAreaMetadata(entity, onChange);
 
@@ -22,8 +21,8 @@ export default function KhuASidebar({ entity, onChange, onSave, onDelete }) {
 
   const handleSaveClick = async () => {
     if (!validate()) return;
+    setIsLoading(true);
     try {
-      setIsLoading(true);
       await onSave(entity);
       toast.success('Đã lưu Khu A thành công');
     } catch (err) {
@@ -33,6 +32,8 @@ export default function KhuASidebar({ entity, onChange, onSave, onDelete }) {
       setIsLoading(false);
     }
   };
+
+  const saveDisabled = !isValid || isUnchanged || isLoading;
 
   return (
     <div className="p-4 flex flex-col space-y-4 bg-white">
@@ -77,36 +78,15 @@ export default function KhuASidebar({ entity, onChange, onSave, onDelete }) {
 
       {/* Opacity */}
       <div className="pt-4 border-t">
-        <OpacitySlider
-          value={entity.opacity ?? 0.2}
-          onChange={handleOpacityChange}
-        />
+        <OpacitySlider value={entity.opacity ?? 0.2} onChange={handleOpacityChange} />
       </div>
-
-      {/* Zoom lock */}
-      <div className="flex items-center gap-2 text-sm pt-1">
-        <input
-          type="checkbox"
-          checked={entity.lockedZoom ?? false}
-          onChange={handleCheckboxChange('lockedZoom')}
-        />
-        <span className="text-gray-800">Khóa zoom</span>
-        {entity.lockedZoom && (
-          <span className="text-yellow-600 flex items-center gap-1" title="Người dùng sẽ không thay đổi được mức zoom">
-            <Info size={16} /> Zoom bị khóa
-          </span>
-        )}
-      </div>
-
       {/* Buttons */}
       <div className="pt-6 flex justify-between">
         <button
           onClick={handleSaveClick}
-          disabled={!isValid || isUnchanged || isLoading}
+          disabled={saveDisabled}
           className={`px-5 py-2 rounded text-white transition ${
-            !isValid || isUnchanged || isLoading
-              ? 'bg-gray-400 cursor-not-allowed'
-              : 'bg-green-600 hover:bg-green-700'
+            saveDisabled ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'
           }`}
         >
           {isLoading ? 'Đang lưu...' : 'Lưu'}

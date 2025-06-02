@@ -1,4 +1,4 @@
-//src/components/postmap/ZoomLockController.jsx
+//src/components/postmap/draw/ZoomLockController.jsx
 import { useEffect } from 'react';
 import { useMap } from 'react-leaflet';
 

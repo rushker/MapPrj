@@ -1,4 +1,4 @@
-// src/components/postmap/MapWrapper.jsx
+// src/components/postmap/draw/MapWrapper.jsx
 import { useRef, useCallback } from 'react';
 import { MapContainer, TileLayer } from 'react-leaflet';
 import LeafletMap from './LeafletMap';
