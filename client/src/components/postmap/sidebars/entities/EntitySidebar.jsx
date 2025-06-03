@@ -16,22 +16,38 @@ export default function EntitySidebar({ entity, onChange, onSave, onDelete, onCl
     isValid,
     isUnchanged,
     handleInputChange,
+    handleImagesChange,
   } = useEntityMetadata(entity, onChange);
 
   if (!entity) return null;
 
   const handleImageUpload = async (file) => {
-    const { url } = await uploadImage(file);
-    const updatedImages = [...(metadata.images || []), url];
-    handleInputChange('images')(updatedImages);
+    try {
+      const { url } = await uploadImage(file);
+      const updatedImages = [...(metadata.images || []), url];
+      handleImagesChange(updatedImages); // Sử dụng hàm chuyên dụng
+    } catch (err) {
+      toast.error('Upload ảnh thất bại: ' + err.message);
+    }
   };
 
   const handleImageDelete = async (url) => {
-    const publicId = url.split('/').pop().split('.')[0];
+  try {
+    // Sửa cách trích xuất publicId
+    const publicId = url.match(/upload\/(?:v\d+\/)?([^\.]+)/)?.[1];
+    
+    if (!publicId) {
+      throw new Error('Không thể xác định publicId của ảnh');
+    }
+    
     await deleteImage(publicId);
     const updatedImages = (metadata.images || []).filter((img) => img !== url);
-    handleInputChange('images')(updatedImages);
-  };
+    handleImagesChange(updatedImages); 
+  } catch (err) {
+    console.error('Xóa ảnh thất bại:', err);
+    toast.error('Xóa ảnh thất bại: ' + err.message);
+  }
+};
 
   const handleSaveClick = async () => {
     if (!validate()) return;

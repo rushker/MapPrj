@@ -2,16 +2,11 @@
 import mongoose from 'mongoose';
 
 const AreaSchema = new mongoose.Schema({
-  projectId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Project',
-    required: true,
-  },
   name: {
     type: String,
     required: true,
     trim: true,
-    default: 'Khu chưa đặt tên',  // Default placeholder name
+    default: 'Khu chưa đặt tên', // Placeholder mặc định
   },
   description: {
     type: String,
@@ -30,9 +25,9 @@ const AreaSchema = new mongoose.Schema({
     max: 1,
   },
   lockedZoom: {
-  type: Boolean,
-  default: false,
-},
+    type: Boolean,
+    default: false,
+  },
   polygon: {
     type: {
       type: String,
@@ -40,8 +35,8 @@ const AreaSchema = new mongoose.Schema({
       default: 'Polygon',
     },
     coordinates: {
-      type: [[[Number]]],
-      default: [],  // Allow empty, user will draw later
+      type: [[[Number]]], // Multi-ring polygon
+      default: [], // User sẽ vẽ sau
     },
   },
   minZoom: {
@@ -64,7 +59,7 @@ const AreaSchema = new mongoose.Schema({
   timestamps: true,
 });
 
-AreaSchema.index({ projectId: 1 });           // Index for queries
-AreaSchema.index({ polygon: '2dsphere' });     // Geospatial index
+// Index cho tìm kiếm theo tọa độ
+AreaSchema.index({ polygon: '2dsphere' });
 
 export default mongoose.model('Area', AreaSchema);

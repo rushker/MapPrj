@@ -31,6 +31,10 @@ export default function useAreaMetadata(area, onChange) {
   const handleOpacityChange = (value) => {
     onChange({ ...area, opacity: value });
   };
+  // Thêm hàm reset initial state
+  const resetInitial = () => {
+    setInitialArea(area);
+  };
 
   const isUnchanged = useMemo(() => {
     if (!initialArea) return false;
@@ -51,6 +55,7 @@ export default function useAreaMetadata(area, onChange) {
     handleInputChange,
     handleCheckboxChange,
     handleOpacityChange,
+    resetInitial,
   };
 }
 

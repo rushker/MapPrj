@@ -1,3 +1,4 @@
+//server/controller/areaController.js
 import Area from '../models/Area.js';
 import { handleError, handleNotFound } from '../utils/errorHandler.js';
 

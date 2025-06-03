@@ -39,6 +39,22 @@ export function useEntityMetadata(entity, onChange) {
     onChange({ ...entity, [field]: e.target.checked });
   };
 
+  // Thêm hàm xử lý riêng cho hình ảnh
+const handleImagesChange = (newImages) => {
+  const updated = { 
+    ...entity,
+    metadata: {
+      ...entity.metadata,
+      images: newImages
+    }
+  };
+  onChange(updated);
+};
+  // Thêm hàm reset initial state
+  const resetInitial = () => {
+    setInitialEntity(entity);
+  };
+
   const isUnchanged = useMemo(() => {
     if (!initialEntity) return false;
     return ['name', 'type', 'metadata.description'].every(
@@ -61,5 +77,7 @@ export function useEntityMetadata(entity, onChange) {
     isUnchanged,
     handleInputChange,
     handleCheckboxChange,
+     handleImagesChange,
+    resetInitial,
   };
 }

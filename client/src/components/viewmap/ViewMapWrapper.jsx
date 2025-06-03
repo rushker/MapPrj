@@ -1,6 +1,6 @@
 // src/components/viewmap/ViewMapWrapper.jsx
 import { MapContainer, TileLayer } from 'react-leaflet';
-import MaskOutside from './MaskOutside';
+import MaskOutside from './p2v/MaskOutside';
 import AreaLayer from '../postmap/layers/AreaLayer';
 import EntityLayer from '../postmap/layers/EntityLayer';
 import ViewSidebar from './ViewSidebar';
