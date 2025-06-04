@@ -1,134 +1,117 @@
 // hooks/local/useAutoSave.js
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { updateArea } from '../../services/areas';
 import { updateEntity } from '../../services/entities';
+import { useAreaContext } from '../contexts/AreaContext';
 import toast from 'react-hot-toast';
+import isEqual from 'lodash/isEqual';
 
 const DEBOUNCE_INTERVAL = 20000;
 
-/**
- * useAutoSave - Hook tự động lưu bản nháp thay đổi area và entity theo chu kỳ
- * 
- * @param {string} areaId - ID của khu vực (area)
- * @param {object} areaMetadata - Thông tin metadata của area
- * @param {Array} entityList - Danh sách các entity (Khu C, marker, ...)
- */
-export default function useAutoSave(areaId, areaMetadata, entityList) {
-  // Lưu trữ phiên bản trước của area và entities để so sánh thay đổi
+export default function useAutoSave() {
+  const { areaId, areaMetadata, entities } = useAreaContext();
+
   const prevAreaRef = useRef(null);
-  const prevEntitiesRef = useRef([]);
+  const prevEntityMapRef = useRef(new Map());
   const debounceTimeoutRef = useRef(null);
   const isSavingRef = useRef(false);
 
-  // ----------- So sánh thay đổi area metadata ------------
-  const hasAreaChanged = (current, previous) => {
-    if (!previous) return true;
+  // ==== AREA SO SÁNH ====
+  const hasAreaChanged = useCallback((current, previous) => {
+    if (!current || !previous) return false;
     return (
-      current?.name !== previous?.name ||
-      current?.type !== previous?.type ||
-      current?.description !== previous?.description ||
-      current?.opacity !== previous?.opacity ||
-      current?.lockedZoom !== previous?.lockedZoom
+      current.name !== previous.name ||
+      current.description !== previous.description ||
+      current.type !== previous.type ||
+      current.opacity !== previous.opacity ||
+      current.lockedZoom !== previous.lockedZoom
     );
-  };
+  }, []);
 
-  // ----------- So sánh thay đổi entity dựa trên metadata và geometry ----------
-  const hasEntityChanged = (current, previous) => {
-    if (!previous) return true;
+  // ==== ENTITY SO SÁNH ====
+  const hasEntityChanged = useCallback((current, previous) => {
+    if (!current || !previous) return false;
+
     return (
-      current?.name !== previous?.name ||
-      current?.type !== previous?.type ||
-      current?.metadata?.description !== previous?.metadata?.description ||
-      JSON.stringify(current?.geometry) !== JSON.stringify(previous?.geometry) ||
-      JSON.stringify(current?.metadata?.images || []) !==
-        JSON.stringify(previous?.metadata?.images || [])
+      current.name !== previous.name ||
+      current.type !== previous.type ||
+      !isEqual(current.geometry, previous.geometry) ||
+      !isEqual(current.metadata, previous.metadata)
     );
-  };
+  }, []);
 
-  // ----------- Hàm chính thực hiện lưu dữ liệu ----------
-  const saveChanges = async () => {
-    if (isSavingRef.current) return;
+  // ==== HÀM LƯU CHÍNH ====
+  const saveChanges = useCallback(async () => {
+    if (!areaId || isSavingRef.current) return;
+
     isSavingRef.current = true;
+    const changes = { area: false, entities: [] };
 
     try {
-      const changes = {
-        area: false,
-        entities: []
-      };
-
-      // 1. Lưu area nếu có thay đổi
+      // AREA
       if (hasAreaChanged(areaMetadata, prevAreaRef.current)) {
         await updateArea(areaId, areaMetadata);
         changes.area = true;
       }
 
-      // 2. Tạo map từ _id → entity trước đó để so sánh hiệu quả hơn
-      const prevEntityMap = Object.fromEntries(
-        prevEntitiesRef.current.map(e => [e._id, e])
-      );
+      // ENTITIES
+      const updatePromises = entities
+        .filter(entity => {
+          const prev = prevEntityMapRef.current.get(entity._id);
+          return hasEntityChanged(entity, prev);
+        })
+        .map(entity =>
+          updateEntity(entity._id, entity)
+            .then(() => entity._id)
+            .catch(() => null)
+        );
 
-      // 3. Duyệt danh sách hiện tại và so sánh từng entity theo _id
-      const entityUpdates = entityList.map(entity => {
-        const prevEntity = prevEntityMap[entity._id];
-        if (hasEntityChanged(entity, prevEntity)) {
-          return updateEntity(entity._id, {
-            name: entity.name,
-            type: entity.type,
-            geometry: entity.geometry,
-            metadata: {
-              description: entity.metadata?.description || '',
-              images: entity.metadata?.images || []
-            }
-          }).then(() => entity._id); // Trả về _id nếu đã cập nhật
-        }
-        return Promise.resolve(null); // Không thay đổi
-      });
-
-      // 4. Thực hiện tất cả các cập nhật song song
-      const updatedIds = (await Promise.all(entityUpdates)).filter(Boolean);
+      const updatedIds = (await Promise.all(updatePromises)).filter(Boolean);
       changes.entities = updatedIds;
 
-      // 5. Hiển thị thông báo nếu có thay đổi
       if (changes.area || changes.entities.length > 0) {
-        console.log('[AutoSave] ✅ Saved changes:', changes);
         toast.success('Đã tự động lưu bản nháp');
-
-        // Cập nhật reference sau khi lưu thành công
+        // Update refs
         prevAreaRef.current = { ...areaMetadata };
-        prevEntitiesRef.current = [...entityList];
+        prevEntityMapRef.current = new Map(
+          entities.map(e => [e._id, { ...e }])
+        );
       }
     } catch (err) {
-      console.error('[AutoSave] ❌ Save error:', err);
+      console.error(err);
       toast.error('Tự động lưu thất bại');
     } finally {
       isSavingRef.current = false;
     }
-  };
+  }, [areaId, areaMetadata, entities, hasAreaChanged, hasEntityChanged]);
 
-  // --------------- Debounce tự động lưu sau mỗi lần thay đổi ----------------
+  // ==== DEBOUNCE AUTO SAVE ====
   useEffect(() => {
     if (!areaId) return;
 
-    if (debounceTimeoutRef.current) {
-      clearTimeout(debounceTimeoutRef.current);
+    // Khởi tạo initial
+    if (!prevAreaRef.current) {
+      prevAreaRef.current = { ...areaMetadata };
+    }
+
+    if (prevEntityMapRef.current.size === 0) {
+      prevEntityMapRef.current = new Map(
+        entities.map(e => [e._id, { ...e }])
+      );
     }
 
     debounceTimeoutRef.current = setTimeout(saveChanges, DEBOUNCE_INTERVAL);
 
     return () => {
-      if (debounceTimeoutRef.current) {
-        clearTimeout(debounceTimeoutRef.current);
-      }
-    };
-  }, [areaId, areaMetadata, entityList]);
-
-  // ---------------- Lưu thủ công khi cần thiết (gọi từ ngoài) ---------------
-  const manualSave = () => {
-    if (debounceTimeoutRef.current) {
       clearTimeout(debounceTimeoutRef.current);
-    }
+    };
+  }, [areaId, areaMetadata, entities, saveChanges]);
+
+  // ==== MANUAL SAVE ====
+  const manualSave = useCallback(() => {
+    clearTimeout(debounceTimeoutRef.current);
     return saveChanges();
-  };
+  }, [saveChanges]);
 
   return { manualSave };
 }

@@ -4,7 +4,7 @@ import { useRef } from 'react';
 import useGeomanEvents from './useGeomanEvents';
 import AreaLayer from './layers/AreaLayer';
 import EntityLayer from './layers/EntityLayer';
-
+import { useAreaContext } from '../../../contexts/AreaContext';
 /**
  * LeafletMap là component trung tâm quản lý bản đồ tương tác:
  * - Hiển thị khu A (AreaLayer) và các entity con (EntityLayer)
@@ -43,7 +43,8 @@ export default function LeafletMap({
   onCreateEntity = () => {},
 }) {
   const mapRef = useRef(null);
-
+   const { areaId } = useAreaContext();
+   
   // Tích hợp sự kiện vẽ/sửa/xóa qua leaflet-geoman
   useGeomanEvents({
     mapRef,
@@ -55,6 +56,14 @@ export default function LeafletMap({
     onCreateKhuA,
     onCreateEntity,
   });
+  // Thêm areaId vào các callback
+  const handleCreateKhuA = (polygon) => {
+    onCreateKhuA({ ...polygon, areaId });
+  };
+
+  const handleCreateEntity = (entity) => {
+    onCreateEntity({ ...entity, areaId });
+  };
 
   return (
     <MapContainer
@@ -75,6 +84,7 @@ export default function LeafletMap({
 
       {/* Lớp hiển thị tất cả các entity (polygon và marker) */}
       <EntityLayer
+      areaId={areaId}
         entities={entities}
         selectedEntityId={selectedEntityId}
         onSelectEntity={onSelectEntity}

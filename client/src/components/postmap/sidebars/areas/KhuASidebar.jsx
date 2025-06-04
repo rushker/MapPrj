@@ -4,26 +4,26 @@ import { toast } from 'react-hot-toast';
 import OpacitySlider from './OpacitySlider';
 import useAreaMetadata from '../../../../hooks/local/metadata/useAreaMetadata';
 
-
-export default function KhuASidebar({ entity, onChange, onSave, onDelete }) {
+export default function KhuASidebar({ onSave, onDelete }) {
   const [isLoading, setIsLoading] = useState(false);
 
   const {
+    areaMetadata,
     errors,
     validate,
     isUnchanged,
     isValid,
     handleInputChange,
     handleOpacityChange,
-  } = useAreaMetadata(entity, onChange);
+  } = useAreaMetadata();
 
-  if (!entity) return <div className="p-4">Chưa chọn Khu A</div>;
+  if (!areaMetadata) return <div className="p-4">Chưa chọn Khu A</div>;
 
   const handleSaveClick = async () => {
     if (!validate()) return;
     setIsLoading(true);
     try {
-      await onSave(entity);
+      await onSave(areaMetadata);
       toast.success('Đã lưu Khu A thành công');
     } catch (err) {
       console.error(err);
@@ -44,7 +44,7 @@ export default function KhuASidebar({ entity, onChange, onSave, onDelete }) {
         <input
           type="text"
           placeholder="Tên khu A"
-          value={entity.name || ''}
+          value={areaMetadata.name || ''}
           onChange={handleInputChange('name')}
           className={`w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 ${
             errors.name ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-blue-500'
@@ -56,7 +56,7 @@ export default function KhuASidebar({ entity, onChange, onSave, onDelete }) {
       {/* Mô tả */}
       <textarea
         placeholder="Mô tả"
-        value={entity.description || ''}
+        value={areaMetadata.description || ''}
         onChange={handleInputChange('description')}
         className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
         rows={3}
@@ -67,7 +67,7 @@ export default function KhuASidebar({ entity, onChange, onSave, onDelete }) {
         <input
           type="text"
           placeholder="Loại khu (type)"
-          value={entity.type || ''}
+          value={areaMetadata.type || ''}
           onChange={handleInputChange('type')}
           className={`w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 ${
             errors.type ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-blue-500'
@@ -78,8 +78,9 @@ export default function KhuASidebar({ entity, onChange, onSave, onDelete }) {
 
       {/* Opacity */}
       <div className="pt-4 border-t">
-        <OpacitySlider value={entity.opacity ?? 0.2} onChange={handleOpacityChange} />
+        <OpacitySlider value={areaMetadata.opacity ?? 0.2} onChange={handleOpacityChange} />
       </div>
+
       {/* Buttons */}
       <div className="pt-6 flex justify-between">
         <button
@@ -103,3 +104,4 @@ export default function KhuASidebar({ entity, onChange, onSave, onDelete }) {
     </div>
   );
 }
+
