@@ -11,7 +11,7 @@ export default function EntitySidebar({ entity, onChange, onSave, onDelete, onCl
   const config = SIDEBAR_CONFIG[entity?.type] || {};
 
   const {
-    metadata,
+    entity: currentEntity,
     validate,
     isValid,
     isUnchanged,
@@ -24,36 +24,32 @@ export default function EntitySidebar({ entity, onChange, onSave, onDelete, onCl
   const handleImageUpload = async (file) => {
     try {
       const { url } = await uploadImage(file);
-      const updatedImages = [...(metadata.images || []), url];
-      handleImagesChange(updatedImages); // Sử dụng hàm chuyên dụng
+      const updatedImages = [...(currentEntity.metadata?.images || []), url];
+      handleImagesChange(updatedImages);
     } catch (err) {
       toast.error('Upload ảnh thất bại: ' + err.message);
     }
   };
 
   const handleImageDelete = async (url) => {
-  try {
-    // Sửa cách trích xuất publicId
-    const publicId = url.match(/upload\/(?:v\d+\/)?([^\.]+)/)?.[1];
-    
-    if (!publicId) {
-      throw new Error('Không thể xác định publicId của ảnh');
+    try {
+      const publicId = url.match(/upload\/(?:v\d+\/)?([^\.]+)/)?.[1];
+      if (!publicId) throw new Error('Không thể xác định publicId của ảnh');
+
+      await deleteImage(publicId);
+      const updatedImages = (currentEntity.metadata?.images || []).filter((img) => img !== url);
+      handleImagesChange(updatedImages);
+    } catch (err) {
+      console.error('Xóa ảnh thất bại:', err);
+      toast.error('Xóa ảnh thất bại: ' + err.message);
     }
-    
-    await deleteImage(publicId);
-    const updatedImages = (metadata.images || []).filter((img) => img !== url);
-    handleImagesChange(updatedImages); 
-  } catch (err) {
-    console.error('Xóa ảnh thất bại:', err);
-    toast.error('Xóa ảnh thất bại: ' + err.message);
-  }
-};
+  };
 
   const handleSaveClick = async () => {
     if (!validate()) return;
     setIsLoading(true);
     try {
-      await onSave(metadata);
+      await onSave(currentEntity); // ✅ Gửi toàn bộ entity
       toast.success('Đã lưu entity thành công');
     } catch (err) {
       console.error(err);
@@ -73,7 +69,7 @@ export default function EntitySidebar({ entity, onChange, onSave, onDelete, onCl
       <label className="block text-sm font-medium mb-1">Tên</label>
       <input
         className="w-full border px-2 py-1 rounded mb-3"
-        value={metadata.name || ''}
+        value={currentEntity.name || ''}
         onChange={(e) => handleInputChange('name')(e.target.value)}
         placeholder="Nhập tên"
       />
@@ -82,14 +78,14 @@ export default function EntitySidebar({ entity, onChange, onSave, onDelete, onCl
       <label className="block text-sm font-medium mb-1">Mô tả</label>
       <textarea
         className="w-full border px-2 py-1 rounded mb-3"
-        value={metadata.metadata?.description || ''}
+        value={currentEntity.metadata?.description || ''}
         onChange={(e) => handleInputChange('metadata.description')(e.target.value)}
         placeholder="Mô tả ngắn"
       />
 
       {/* Image Upload */}
       <ImageUploader
-        images={metadata.images || []}
+        images={currentEntity.metadata?.images || []}
         onUpload={handleImageUpload}
         onDelete={handleImageDelete}
       />
