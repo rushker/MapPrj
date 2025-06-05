@@ -2,7 +2,7 @@
 import PolygonLayer from '../shapes/PolygonLayer';
 import MarkerLayer from '../shapes/MarkerLayer';
 import useSeparateEntities from '../../../../hooks/useSeparateEntities';
-import { useAreaContext } from '../../../contexts/AreaContext';
+import { useAreaContext } from '../../../../context/AreaContext';
 
 const EntityLayer = ({ selectedEntityId, onSelectEntity }) => {
   const { entities } = useAreaContext();

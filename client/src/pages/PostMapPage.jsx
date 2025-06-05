@@ -1,9 +1,9 @@
 // src/pages/PostMapPage.jsx
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../routes';
-import useAutoSave from '../hooks/useAutoSave';
-import { AreaProvider, useAreaContext } from '../contexts/AreaContext';
-import Wrapper from '../components/postmap/Wrapper';
+import useAutoSave from '../hooks/local/useAutoSave';
+import { AreaProvider, useAreaContext } from '../context/AreaContext';
+import Wrapper from '../components/postmap/draw/Wrapper';
 import toast from 'react-hot-toast';
 import * as api from '../services/areas'; // Giả định bạn có uploadArea tại đây
 

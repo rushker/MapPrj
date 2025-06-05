@@ -4,7 +4,7 @@ import { useRef } from 'react';
 import useGeomanEvents from './useGeomanEvents';
 import AreaLayer from './layers/AreaLayer';
 import EntityLayer from './layers/EntityLayer';
-import { useAreaContext } from '../../../contexts/AreaContext';
+import { useAreaContext } from '../../../context/AreaContext';
 /**
  * LeafletMap là component trung tâm quản lý bản đồ tương tác:
  * - Hiển thị khu A (AreaLayer) và các entity con (EntityLayer)

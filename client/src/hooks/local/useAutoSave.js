@@ -2,7 +2,7 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { updateArea } from '../../services/areas';
 import { updateEntity } from '../../services/entities';
-import { useAreaContext } from '../contexts/AreaContext';
+import { useAreaContext } from '../../context/AreaContext';
 import toast from 'react-hot-toast';
 import isEqual from 'lodash/isEqual';
 

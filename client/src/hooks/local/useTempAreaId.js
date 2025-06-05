@@ -1,6 +1,6 @@
 // hooks/local/useTempAreaId.js
 // ✅ Hook quản lý areaId tạm thời trong localStorage (không phụ thuộc route)
-import { useAreaContext } from '../contexts/AreaContext';
+import { useAreaContext } from '../../context/AreaContext';
 
 const LOCAL_KEY = 'currentAreaId';
 
