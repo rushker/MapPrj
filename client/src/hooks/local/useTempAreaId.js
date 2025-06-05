@@ -12,9 +12,10 @@ export function useTempAreaId() {
   const { areaId, setAreaId } = useAreaContext();
 
   const saveAreaId = (id) => {
-    localStorage.setItem(LOCAL_KEY, id);
-    setAreaId(id);
-  };
+  if (!id || id === areaId) return;
+  localStorage.setItem(LOCAL_KEY, id);
+  setAreaId(id);
+};
 
   const clearAreaId = () => {
     localStorage.removeItem(LOCAL_KEY);

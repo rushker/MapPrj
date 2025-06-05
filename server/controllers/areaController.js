@@ -116,7 +116,7 @@ export const searchAreas = async (req, res) => {
     const areas = await Area.find({
       $or: [
         { name: regex },
-        { tags: { $in: [regex] } }, // nếu tags có tồn tại
+        { tags: regex }
       ],
     });
 

@@ -26,7 +26,6 @@ const useGeomanEvents = ({
   onCreateKhuA,
   onCreateEntity,
 }) => {
-  // Thêm controls chỉ 1 lần khi map được tạo
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
@@ -46,19 +45,17 @@ const useGeomanEvents = ({
     };
   }, [mapRef]);
 
-  // Effect chính quản lý bật/tắt chế độ và event
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
 
-    // Bật/tắt draw
+    // Apply drawing tools
     if (enableDraw && drawShape) {
       map.pm.enableDraw(drawShape);
     } else if (drawShape) {
       map.pm.disableDraw(drawShape);
     }
 
-    // Bật/tắt edit, drag, remove
     if (enableEdit) {
       map.pm.enableGlobalEditMode();
     } else {
@@ -77,39 +74,44 @@ const useGeomanEvents = ({
       map.pm.disableGlobalRemovalMode();
     }
 
-    // Event tạo layer mới
     const handleCreate = (e) => {
       const { layer, shape } = e;
       const geoJson = layer.toGeoJSON();
       const coords = geoJson.geometry.coordinates;
 
-      switch (shape) {
-        case 'Rectangle':
-        case 'Polygon':
-          if (onCreateKhuA) {
-            onCreateKhuA(coords);
-          } else if (onCreateEntity) {
-            onCreateEntity({ type: 'polygon', coordinates: coords });
-          }
-          break;
-        case 'Marker': {
-          const latlng = layer.getLatLng();
-          if (onCreateEntity) {
-            onCreateEntity({ type: 'marker', coordinates: [latlng.lng, latlng.lat] });
-          }
-          break;
+      if (shape === 'Rectangle') {
+        // Khu A - luôn là rectangle
+        if (onCreateKhuA) {
+          onCreateKhuA({
+            type: 'polygon',
+            coordinates: coords,
+          });
         }
-        default:
-          break;
+      } else if (shape === 'Polygon') {
+        // Entity - Polygon
+        if (onCreateEntity) {
+          onCreateEntity({
+            type: 'polygon',
+            coordinates: coords,
+          });
+        }
+      } else if (shape === 'Marker') {
+        // Entity - Marker
+        const latlng = layer.getLatLng();
+        if (onCreateEntity) {
+          onCreateEntity({
+            type: 'marker',
+            coordinates: [latlng.lng, latlng.lat],
+          });
+        }
       }
 
-      // Remove layer sau khi lấy data, vì ta quản lý layer qua state/entity
+      // Cleanup layer after create
       layer.remove();
     };
 
     map.on('pm:create', handleCreate);
 
-    // Cleanup khi unmount hoặc deps thay đổi
     return () => {
       map.off('pm:create', handleCreate);
       if (drawShape) {

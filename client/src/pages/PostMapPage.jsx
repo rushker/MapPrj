@@ -1,111 +1,55 @@
 // src/pages/PostMapPage.jsx
-import { useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { SidebarProvider, useSidebarContext } from '../context/SidebarContext';
-import MapWrapper from '../components/postmap/MapWrapper';
-import SidebarContainer from '../components/sidebars/SidebarContainer';
-import { ROUTES } from '../routes'
+import { useNavigate } from 'react-router-dom';
+import { ROUTES } from '../routes';
+import useAutoSave from '../hooks/useAutoSave';
+import { AreaProvider, useAreaContext } from '../contexts/AreaContext';
+import Wrapper from '../components/postmap/Wrapper';
+import toast from 'react-hot-toast';
+import * as api from '../services/areas'; // Giả định bạn có uploadArea tại đây
 
-import useArea from '../hooks/use/useMapArea';
-import useMapEntities from '../hooks/use/useMapEntities';
-
-// Tách ra component con để dùng useSidebarContext hook
-function PostMapContent({ projectId, areaId }) {
-  const navigate = useNavigate();
-
-  const {
-    khuA,
-    loading: loadingA,
-    error: errorA,
-    saveKhuA,
-    removeKhuA,
-    setKhuA,
-  } = useArea(projectId, areaId);
-
-  const {
-    entities,
-    khuCs,
-    markers,
-    loading: loadingE,
-    createEntity,
-    updateEntity,
-    deleteEntity,
-    refresh,
-  } = useMapEntities(projectId, areaId);
-
-  useEffect(() => {
-    if (khuA?._id) refresh();
-  }, [khuA, refresh]);
-
-  const {
-    editingEntity,
-    openSidebar,
-  } = useSidebarContext();
-
-  if (loadingA || loadingE) return <div>Đang tải...</div>;
-  if (errorA) return <div>Lỗi: {errorA.message}</div>;
-
-  // Nút chuyển sang ViewMap chỉ hiển thị khi có khuA (areaId)
-  const canViewMap = Boolean(khuA?._id);
-
+// 👉 Bọc toàn bộ page trong AreaProvider
+export default function PostMapPage() {
   return (
-    <div className="flex h-screen relative">
-      {/* Nút chuyển sang chế độ xem bản đồ */}
-      {canViewMap && (
-        <div className="absolute top-4 right-4 z-[1000]">
-          <button
-            onClick={() => navigate(ROUTES.VIEW_MAP(projectId, khuA._id))}
-            className="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700 transition"
-            title="Chuyển sang chế độ xem bản đồ"
-          >
-            Xem bản đồ
-          </button>
-        </div>
-      )}
-
-      <MapWrapper
-        center={[21.0278, 105.8342]}
-        zoom={13}
-        enableDraw={!khuA}
-        drawShape="Rectangle"
-        onCreateKhuA={(coords) =>
-          setKhuA({ ...khuA, coordinates: coords })
-        }
-        onSaveKhuA={saveKhuA}
-        onDeleteKhuA={removeKhuA}
-        khuA={khuA}
-        entities={entities}
-        selectedEntityId={editingEntity?._id || null}
-        onSelectEntity={(id) => {
-          const entity = entities.find(e => e._id === id);
-          if (entity) openSidebar(entity.type, entity);
-        }}
-        onUpdateEntity={(id, data) => updateEntity(id, data)}
-        onDeleteEntity={(id) => deleteEntity(id)}
-        onCreateEntity={(entity) => createEntity(entity.type, entity)}
-      />
-
-      <SidebarContainer
-        khuA={khuA}
-        onSaveKhuA={saveKhuA}
-        onDeleteKhuA={removeKhuA}
-        khuCs={khuCs}
-        markers={markers}
-        onSaveEntity={(id, data) =>
-          id ? updateEntity(id, data) : createEntity(data.type, data)
-        }
-        onDeleteEntity={(id) => deleteEntity(id)}
-      />
-    </div>
+    <AreaProvider>
+      <PostMapContent />
+    </AreaProvider>
   );
 }
 
-export default function PostMapPage() {
-  const { projectId, areaId } = useParams();
+// 👉 Logic chính tách riêng để gọi được useAreaContext
+function PostMapContent() {
+  const navigate = useNavigate();
+  const { manualSave } = useAutoSave();
+  const { areaId } = useAreaContext();
+
+  const handleUpload = async () => {
+    await manualSave(); // đảm bảo entity + metadata đã được save
+    try {
+      await api.uploadArea(areaId); // Gọi API upload
+      toast.success('Đã upload bản đồ thành công');
+      navigate(ROUTES.VIEW_MAP(areaId)); // Điều hướng sau upload
+    } catch (error) {
+      toast.error('Upload thất bại');
+    }
+  };
 
   return (
-    <SidebarProvider>
-      <PostMapContent projectId={projectId} areaId={areaId} />
-    </SidebarProvider>
+    <div className="flex flex-col h-screen">
+      {/* Thanh điều hướng trên cùng */}
+      <div className="flex justify-between p-4 bg-gray-100">
+        <button onClick={() => navigate(ROUTES.MANAGER_PAGE)}>← Quay lại danh sách</button>
+        <div className="flex gap-4">
+          <button onClick={handleUpload} className="btn btn-primary">📤 Upload bản đồ</button>
+          {areaId && (
+            <button onClick={() => navigate(ROUTES.VIEW_MAP(areaId))} className="btn btn-secondary">
+              👁️ Xem thử
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Bản đồ và sidebar */}
+      <Wrapper />
+    </div>
   );
 }

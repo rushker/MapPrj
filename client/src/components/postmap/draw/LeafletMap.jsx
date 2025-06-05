@@ -26,7 +26,7 @@ import { useAreaContext } from '../../../contexts/AreaContext';
  * @param {function} onCreateEntity - callback khi user vẽ xong entity (polygon / marker)
  */
 export default function LeafletMap({
-  khuA = null,
+  areaMetadata = null,
   entities = [],
   selectedEntityId = null,
   onSelectEntity = () => {},
@@ -38,14 +38,22 @@ export default function LeafletMap({
   enableDrag = false,
   enableRemove = false,
 
-  // Callbacks khi tạo mới
-  onCreateKhuA = () => {},
+  // Callbacks
+  onCreateArea = () => {},
   onCreateEntity = () => {},
 }) {
   const mapRef = useRef(null);
-   const { areaId } = useAreaContext();
-   
-  // Tích hợp sự kiện vẽ/sửa/xóa qua leaflet-geoman
+  const { areaId } = useAreaContext();
+
+  // === Callbacks xử lý vẽ xong
+  const handleCreateArea = (polygon) => {
+    onCreateArea({ ...polygon, areaId });
+  };
+
+  const handleCreateEntity = (entity) => {
+    onCreateEntity({ ...entity, areaId });
+  };
+
   useGeomanEvents({
     mapRef,
     enableDraw,
@@ -53,21 +61,13 @@ export default function LeafletMap({
     enableEdit,
     enableDrag,
     enableRemove,
-    onCreateKhuA,
-    onCreateEntity,
+    onCreateKhuA: handleCreateArea,
+    onCreateEntity: handleCreateEntity,
   });
-  // Thêm areaId vào các callback
-  const handleCreateKhuA = (polygon) => {
-    onCreateKhuA({ ...polygon, areaId });
-  };
-
-  const handleCreateEntity = (entity) => {
-    onCreateEntity({ ...entity, areaId });
-  };
 
   return (
     <MapContainer
-      center={[10.762622, 106.660172]} // default: Hồ Con Rùa
+      center={[10.762622, 106.660172]}
       zoom={16}
       style={{ height: '100%', width: '100%' }}
       whenCreated={(mapInstance) => {
@@ -79,12 +79,12 @@ export default function LeafletMap({
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
 
-      {/* Lớp hiển thị polygon khu A */}
-      {khuA && <AreaLayer area={khuA} />}
+      {/* Khu vực */}
+      {areaMetadata && <AreaLayer area={areaMetadata} />}
 
-      {/* Lớp hiển thị tất cả các entity (polygon và marker) */}
+      {/* Entities */}
       <EntityLayer
-      areaId={areaId}
+        areaId={areaId}
         entities={entities}
         selectedEntityId={selectedEntityId}
         onSelectEntity={onSelectEntity}
