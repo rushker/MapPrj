@@ -1,61 +1,50 @@
 // src/components/viewmap/ViewMapWrapper.jsx
-import { MapContainer, TileLayer } from 'react-leaflet';
-import MaskOutside from './p2v/MaskOutside';
-import AreaLayer from '../postmap/layers/AreaLayer';
-import EntityLayer from '../postmap/layers/EntityLayer';
-import ViewSidebar from './ViewSidebar';
+import { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import LeafletMap from '../LeafletMap';
+import { getAreaById } from '../../../services/areas';
+import { getEntitiesByArea } from '../../../services/entities';
+import toast from 'react-hot-toast';
 
-const isValidPolygon = (polygon) =>
-  Array.isArray(polygon) &&
-  polygon.length >= 3 &&
-  polygon.every(
-    (pt) =>
-      Array.isArray(pt) &&
-      pt.length === 2 &&
-      typeof pt[0] === 'number' &&
-      typeof pt[1] === 'number'
-  );
+export default function ViewMapWrapper() {
+  const { areaId } = useParams();
+  const [area, setArea] = useState(null);
+  const [entities, setEntities] = useState([]);
+  const [selectedEntityId, setSelectedEntityId] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-export default function ViewMapWrapper({ khuA, entities = [] }) {
-  if (!khuA) return <div className="p-4">Không có dữ liệu khu A</div>;
+  const isEditMode = false;
 
-  const validPolygon = isValidPolygon(khuA.polygon);
-  const mapCenter = validPolygon ? khuA.polygon[0] : [10.762622, 106.660172];
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [areaRes, entityRes] = await Promise.all([
+          getAreaById(areaId),
+          getEntitiesByArea(areaId),
+        ]);
+        setArea(areaRes || null);
+        setEntities(entityRes || []);
+      } catch (err) {
+        toast.error('Không thể tải dữ liệu bản đồ');
+        console.error('Lỗi khi tải ViewMap:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const khuCs = entities.filter((e) => e.type === 'khuC');
-  const markers = entities.filter((e) => e.type === 'marker');
+    if (areaId) fetchData();
+  }, [areaId]);
+
+  if (loading) return <div className="text-center mt-8">Đang tải bản đồ...</div>;
+  if (!area) return <div className="text-center mt-8 text-red-500">Không tìm thấy khu vực</div>;
 
   return (
-    <div className="flex relative">
-      <div className="flex-1">
-        <MapContainer
-          center={mapCenter}
-          zoom={17}
-          style={{ height: '100vh', width: '100%' }}
-          scrollWheelZoom={false}
-          attributionControl={true}
-        >
-          <TileLayer
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            attribution="&copy; OpenStreetMap contributors"
-          />
-          {validPolygon && (
-            <>
-              <MaskOutside khuAPolygon={khuA.polygon} />
-              <AreaLayer area={khuA} showLabel />
-              <EntityLayer khuCs={khuCs} markers={markers} />
-            </>
-          )}
-        </MapContainer>
-      </div>
-
-      {!validPolygon && (
-        <div className="absolute top-4 left-4 bg-white p-3 rounded shadow text-sm text-red-600 z-[1000]">
-          Polygon không hợp lệ – không thể hiển thị khu A.
-        </div>
-      )}
-
-      <ViewSidebar area={khuA} khuCs={khuCs} markers={markers} />
-    </div>
+    <LeafletMap
+      areaMetadata={area}
+      entities={entities}
+      selectedEntityId={selectedEntityId}
+      onSelectEntity={setSelectedEntityId}
+      readOnly={!isEditMode}
+    />
   );
 }

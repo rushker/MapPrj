@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../routes';
 import useAutoSave from '../hooks/local/useAutoSave';
 import { AreaProvider, useAreaContext } from '../context/AreaContext';
-import Wrapper from '../components/postmap/draw/Wrapper';
+import PostMapWrapper from '../components/postmap/draw/PostMapWrapper';
 import toast from 'react-hot-toast';
 import * as api from '../services/areas'; // Giả định bạn có uploadArea tại đây
 
@@ -49,7 +49,7 @@ function PostMapContent() {
       </div>
 
       {/* Bản đồ và sidebar */}
-      <Wrapper />
+      <PostMapWrapper />
     </div>
   );
 }

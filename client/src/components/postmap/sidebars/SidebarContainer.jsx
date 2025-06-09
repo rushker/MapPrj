@@ -2,42 +2,52 @@
 import { lazy, Suspense, memo } from 'react';
 import { useSidebarContext } from '../../../context/SidebarContext';
 
-// Lazy load từng sidebar theo loại chỉnh sửa
 const KhuASidebar = lazy(() => import('./areas/KhuASidebar'));
 const EntitySidebar = lazy(() => import('./entities/EntitySidebar'));
 
-// Mapping sidebar component theo loại
 const SIDEBAR_COMPONENTS = {
   area: KhuASidebar,
   entity: EntitySidebar,
 };
 
-function SidebarContainer() {
+function SidebarContainer({ onSaveAreaMetadata, onSaveEntity }) {
   const {
     sidebarOpen,
     editingType,
-    editingEntity,
-    setEditingEntity,
-    handleSave,
-    handleDelete,
+    editingData,
+    setEditingData,
     closeSidebar,
+    handleDelete,
   } = useSidebarContext();
 
   if (!sidebarOpen) return null;
 
   const SidebarComponent = SIDEBAR_COMPONENTS[editingType];
 
+  const commonProps = {
+    onClose: closeSidebar,
+    onDelete: handleDelete,
+  };
+
+  const sidebarProps =
+    editingType === 'area'
+      ? {
+          metadata: editingData,
+          onSave: onSaveAreaMetadata,
+          ...commonProps,
+        }
+      : {
+          entity: editingData,
+          onChange: setEditingData,
+          onSave: onSaveEntity,
+          ...commonProps,
+        };
+
   return (
     <div className="w-[320px] bg-white border-l h-full shadow-lg">
       <Suspense fallback={<div className="p-4">Đang tải...</div>}>
-        {SidebarComponent && editingEntity ? (
-          <SidebarComponent
-            entity={editingEntity}
-            onChange={setEditingEntity}
-            onSave={handleSave}
-            onDelete={handleDelete}
-            onClose={closeSidebar}
-          />
+        {SidebarComponent ? (
+          <SidebarComponent {...sidebarProps} />
         ) : (
           <div className="p-4 text-gray-500">Chọn một đối tượng để chỉnh sửa.</div>
         )}

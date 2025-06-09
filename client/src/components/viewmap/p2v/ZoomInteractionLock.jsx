@@ -2,28 +2,25 @@
 import { useEffect } from 'react';
 import { useMap } from 'react-leaflet';
 
+/**
+ * Lock các tương tác zoom, pan, v.v. nếu `locked = true`
+ * Đồng thời set maxZoom nếu truyền vào
+ */
 const ZoomInteractionLock = ({ locked }) => {
   const map = useMap();
 
   useEffect(() => {
     if (!map) return;
 
-    if (locked) {
-      map.scrollWheelZoom.disable();
-      map.doubleClickZoom.disable();
-      map.touchZoom.disable();
-      map.boxZoom.disable();
-      map.keyboard.disable();
-    } else {
-      map.scrollWheelZoom.enable();
-      map.doubleClickZoom.enable();
-      map.touchZoom.enable();
-      map.boxZoom.enable();
-      map.keyboard.enable();
-    }
+    const toggle = locked ? 'disable' : 'enable';
+    map.scrollWheelZoom[toggle]();
+    map.doubleClickZoom[toggle]();
+    map.touchZoom[toggle]();
+    map.boxZoom[toggle]();
+    map.keyboard[toggle]();
 
     return () => {
-      // Always clean up (re-enable interactions)
+      // Luôn mở lại khi unmount
       map.scrollWheelZoom.enable();
       map.doubleClickZoom.enable();
       map.touchZoom.enable();
@@ -36,3 +33,4 @@ const ZoomInteractionLock = ({ locked }) => {
 };
 
 export default ZoomInteractionLock;
+

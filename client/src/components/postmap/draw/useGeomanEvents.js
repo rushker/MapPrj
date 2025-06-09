@@ -1,4 +1,3 @@
-// src/components/postmap/draw/useGeomanEvents.js
 import { useEffect } from 'react';
 
 /**
@@ -8,11 +7,11 @@ import { useEffect } from 'react';
  *
  * @param {object} mapRef - ref đến Map instance
  * @param {object} options
- * @param {boolean} options.enableDraw - bật/tắt chế độ vẽ
- * @param {string} options.drawShape - loại shape để vẽ: 'Polygon', 'Rectangle', 'Marker', hoặc null
- * @param {boolean} options.enableEdit - bật/tắt chế độ chỉnh sửa polygon, marker đã có
- * @param {boolean} options.enableDrag - bật/tắt chế độ kéo thả các layer
- * @param {boolean} options.enableRemove - bật/tắt chế độ xóa layer
+ * @param {boolean} [options.enableDraw] - bật/tắt chế độ vẽ
+ * @param {string|null} [options.drawShape] - loại shape để vẽ: 'Polygon', 'Rectangle', 'Marker', hoặc null
+ * @param {boolean} [options.enableEdit] - bật/tắt chế độ chỉnh sửa polygon, marker đã có
+ * @param {boolean} [options.enableDrag] - bật/tắt chế độ kéo thả các layer
+ * @param {boolean} [options.enableRemove] - bật/tắt chế độ xóa layer
  * @param {function} options.onCreateKhuA - callback khi tạo khu A (polygon/rectangle)
  * @param {function} options.onCreateEntity - callback khi tạo entity khác (polygon, marker)
  */
@@ -30,6 +29,7 @@ const useGeomanEvents = ({
     const map = mapRef.current;
     if (!map) return;
 
+    // Khởi tạo controls leaflet-geoman với tắt hết
     map.pm.addControls({
       position: 'topleft',
       drawPolygon: false,
@@ -49,56 +49,54 @@ const useGeomanEvents = ({
     const map = mapRef.current;
     if (!map) return;
 
-    // Apply drawing tools
+    // Tắt hết trước, tránh trạng thái sót
+    map.pm.disableGlobalEditMode();
+    map.pm.disableGlobalDragMode();
+    map.pm.disableGlobalRemovalMode();
+    if (drawShape) {
+      map.pm.disableDraw(drawShape);
+    }
+
+    // Bật các chế độ theo props nếu có
     if (enableDraw && drawShape) {
       map.pm.enableDraw(drawShape);
-    } else if (drawShape) {
-      map.pm.disableDraw(drawShape);
     }
 
     if (enableEdit) {
       map.pm.enableGlobalEditMode();
-    } else {
-      map.pm.disableGlobalEditMode();
     }
 
     if (enableDrag) {
       map.pm.enableGlobalDragMode();
-    } else {
-      map.pm.disableGlobalDragMode();
     }
 
     if (enableRemove) {
       map.pm.enableGlobalRemovalMode();
-    } else {
-      map.pm.disableGlobalRemovalMode();
     }
 
+    // Xử lý sự kiện tạo layer mới
     const handleCreate = (e) => {
       const { layer, shape } = e;
       const geoJson = layer.toGeoJSON();
       const coords = geoJson.geometry.coordinates;
 
       if (shape === 'Rectangle') {
-        // Khu A - luôn là rectangle
-        if (onCreateKhuA) {
+        if (typeof onCreateKhuA === 'function') {
           onCreateKhuA({
             type: 'polygon',
             coordinates: coords,
           });
         }
       } else if (shape === 'Polygon') {
-        // Entity - Polygon
-        if (onCreateEntity) {
+        if (typeof onCreateEntity === 'function') {
           onCreateEntity({
             type: 'polygon',
             coordinates: coords,
           });
         }
       } else if (shape === 'Marker') {
-        // Entity - Marker
         const latlng = layer.getLatLng();
-        if (onCreateEntity) {
+        if (typeof onCreateEntity === 'function') {
           onCreateEntity({
             type: 'marker',
             coordinates: [latlng.lng, latlng.lat],
@@ -106,20 +104,21 @@ const useGeomanEvents = ({
         }
       }
 
-      // Cleanup layer after create
+      // Xóa layer vẽ sau khi tạo để tránh lưu layer tạm trên map
       layer.remove();
     };
 
     map.on('pm:create', handleCreate);
 
+    // Cleanup
     return () => {
       map.off('pm:create', handleCreate);
-      if (drawShape) {
-        map.pm.disableDraw(drawShape);
-      }
       map.pm.disableGlobalEditMode();
       map.pm.disableGlobalDragMode();
       map.pm.disableGlobalRemovalMode();
+      if (drawShape) {
+        map.pm.disableDraw(drawShape);
+      }
     };
   }, [
     mapRef,

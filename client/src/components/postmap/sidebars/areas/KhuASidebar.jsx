@@ -1,12 +1,9 @@
 // components/sidebars/areas/KhuASidebar.jsx
-import { useState } from 'react';
 import { toast } from 'react-hot-toast';
 import OpacitySlider from './OpacitySlider';
 import useAreaMetadata from '../../../../hooks/local/metadata/useAreaMetadata';
 
-export default function KhuASidebar({ onSave, onDelete }) {
-  const [isLoading, setIsLoading] = useState(false);
-
+export default function KhuASidebar({ onDelete }) {
   const {
     areaMetadata,
     errors,
@@ -19,21 +16,13 @@ export default function KhuASidebar({ onSave, onDelete }) {
 
   if (!areaMetadata) return <div className="p-4">Chưa chọn Khu A</div>;
 
-  const handleSaveClick = async () => {
-    if (!validate()) return;
-    setIsLoading(true);
-    try {
-      await onSave(areaMetadata);
-      toast.success('Đã lưu Khu A thành công');
-    } catch (err) {
-      console.error(err);
-      toast.error('Lưu thất bại. Vui lòng thử lại.');
-    } finally {
-      setIsLoading(false);
-    }
+  const handleSaveClick = () => {
+    const valid = validate();
+    if (!valid) return;
+    toast.success('Đã lưu nháp Khu A');
   };
 
-  const saveDisabled = !isValid || isUnchanged || isLoading;
+  const saveDisabled = !isValid || isUnchanged;
 
   return (
     <div className="p-4 flex flex-col space-y-4 bg-white">
@@ -90,12 +79,11 @@ export default function KhuASidebar({ onSave, onDelete }) {
             saveDisabled ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'
           }`}
         >
-          {isLoading ? 'Đang lưu...' : 'Lưu'}
+          Lưu nháp
         </button>
 
         <button
           onClick={onDelete}
-          disabled={isLoading}
           className="bg-red-600 text-white px-5 py-2 rounded hover:bg-red-700 transition"
         >
           Xóa
@@ -104,4 +92,3 @@ export default function KhuASidebar({ onSave, onDelete }) {
     </div>
   );
 }
-

@@ -3,7 +3,7 @@ import { Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { useEffect, useRef } from 'react';
 
-const MarkerLayer = ({ entities = [], selectedEntityId, onSelectEntity }) => {
+const MarkerLayer = ({ entities = [], selectedEntityId, onSelectEntity, readOnly = false }) => {
   const map = useMap();
   const markerRefs = useRef({});
 
@@ -39,9 +39,13 @@ const MarkerLayer = ({ entities = [], selectedEntityId, onSelectEntity }) => {
                 iconAnchor: [15, 40],
                 popupAnchor: [0, -30],
               })}
-              eventHandlers={{
-                click: () => onSelectEntity?.(entity._id),
-              }}
+              eventHandlers={
+                readOnly
+                  ? {} // Không cho click nếu readOnly
+                  : {
+                      click: () => onSelectEntity?.(entity._id),
+                    }
+              }
               ref={ref => {
                 if (ref) {
                   markerRefs.current[entity._id] = ref;

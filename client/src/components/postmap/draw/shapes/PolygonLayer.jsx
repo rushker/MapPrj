@@ -2,6 +2,7 @@
 import { Polygon, Popup, useMap } from 'react-leaflet';
 import { useEffect, useRef } from 'react';
 import { geoToLatLng } from '../../../../utils/geometry';
+import L from 'leaflet';
 
 const defaultStyle = {
   color: '#3388ff',
@@ -15,7 +16,7 @@ const selectedStyle = {
   fillOpacity: 0.4,
 };
 
-const PolygonLayer = ({ entities = [], selectedEntityId, onSelectEntity }) => {
+const PolygonLayer = ({ entities = [], selectedEntityId, onSelectEntity, readOnly = false }) => {
   const map = useMap();
   const polygonRefs = useRef({});
 
@@ -46,9 +47,13 @@ const PolygonLayer = ({ entities = [], selectedEntityId, onSelectEntity }) => {
               key={entity._id}
               positions={latlngs}
               pathOptions={entity._id === selectedEntityId ? selectedStyle : defaultStyle}
-              eventHandlers={{
-                click: () => onSelectEntity?.(entity._id),
-              }}
+              eventHandlers={
+                readOnly
+                  ? {} // Không cho click nếu readOnly
+                  : {
+                      click: () => onSelectEntity?.(entity._id),
+                    }
+              }
               ref={ref => {
                 if (ref) {
                   polygonRefs.current[entity._id] = ref;

@@ -5,6 +5,18 @@ import { updateEntity } from '../../services/entities';
 import { useAreaContext } from '../../context/AreaContext';
 import toast from 'react-hot-toast';
 import isEqual from 'lodash/isEqual';
+/**
+ * Hook này cung cấp tính năng tự động lưu (auto-save) và lưu thủ công (manual-save) 
+ * cho dữ liệu Area (Khu A) và Entities (Khu C: Polygon, Marker).
+ * 
+ * Chỉ lưu khi:
+ * - Area có thay đổi so với lần lưu trước.
+ * - Entity có thay đổi so với lần lưu trước.
+ * - Đảm bảo areaId tồn tại và areaMetadata.name không rỗng.
+ * 
+ * Các ref (`prevAreaRef`, `prevEntityMapRef`) dùng để so sánh dữ liệu hiện tại 
+ * với dữ liệu đã lưu trước đó, tránh lưu dư thừa.
+ */
 
 const DEBOUNCE_INTERVAL = 20000;
 
@@ -15,8 +27,8 @@ export default function useAutoSave() {
   const prevEntityMapRef = useRef(new Map());
   const debounceTimeoutRef = useRef(null);
   const isSavingRef = useRef(false);
+  const wasManuallySavedRef = useRef(false);
 
-  // ==== AREA SO SÁNH ====
   const hasAreaChanged = useCallback((current, previous) => {
     if (!current || !previous) return false;
     return (
@@ -28,10 +40,8 @@ export default function useAutoSave() {
     );
   }, []);
 
-  // ==== ENTITY SO SÁNH ====
   const hasEntityChanged = useCallback((current, previous) => {
     if (!current || !previous) return false;
-
     return (
       current.name !== previous.name ||
       current.type !== previous.type ||
@@ -40,11 +50,23 @@ export default function useAutoSave() {
     );
   }, []);
 
-  // ==== HÀM LƯU CHÍNH ====
+  const hasUnsavedChanges = useCallback(() => {
+    if (!areaId || !areaMetadata?.name) return false;
+
+    const areaChanged = hasAreaChanged(areaMetadata, prevAreaRef.current);
+    const entityChanged = entities.some(entity => {
+      const prev = prevEntityMapRef.current.get(entity._id);
+      return hasEntityChanged(entity, prev);
+    });
+
+    return areaChanged || entityChanged;
+  }, [areaId, areaMetadata, entities, hasAreaChanged, hasEntityChanged]);
+
   const saveChanges = useCallback(async () => {
-    if (!areaId || isSavingRef.current) return;
+    if (!areaId || !areaMetadata?.name || isSavingRef.current) return;
 
     isSavingRef.current = true;
+
     const changes = { area: false, entities: [] };
 
     try {
@@ -71,30 +93,29 @@ export default function useAutoSave() {
 
       if (changes.area || changes.entities.length > 0) {
         toast.success('Đã tự động lưu bản nháp');
-        // Update refs
         prevAreaRef.current = { ...areaMetadata };
         prevEntityMapRef.current = new Map(
           entities.map(e => [e._id, { ...e }])
         );
+        wasManuallySavedRef.current = false;
       }
     } catch (err) {
-      console.error(err);
+      console.error('Auto-save failed:', err);
       toast.error('Tự động lưu thất bại');
     } finally {
       isSavingRef.current = false;
     }
   }, [areaId, areaMetadata, entities, hasAreaChanged, hasEntityChanged]);
 
-  // ==== DEBOUNCE AUTO SAVE ====
   useEffect(() => {
-    if (!areaId) return;
+    if (!areaId || !areaMetadata?.name) return;
 
-    // Khởi tạo initial
+    // Init refs
     if (!prevAreaRef.current) {
       prevAreaRef.current = { ...areaMetadata };
     }
 
-    if (prevEntityMapRef.current.size === 0) {
+    if (prevEntityMapRef.current.size === 0 && entities.length > 0) {
       prevEntityMapRef.current = new Map(
         entities.map(e => [e._id, { ...e }])
       );
@@ -107,11 +128,16 @@ export default function useAutoSave() {
     };
   }, [areaId, areaMetadata, entities, saveChanges]);
 
-  // ==== MANUAL SAVE ====
-  const manualSave = useCallback(() => {
+  const manualSave = useCallback(async () => {
     clearTimeout(debounceTimeoutRef.current);
-    return saveChanges();
+    await saveChanges();
+    wasManuallySavedRef.current = true;
   }, [saveChanges]);
 
-  return { manualSave };
+  return {
+    manualSave,
+    hasUnsavedChanges,
+    wasManuallySaved: wasManuallySavedRef.current,
+  };
 }
+

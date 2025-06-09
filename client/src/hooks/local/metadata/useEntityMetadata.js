@@ -1,7 +1,7 @@
-//hooks/local/metadata/useEntityMetadata.js 
+//hooks/local/metadata/useEntityMetadata.js
 // Quản lý metadata tạm của Entity (Khu C / Marker)
 import { useState, useEffect, useMemo } from 'react';
-import { useAreaContext } from '../../../contexts/AreaContext';
+import { useAreaContext } from '../../../context/AreaContext';
 
 export function useEntityMetadata(entity, onChange) {
   const { areaId } = useAreaContext(); // ✅ Lấy areaId từ context

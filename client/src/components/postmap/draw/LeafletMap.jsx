@@ -5,29 +5,40 @@ import useGeomanEvents from './useGeomanEvents';
 import AreaLayer from './layers/AreaLayer';
 import EntityLayer from './layers/EntityLayer';
 import { useAreaContext } from '../../../context/AreaContext';
+
 /**
  * LeafletMap là component trung tâm quản lý bản đồ tương tác:
- * - Hiển thị khu A (AreaLayer) và các entity con (EntityLayer)
- * - Tích hợp leaflet-geoman để hỗ trợ vẽ / chỉnh sửa / xóa
  *
- * Props:
- * @param {object} khuA - đối tượng area chứa polygon và metadata
- * @param {array} entities - danh sách entity con (markers, polygons)
- * @param {string|null} selectedEntityId - id của entity đang được chọn (dùng để focus + popup)
- * @param {function} onSelectEntity - callback khi user click vào một entity
+ * Mục đích chính:
+ * - Hiển thị khu vực chính (Area/Khu A) với polygon và metadata
+ * - Hiển thị tất cả các entity con (marker, polygon nhỏ - Khu C) của khu vực đó
+ * - Tích hợp thư viện leaflet-geoman hỗ trợ vẽ, chỉnh sửa, kéo thả, xóa đối tượng trên bản đồ
+ * - Quản lý callback khi user hoàn thành vẽ khu vực hoặc entity mới
  *
- * Geoman controls:
- * @param {boolean} enableDraw - bật chế độ vẽ
- * @param {string|null} drawShape - loại shape để vẽ: 'Rectangle', 'Polygon', 'Marker'
- * @param {boolean} enableEdit - bật chỉnh sửa global
- * @param {boolean} enableDrag - bật kéo thả global
- * @param {boolean} enableRemove - bật chế độ xóa
- * @param {function} onCreateKhuA - callback khi user vẽ xong khu A
- * @param {function} onCreateEntity - callback khi user vẽ xong entity (polygon / marker)
+ * Luồng dữ liệu và quản lý trạng thái:
+ * - areaMetadata: polygon + metadata của khu vực chính, nhận từ props (được fetch và quản lý bên ngoài)
+ * - entities: KHÔNG nhận qua props mà được lấy trực tiếp từ AreaContext (toàn bộ entities của khu vực hiện tại)
+ * - selectedEntityId & onSelectEntity: props truyền xuống để xử lý focus và tương tác chọn entity con
+ * - areaId lấy từ context để đồng bộ id khu vực cho các thao tác vẽ và lưu dữ liệu mới
+ *
+ * Các control flags (props) cho phép bật tắt các tính năng của leaflet-geoman:
+ * - enableDraw, drawShape: bật chế độ vẽ và xác định kiểu shape đang vẽ (Rectangle, Polygon, Marker)
+ * - enableEdit: bật chỉnh sửa toàn cục
+ * - enableDrag: bật kéo thả toàn cục
+ * - enableRemove: bật chế độ xóa
+ *
+ * Callback:
+ * - onCreateArea: khi user vẽ xong polygon khu vực mới
+ * - onCreateEntity: khi user vẽ xong một entity mới (polygon/marker)
+ *
+ * Lưu ý:
+ * - areaId   được quản lý trong AreaContext để tránh truyền prop rườm rà, đồng thời đồng bộ dễ dàng
+ * - entities được quản lý trong AreaContext để tránh truyền prop rườm rà, đồng thời đồng bộ dễ dàng
+ * - LeafletMap chỉ chịu trách nhiệm hiển thị và tương tác, không lưu trữ trực tiếp dữ liệu entities
  */
+
 export default function LeafletMap({
   areaMetadata = null,
-  entities = [],
   selectedEntityId = null,
   onSelectEntity = () => {},
 
@@ -45,15 +56,19 @@ export default function LeafletMap({
   const mapRef = useRef(null);
   const { areaId } = useAreaContext();
 
-  // === Callbacks xử lý vẽ xong
+  // Callback khi vẽ xong khu vực (polygon Khu A)
   const handleCreateArea = (polygon) => {
+    // Gắn thêm areaId để đồng bộ với context
     onCreateArea({ ...polygon, areaId });
   };
 
+  // Callback khi vẽ xong entity (polygon/marker Khu C)
   const handleCreateEntity = (entity) => {
+    // Gắn thêm areaId để liên kết entity với khu vực hiện tại
     onCreateEntity({ ...entity, areaId });
   };
 
+  // Đăng ký sự kiện leaflet-geoman với các flags và callback xử lý
   useGeomanEvents({
     mapRef,
     enableDraw,
@@ -79,13 +94,11 @@ export default function LeafletMap({
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
 
-      {/* Khu vực */}
+      {/* Hiển thị polygon khu vực chính (Khu A) */}
       {areaMetadata && <AreaLayer area={areaMetadata} />}
 
-      {/* Entities */}
+      {/* Hiển thị các entity con (marker, polygon nhỏ) lấy từ context */}
       <EntityLayer
-        areaId={areaId}
-        entities={entities}
         selectedEntityId={selectedEntityId}
         onSelectEntity={onSelectEntity}
       />

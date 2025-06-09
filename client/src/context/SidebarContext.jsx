@@ -6,19 +6,19 @@ const SidebarContext = createContext();
 
 export function SidebarProvider({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [editingType, setEditingType] = useState(null); // 'area' or 'entity'
-  const [editingEntity, setEditingEntity] = useState(null); // object being edited
+  const [editingType, setEditingType] = useState(null); // 'area' | 'entity'
+  const [editingData, setEditingData] = useState(null); // entity or areaMetadata
 
-  const openSidebar = useCallback((type, entity) => {
+  const openSidebar = useCallback((type, data) => {
     setEditingType(type);
-    setEditingEntity(entity);
+    setEditingData(data);
     setSidebarOpen(true);
   }, []);
 
   const closeSidebar = useCallback(() => {
     setSidebarOpen(false);
-    setEditingEntity(null);
     setEditingType(null);
+    setEditingData(null);
   }, []);
 
   return (
@@ -26,8 +26,8 @@ export function SidebarProvider({ children }) {
       value={{
         sidebarOpen,
         editingType,
-        editingEntity,
-        setEditingEntity,
+        editingData, // <-- đổi tên cho trung lập
+        setEditingData,
         openSidebar,
         closeSidebar,
       }}
