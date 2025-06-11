@@ -28,11 +28,11 @@ const useGeomanEvents = ({
   onCreateKhuA,
   onCreateEntity,
   onUpdatePolygon,
-  readOnly = false,
+  isEditMode = false,
 }) => {
   useEffect(() => {
     const map = mapRef.current;
-     if (!map || readOnly) return;
+     if (!map || !isEditMode) return;
 
     // Khởi tạo controls leaflet-geoman (chỉ gọi 1 lần)
     map.pm.addControls({

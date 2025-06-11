@@ -5,7 +5,7 @@ import LeafletMap from './draw/LeafletMap';
 import SidebarContainer from './sidebars/SidebarContainer';
 import { createArea, updateAreaPolygon, updateArea } from '../../services/areas';
 import { useTempAreaId } from '../../hooks/local/useTempAreaId';
-import { useAreaContext, AreaProvider } from '../../context/AreaContext';
+import { useAreaContext } from '../../context/AreaContext';
 import useAutoSave from '../../hooks/local/useAutoSave';
 import { useEnsureValidAreaId } from '../../utils/useEnsureValidAreaId';
 
@@ -104,7 +104,7 @@ export default function PostMapWrapper() {
   };
 
   return (
-    <AreaProvider isEditMode={true}>
+    
       <div className="flex h-screen w-full">
         <div className="flex-1">
           <LeafletMap
@@ -126,6 +126,6 @@ export default function PostMapWrapper() {
           onSaveEntity={handleSaveEntityMetadata}
         />
       </div>
-    </AreaProvider>
+   
   );
 }

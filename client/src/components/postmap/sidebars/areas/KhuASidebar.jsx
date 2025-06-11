@@ -102,6 +102,12 @@ export default function KhuASidebar({
           >
             Lưu nháp
           </button>
+          <button
+            onClick={onClose}
+            className="mt-4 bg-gray-200 text-gray-800 px-5 py-2 rounded hover:bg-gray-300 transition self-start"
+          >
+            Đóng
+          </button>
 
           <button
             onClick={onDelete}

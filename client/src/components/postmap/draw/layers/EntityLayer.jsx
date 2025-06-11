@@ -7,26 +7,22 @@ import { useAreaContext } from '../../../../context/AreaContext';
 /**
  * @param {string} selectedEntityId - ID của entity đang được chọn.
  * @param {function} onSelectEntity - Callback khi người dùng click chọn một entity.
- * @param {boolean} readOnly - Nếu true, disable các sự kiện tương tác (dùng cho ViewMap).
  */
-const EntityLayer = ({ selectedEntityId, onSelectEntity, readOnly = false }) => {
+const EntityLayer = ({ selectedEntityId, onSelectEntity }) => {
   const { entities, isEditMode } = useAreaContext();
-  const { khuCs, markers } = useSeparateEntities(entities, readOnly);
-  // Kết hợp readOnly từ prop và context
-  const finalReadOnly = readOnly || !isEditMode;
+  const { khuCs, markers } = useSeparateEntities(entities, !isEditMode); // Sử dụng !isEditMode cho readOnly
+  
   return (
     <>
       <PolygonLayer
         entities={khuCs}
         selectedEntityId={selectedEntityId}
         onSelectEntity={onSelectEntity}
-        readOnly={finalReadOnly}
       />
       <MarkerLayer
         entities={markers}
         selectedEntityId={selectedEntityId}
         onSelectEntity={onSelectEntity}
-        readOnly={finalReadOnly}
       />
     </>
   );

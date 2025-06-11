@@ -80,7 +80,7 @@ export default function LeafletMap({
     onCreateKhuA: handleCreateArea,
     onCreateEntity: handleCreateEntity,
     onUpdatePolygon,
-    readOnly,
+    isEditMode,
   });
 
   return (
@@ -104,7 +104,7 @@ export default function LeafletMap({
       <EntityLayer
         selectedEntityId={selectedEntityId}
         onSelectEntity={onSelectEntity}
-        readOnly={!isEditMode} 
+        isEditMode={isEditMode} 
       />
     </MapContainer>
   );
