@@ -10,22 +10,23 @@ import { useAreaContext } from '../../../../context/AreaContext';
  * @param {boolean} readOnly - Nếu true, disable các sự kiện tương tác (dùng cho ViewMap).
  */
 const EntityLayer = ({ selectedEntityId, onSelectEntity, readOnly = false }) => {
-  const { entities } = useAreaContext();
-  const { khuCs, markers } = useSeparateEntities(entities);
-
+  const { entities, isEditMode } = useAreaContext();
+  const { khuCs, markers } = useSeparateEntities(entities, readOnly);
+  // Kết hợp readOnly từ prop và context
+  const finalReadOnly = readOnly || !isEditMode;
   return (
     <>
       <PolygonLayer
         entities={khuCs}
         selectedEntityId={selectedEntityId}
         onSelectEntity={onSelectEntity}
-        readOnly={readOnly}
+        readOnly={finalReadOnly}
       />
       <MarkerLayer
         entities={markers}
         selectedEntityId={selectedEntityId}
         onSelectEntity={onSelectEntity}
-        readOnly={readOnly}
+        readOnly={finalReadOnly}
       />
     </>
   );

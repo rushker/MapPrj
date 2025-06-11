@@ -1,6 +1,7 @@
 // src/components/sidebars/SidebarContainer.jsx
 import { lazy, Suspense, memo } from 'react';
 import { useSidebarContext } from '../../../context/SidebarContext';
+import { useAreaContext } from '../../../context/AreaContext';
 
 const KhuASidebar = lazy(() => import('./areas/KhuASidebar'));
 const EntitySidebar = lazy(() => import('./entities/EntitySidebar'));
@@ -20,26 +21,29 @@ function SidebarContainer({ onSaveAreaMetadata, onSaveEntity }) {
     handleDelete,
   } = useSidebarContext();
 
+  const { isEditMode } = useAreaContext();
+
   if (!sidebarOpen) return null;
 
   const SidebarComponent = SIDEBAR_COMPONENTS[editingType];
 
   const commonProps = {
     onClose: closeSidebar,
-    onDelete: handleDelete,
+    onDelete: isEditMode ? handleDelete : null, // Chỉ cho phép xóa khi ở chế độ chỉnh sửa
+    isEditMode, // Truyền trạng thái chỉnh sửa xuống component con
   };
 
   const sidebarProps =
     editingType === 'area'
       ? {
           metadata: editingData,
-          onSave: onSaveAreaMetadata,
+           onSave: isEditMode ? onSaveAreaMetadata : null, // Chỉ cho phép lưu khi chỉnh sửa
           ...commonProps,
         }
       : {
-          entity: editingData,
-          onChange: setEditingData,
-          onSave: onSaveEntity,
+           entity: editingData,
+          onChange: isEditMode ? setEditingData : null, // Chỉ cho phép thay đổi khi chỉnh sửa
+          onSave: isEditMode ? onSaveEntity : null, // Chỉ cho phép lưu khi chỉnh sửa
           ...commonProps,
         };
 

@@ -1,17 +1,17 @@
-//hooks/local/metadata/useEntityMetadata.js
-// Quản lý metadata tạm của Entity (Khu C / Marker)
+// hooks/local/metadata/useEntityMetadata.js
 import { useState, useEffect, useMemo } from 'react';
 import { useAreaContext } from '../../../context/AreaContext';
 
+// Hook quản lý metadata tạm của Entity (Khu C / Marker)
 export function useEntityMetadata(entity, onChange) {
-  const { areaId } = useAreaContext(); // ✅ Lấy areaId từ context
+  const { areaId, isEditMode } = useAreaContext();
   const [initialEntity, setInitialEntity] = useState(null);
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
     if (entity && !entity.areaId && areaId) {
       const updated = { ...entity, areaId };
-      onChange(updated); // ✅ Gán areaId nếu chưa có
+      if (onChange) onChange(updated);
     }
     setInitialEntity(entity);
     setErrors({});
@@ -26,6 +26,8 @@ export function useEntityMetadata(entity, onChange) {
   };
 
   const handleInputChange = (field) => (e) => {
+    if (!isEditMode) return;
+
     const value = e?.target?.value ?? e;
     const updated = { ...entity };
 
@@ -38,14 +40,19 @@ export function useEntityMetadata(entity, onChange) {
       updated[field] = value;
     }
 
-    onChange(updated);
+    if (onChange) onChange(updated);
   };
 
   const handleCheckboxChange = (field) => (e) => {
-    onChange({ ...entity, [field]: e.target.checked });
+    if (!isEditMode) return;
+
+    const updated = { ...entity, [field]: e.target.checked };
+    if (onChange) onChange(updated);
   };
 
   const handleImagesChange = (newImages) => {
+    if (!isEditMode) return;
+
     const updated = {
       ...entity,
       metadata: {
@@ -53,7 +60,7 @@ export function useEntityMetadata(entity, onChange) {
         images: newImages,
       },
     };
-    onChange(updated);
+    if (onChange) onChange(updated);
   };
 
   const resetInitial = () => {
@@ -74,7 +81,7 @@ export function useEntityMetadata(entity, onChange) {
   }, [entity]);
 
   return {
-    entity, // ✅ trả về toàn bộ entity
+    entity,
     errors,
     validate,
     isValid,

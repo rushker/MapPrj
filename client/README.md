@@ -10,3 +10,24 @@ Currently, two official plugins are available:
 ## Expanding the ESLint configuration
 
 If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+
+
+
+# Logic 
+
+[Người dùng vẽ rectangle]
+        ↓
+handleCreateArea(coordinates, maxZoom)
+        ↓
+POST /api/areas
+  - Payload: { coordinates, maxZoom }
+        ↓
+[Backend tạo areaId, polygon (GeoJSON), lưu DB]
+        ↓
+Trả về areaId + polygon
+        ↓
+[Frontend nhận areaId]
+→ Lưu localStorage
+→ Gán vào context
+→ Hiển thị trên bản đồ
+→ Sau đó: user nhập metadata (name, type, ...) → PATCH /api/areas/:id

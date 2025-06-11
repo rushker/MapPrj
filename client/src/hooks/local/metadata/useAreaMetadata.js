@@ -1,18 +1,17 @@
-//hooks/local/metadata/useAreaMetadata.js
-// Quản lý metadata tạm của Khu A
+// hooks/local/metadata/useAreaMetadata.js
 import { useState, useEffect, useMemo } from 'react';
 import { useAreaContext } from '../../context/AreaContext';
 
 // Hook quản lý metadata tạm của Khu A
 export default function useAreaMetadata(onChange) {
-  const { areaMetadata, setAreaMetadata } = useAreaContext();
+  const { areaMetadata, setAreaMetadata, isEditMode } = useAreaContext();
   const [errors, setErrors] = useState({});
   const [initialMetadata, setInitialMetadata] = useState(null);
 
   // Cập nhật metadata ban đầu khi areaMetadata (từ context) thay đổi
   useEffect(() => {
     setInitialMetadata(areaMetadata ? { ...areaMetadata } : null);
-  }, [areaMetadata?.id]); // hoặc areaId nếu cần thiết
+  }, [areaMetadata?.id]);
 
   const validate = () => {
     const newErrors = {};
@@ -23,20 +22,29 @@ export default function useAreaMetadata(onChange) {
   };
 
   const handleInputChange = (field) => (e) => {
+    if (!isEditMode) return;
     const value = e?.target?.value ?? e;
-    setAreaMetadata(prev => ({ ...prev, [field]: value }));
+    const updated = { ...areaMetadata, [field]: value };
+    setAreaMetadata(updated);
+    if (onChange) onChange(updated);
   };
 
   const handleCheckboxChange = (field) => (e) => {
-    setAreaMetadata(prev => ({ ...prev, [field]: e.target.checked }));
+    if (!isEditMode) return;
+    const updated = { ...areaMetadata, [field]: e.target.checked };
+    setAreaMetadata(updated);
+    if (onChange) onChange(updated);
   };
 
   const handleOpacityChange = (value) => {
-    setAreaMetadata(prev => ({ ...prev, opacity: value }));
+    if (!isEditMode) return;
+    const updated = { ...areaMetadata, opacity: value };
+    setAreaMetadata(updated);
+    if (onChange) onChange(updated);
   };
 
   const resetInitial = () => {
-    if (initialMetadata) {
+    if (initialMetadata && isEditMode) {
       setAreaMetadata({ ...initialMetadata });
     }
   };

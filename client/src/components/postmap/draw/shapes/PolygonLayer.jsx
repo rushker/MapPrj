@@ -3,7 +3,7 @@ import { Polygon, Popup, useMap } from 'react-leaflet';
 import { useEffect, useRef } from 'react';
 import { geoToLatLng } from '../../../../utils/geometry';
 import L from 'leaflet';
-
+import { useAreaContext } from '../../../../context/AreaContext';
 const defaultStyle = {
   color: '#3388ff',
   weight: 2,
@@ -16,12 +16,13 @@ const selectedStyle = {
   fillOpacity: 0.4,
 };
 
-const PolygonLayer = ({ entities = [], selectedEntityId, onSelectEntity, readOnly = false }) => {
+const PolygonLayer = ({ entities = [], selectedEntityId, onSelectEntity}) => {
   const map = useMap();
   const polygonRefs = useRef({});
+  const { isEditMode } = useAreaContext();
 
   useEffect(() => {
-    if (!selectedEntityId) return;
+    if (!isEditMode || !selectedEntityId) return;
 
     const selected = entities.find(e => e._id === selectedEntityId && e.type === 'polygon');
     if (selected?.geometry?.coordinates) {
@@ -34,7 +35,7 @@ const PolygonLayer = ({ entities = [], selectedEntityId, onSelectEntity, readOnl
 
     const polygon = polygonRefs.current[selectedEntityId];
     if (polygon) polygon.openPopup();
-  }, [selectedEntityId, entities, map]);
+  }, [selectedEntityId, entities, map,isEditMode]);
 
   return (
     <>
@@ -48,7 +49,7 @@ const PolygonLayer = ({ entities = [], selectedEntityId, onSelectEntity, readOnl
               positions={latlngs}
               pathOptions={entity._id === selectedEntityId ? selectedStyle : defaultStyle}
               eventHandlers={
-                readOnly
+                isEditMode
                   ? {} // Không cho click nếu readOnly
                   : {
                       click: () => onSelectEntity?.(entity._id),

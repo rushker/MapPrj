@@ -1,9 +1,11 @@
+// components/postmap/draw/useGeomanEvents
 import { useEffect } from 'react';
 
 /**
  * Hook tích hợp leaflet-geoman với nhiều chế độ:
  * - vẽ polygon, rectangle, marker
  * - bật/tắt edit mode, drag mode, removal mode
+ * - cập nhật tọa độ khi người dùng chỉnh sửa polygon
  *
  * @param {object} mapRef - ref đến Map instance
  * @param {object} options
@@ -14,6 +16,7 @@ import { useEffect } from 'react';
  * @param {boolean} [options.enableRemove] - bật/tắt chế độ xóa layer
  * @param {function} options.onCreateKhuA - callback khi tạo khu A (polygon/rectangle)
  * @param {function} options.onCreateEntity - callback khi tạo entity khác (polygon, marker)
+ * @param {function} [options.onUpdatePolygon] - callback khi cập nhật polygon (sau khi edit)
  */
 const useGeomanEvents = ({
   mapRef,
@@ -24,12 +27,14 @@ const useGeomanEvents = ({
   enableRemove = false,
   onCreateKhuA,
   onCreateEntity,
+  onUpdatePolygon,
+  readOnly = false,
 }) => {
   useEffect(() => {
     const map = mapRef.current;
-    if (!map) return;
+     if (!map || readOnly) return;
 
-    // Khởi tạo controls leaflet-geoman với tắt hết
+    // Khởi tạo controls leaflet-geoman (chỉ gọi 1 lần)
     map.pm.addControls({
       position: 'topleft',
       drawPolygon: false,
@@ -49,7 +54,7 @@ const useGeomanEvents = ({
     const map = mapRef.current;
     if (!map) return;
 
-    // Tắt hết trước, tránh trạng thái sót
+    // Tắt hết các chế độ cũ trước khi bật mới
     map.pm.disableGlobalEditMode();
     map.pm.disableGlobalDragMode();
     map.pm.disableGlobalRemovalMode();
@@ -57,62 +62,50 @@ const useGeomanEvents = ({
       map.pm.disableDraw(drawShape);
     }
 
-    // Bật các chế độ theo props nếu có
     if (enableDraw && drawShape) {
       map.pm.enableDraw(drawShape);
     }
 
-    if (enableEdit) {
-      map.pm.enableGlobalEditMode();
-    }
+    if (enableEdit) map.pm.enableGlobalEditMode();
+    if (enableDrag) map.pm.enableGlobalDragMode();
+    if (enableRemove) map.pm.enableGlobalRemovalMode();
 
-    if (enableDrag) {
-      map.pm.enableGlobalDragMode();
-    }
-
-    if (enableRemove) {
-      map.pm.enableGlobalRemovalMode();
-    }
-
-    // Xử lý sự kiện tạo layer mới
     const handleCreate = (e) => {
       const { layer, shape } = e;
       const geoJson = layer.toGeoJSON();
       const coords = geoJson.geometry.coordinates;
 
-      if (shape === 'Rectangle') {
-        if (typeof onCreateKhuA === 'function') {
-          onCreateKhuA({
-            type: 'polygon',
-            coordinates: coords,
-          });
-        }
-      } else if (shape === 'Polygon') {
-        if (typeof onCreateEntity === 'function') {
-          onCreateEntity({
-            type: 'polygon',
-            coordinates: coords,
-          });
-        }
-      } else if (shape === 'Marker') {
+      if (shape === 'Rectangle' && typeof onCreateKhuA === 'function') {
+        onCreateKhuA({ type: 'polygon', coordinates: coords });
+      } else if (shape === 'Polygon' && typeof onCreateEntity === 'function') {
+        onCreateEntity({ type: 'polygon', coordinates: coords });
+      } else if (shape === 'Marker' && typeof onCreateEntity === 'function') {
         const latlng = layer.getLatLng();
-        if (typeof onCreateEntity === 'function') {
-          onCreateEntity({
-            type: 'marker',
-            coordinates: [latlng.lng, latlng.lat],
-          });
-        }
+        onCreateEntity({ type: 'marker', coordinates: [latlng.lng, latlng.lat] });
       }
 
-      // Xóa layer vẽ sau khi tạo để tránh lưu layer tạm trên map
-      layer.remove();
+      layer.remove(); // luôn remove layer tạm vẽ sau tạo
+    };
+
+    const handleUpdate = (e) => {
+      const layer = e.layer;
+      const geoJson = layer.toGeoJSON();
+
+      if (
+        geoJson.geometry?.type === 'Polygon' &&
+        typeof onUpdatePolygon === 'function'
+      ) {
+        onUpdatePolygon({ coordinates: geoJson.geometry.coordinates });
+      }
     };
 
     map.on('pm:create', handleCreate);
+    map.on('pm:update', handleUpdate);
 
-    // Cleanup
     return () => {
       map.off('pm:create', handleCreate);
+      map.off('pm:update', handleUpdate);
+
       map.pm.disableGlobalEditMode();
       map.pm.disableGlobalDragMode();
       map.pm.disableGlobalRemovalMode();
@@ -121,7 +114,7 @@ const useGeomanEvents = ({
       }
     };
   }, [
-    mapRef,
+    mapRef.current,
     enableDraw,
     drawShape,
     enableEdit,
@@ -129,6 +122,8 @@ const useGeomanEvents = ({
     enableRemove,
     onCreateKhuA,
     onCreateEntity,
+    onUpdatePolygon,
+    readOnly,
   ]);
 };
 

@@ -30,9 +30,30 @@ export const getAreaById = async (req, res) => {
 
 export const createArea = async (req, res) => {
   try {
-    const newArea = new Area(req.body);
+    const { coordinates, maxZoom } = req.body;
+
+    if (!coordinates || !Array.isArray(coordinates)) {
+      return res.status(400).json({ success: false, message: 'Thiếu toạ độ' });
+    }
+
+    // Chuyển coordinates (LatLng) sang dạng Polygon GeoJSON hợp lệ
+    const polygon = {
+      type: 'Polygon',
+      coordinates: [[...coordinates, coordinates[0]]], // Phải đóng vòng polygon
+    };
+
+    const newArea = new Area({
+      polygon,
+      maxZoom,
+      // Metadata chưa nhập => dùng default trong model
+    });
+
     await newArea.save();
-    res.status(201).json({ success: true, data: newArea });
+
+    res.status(201).json({
+      success: true,
+      data: newArea,
+    });
   } catch (err) {
     handleError(res, 'Failed to create area', err, 400);
   }

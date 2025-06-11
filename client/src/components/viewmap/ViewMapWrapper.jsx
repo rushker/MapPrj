@@ -5,6 +5,7 @@ import LeafletMap from '../LeafletMap';
 import { getAreaById } from '../../../services/areas';
 import { getEntitiesByArea } from '../../../services/entities';
 import toast from 'react-hot-toast';
+import { AreaProvider } from '../../../contexts/AreaContext';
 
 export default function ViewMapWrapper() {
   const { areaId } = useParams();
@@ -12,8 +13,6 @@ export default function ViewMapWrapper() {
   const [entities, setEntities] = useState([]);
   const [selectedEntityId, setSelectedEntityId] = useState(null);
   const [loading, setLoading] = useState(true);
-
-  const isEditMode = false;
 
   useEffect(() => {
     const fetchData = async () => {
@@ -39,12 +38,17 @@ export default function ViewMapWrapper() {
   if (!area) return <div className="text-center mt-8 text-red-500">Không tìm thấy khu vực</div>;
 
   return (
-    <LeafletMap
-      areaMetadata={area}
-      entities={entities}
-      selectedEntityId={selectedEntityId}
-      onSelectEntity={setSelectedEntityId}
-      readOnly={!isEditMode}
-    />
+    <AreaProvider isEditMode={false}> {/* Wrap với isEditMode=false */}
+      <LeafletMap
+        areaMetadata={area}
+        entities={entities}
+        selectedEntityId={selectedEntityId}
+        onSelectEntity={setSelectedEntityId}
+        enableDraw={false}
+        enableEdit={false}
+        enableDrag={false}
+        enableRemove={false}
+      />
+    </AreaProvider>
   );
 }

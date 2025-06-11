@@ -2,7 +2,7 @@
 import { useEffect } from 'react';
 import { useMap } from 'react-leaflet';
 import * as turf from '@turf/turf';
-import { latLngToGeo } from '@/utils/geometry';
+import { latLngToGeo } from '../../../utils/geometry.js';
 
 const LockViewController = ({ khuAPolygon = [], maxZoom = 18 }) => {
   const map = useMap();

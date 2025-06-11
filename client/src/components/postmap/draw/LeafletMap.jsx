@@ -52,9 +52,10 @@ export default function LeafletMap({
   // Callbacks
   onCreateArea = () => {},
   onCreateEntity = () => {},
+  onUpdatePolygon = () => {},
 }) {
   const mapRef = useRef(null);
-  const { areaId } = useAreaContext();
+  const { areaId, isEditMode } = useAreaContext();
 
   // Callback khi vẽ xong khu vực (polygon Khu A)
   const handleCreateArea = (polygon) => {
@@ -78,6 +79,8 @@ export default function LeafletMap({
     enableRemove,
     onCreateKhuA: handleCreateArea,
     onCreateEntity: handleCreateEntity,
+    onUpdatePolygon,
+    readOnly,
   });
 
   return (
@@ -101,6 +104,7 @@ export default function LeafletMap({
       <EntityLayer
         selectedEntityId={selectedEntityId}
         onSelectEntity={onSelectEntity}
+        readOnly={!isEditMode} 
       />
     </MapContainer>
   );
