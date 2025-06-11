@@ -42,7 +42,7 @@ const MarkerLayer = ({ entities = [], selectedEntityId, onSelectEntity}) => {
                 popupAnchor: [0, -30],
               })}
               eventHandlers={
-                // Sử dụng isEditMode thay vì readOnly
+                // Sử dụng isEditMode 
                 !isEditMode
                   ? {} // Không cho click nếu không phải edit mode
                   : {
