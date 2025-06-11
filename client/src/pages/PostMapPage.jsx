@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../routes';
 import useAutoSave from '../hooks/local/useAutoSave';
 import { AreaProvider, useAreaContext } from '../context/AreaContext';
-import PostMapWrapper from '../components/postmap/draw/PostMapWrapper';
+import PostMapWrapper from '../components/postmap/PostMapWrapper';
 import toast from 'react-hot-toast';
 import * as api from '../services/areas'; // Giả định bạn có uploadArea tại đây
 

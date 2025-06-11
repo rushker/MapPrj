@@ -1,4 +1,4 @@
-// hooks/utils/useEnsureValidAreaId.js
+//utils/useEnsureValidAreaId.js
 import { useEffect } from 'react';
 import { useAreaContext } from '../context/AreaContext';
 import { useTempAreaId } from '../hooks/local/useTempAreaId';

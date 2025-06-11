@@ -1,13 +1,13 @@
 // src/components/postmap/PostMapWrapper.jsx
 import { useState } from 'react';
 import toast from 'react-hot-toast';
-import LeafletMap from './LeafletMap';
-import SidebarContainer from '../sidebars/SidebarContainer';
-import { createArea, updateAreaPolygon, updateArea } from '../../../services/areas';
-import { useTempAreaId } from '../../../hooks/local/useTempAreaId';
-import { useAreaContext, AreaProvider } from '../../../contexts/AreaContext';
-import useAutoSave from '../../../hooks/local/useAutoSave';
-import { useEnsureValidAreaId } from '../../hooks/utils/useEnsureValidAreaId';
+import LeafletMap from './draw/LeafletMap';
+import SidebarContainer from './sidebars/SidebarContainer';
+import { createArea, updateAreaPolygon, updateArea } from '../../services/areas';
+import { useTempAreaId } from '../../hooks/local/useTempAreaId';
+import { useAreaContext, AreaProvider } from '../../context/AreaContext';
+import useAutoSave from '../../hooks/local/useAutoSave';
+import { useEnsureValidAreaId } from '../../utils/useEnsureValidAreaId';
 
 export default function PostMapWrapper() {
   // --------------------- ENSURE VALID AREA ID ---------------------
