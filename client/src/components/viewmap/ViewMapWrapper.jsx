@@ -1,11 +1,11 @@
 // src/components/viewmap/ViewMapWrapper.jsx
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import LeafletMap from '../LeafletMap';
-import { getAreaById } from '../../../services/areas';
-import { getEntitiesByArea } from '../../../services/entities';
+import LeafletMap from '../postmap/draw/LeafletMap';
+import { getAreaById } from '../../services/areas';
+import { getEntitiesByArea } from '../../services/entities';
 import toast from 'react-hot-toast';
-import { AreaProvider } from '../../../contexts/AreaContext';
+import { AreaProvider } from '../../context/AreaContext';
 
 export default function ViewMapWrapper() {
   const { areaId } = useParams();
