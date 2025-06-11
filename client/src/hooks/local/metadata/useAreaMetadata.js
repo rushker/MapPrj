@@ -1,6 +1,6 @@
 // hooks/local/metadata/useAreaMetadata.js
 import { useState, useEffect, useMemo } from 'react';
-import { useAreaContext } from '../../context/AreaContext';
+import { useAreaContext } from '../../../context/AreaContext';
 
 // Hook quản lý metadata tạm của Khu A
 export default function useAreaMetadata(onChange) {
