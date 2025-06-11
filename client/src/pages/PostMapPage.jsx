@@ -1,55 +1,86 @@
 // src/pages/PostMapPage.jsx
 import { useNavigate } from 'react-router-dom';
-import { ROUTES } from '../routes';
-import useAutoSave from '../hooks/local/useAutoSave';
-import { AreaProvider, useAreaContext } from '../context/AreaContext';
-import PostMapWrapper from '../components/postmap/PostMapWrapper';
 import toast from 'react-hot-toast';
-import * as api from '../services/areas'; // Giả định bạn có uploadArea tại đây
+import { ROUTES } from '../routes';
+import { AreaProvider, useAreaContext } from '../context/AreaContext';
+import useAutoSave from '../hooks/local/useAutoSave';
+import PostMapWrapper from '../components/postmap/PostMapWrapper';
 
-// 👉 Bọc toàn bộ page trong AreaProvider
+/**
+ * PostMapPage:
+ * - Wrap AreaProvider để cấp context areaId, metadata, entities
+ * - Hiển thị header với nút quay lại và upload
+ * - Sử dụng PostMapWrapper để xử lý map + sidebar
+ */
 export default function PostMapPage() {
   return (
-    <AreaProvider>
+    <AreaProvider isEditMode={true}>
       <PostMapContent />
     </AreaProvider>
   );
 }
 
-// 👉 Logic chính tách riêng để gọi được useAreaContext
 function PostMapContent() {
   const navigate = useNavigate();
-  const { manualSave } = useAutoSave();
   const { areaId } = useAreaContext();
+  const { manualSave } = useAutoSave();
 
+  /**
+   * Triggers manual save (auto-save chạy theo debounce),
+   * rồi gọi API publish/upload area và chuyển hướng.
+   */
   const handleUpload = async () => {
-    await manualSave(); // đảm bảo entity + metadata đã được save
+    // 1. Lưu tất cả thay đổi còn chờ
+    await manualSave();
+    if (!areaId) {
+      toast.error('Thiếu areaId để upload');
+      return;
+    }
+
     try {
-      await api.uploadArea(areaId); // Gọi API upload
-      toast.success('Đã upload bản đồ thành công');
-      navigate(ROUTES.VIEW_MAP(areaId)); // Điều hướng sau upload
+      // 2. Gọi API uploadArea (tương tự publish)
+      await api.publishArea(areaId);
+      toast.success('Upload bản đồ thành công');
+      // 3. Điều hướng sang trang xem public
+      navigate(ROUTES.VIEW_MAP(areaId));
     } catch (error) {
-      toast.error('Upload thất bại');
+      console.error('Upload failed', error);
+      toast.error('Upload bản đồ thất bại');
     }
   };
 
   return (
     <div className="flex flex-col h-screen">
-      {/* Thanh điều hướng trên cùng */}
-      <div className="flex justify-between p-4 bg-gray-100">
-        <button onClick={() => navigate(ROUTES.MANAGER_PAGE)}>← Quay lại danh sách</button>
-        <div className="flex gap-4">
-          <button onClick={handleUpload} className="btn btn-primary">📤 Upload bản đồ</button>
-          {areaId && (
-            <button onClick={() => navigate(ROUTES.VIEW_MAP(areaId))} className="btn btn-secondary">
-              👁️ Xem thử
-            </button>
-          )}
+      {/* Header */}
+      <header className="flex justify-between p-4 bg-gray-100">
+        <button
+          onClick={() => navigate(ROUTES.MANAGER_PAGE)}
+          className="text-blue-600 hover:underline"
+        >
+          ← Quay lại danh sách
+        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={handleUpload}
+            disabled={!areaId}
+            className="btn btn-primary"
+          >
+            📤 Upload bản đồ
+          </button>
+          <button
+            onClick={() => navigate(ROUTES.VIEW_MAP(areaId))}
+            disabled={!areaId}
+            className="btn btn-secondary"
+          >
+            👁️ Xem thử
+          </button>
         </div>
-      </div>
+      </header>
 
-      {/* Bản đồ và sidebar */}
-      <PostMapWrapper />
+      {/* Map & Sidebar */}
+      <main className="flex-1">
+        <PostMapWrapper />
+      </main>
     </div>
   );
 }
