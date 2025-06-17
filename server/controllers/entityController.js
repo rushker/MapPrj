@@ -1,4 +1,3 @@
-// controllers/entityController.js
 import Entity from '../models/Entity.js';
 import mongoose from 'mongoose';
 import { handleError, handleNotFound } from '../utils/errorHandler.js';
@@ -11,7 +10,6 @@ export const createEntity = async (req, res) => {
     }
 
     const { name, type, geometry, metadata = {} } = req.body;
-
     if (!name || !type || !geometry?.type || !geometry?.coordinates) {
       return handleError(res, 'Missing required fields', null, 400);
     }
@@ -22,7 +20,6 @@ export const createEntity = async (req, res) => {
 
     const entity = new Entity({ name, type, geometry, metadata, areaId });
     await entity.save();
-
     res.status(201).json({ success: true, data: entity });
   } catch (err) {
     handleError(res, 'Failed to create entity', err);
@@ -49,6 +46,56 @@ export const updateEntity = async (req, res) => {
     res.json({ success: true, data: updated });
   } catch (err) {
     handleError(res, 'Failed to update entity', err);
+  }
+};
+
+export const updateEntityMetadata = async (req, res) => {
+  try {
+    const { entityId } = req.params;
+    const { metadata } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(entityId)) {
+      return handleError(res, 'Invalid entityId', null, 400);
+    }
+
+    if (metadata?.images && !Array.isArray(metadata.images)) {
+      return handleError(res, '`metadata.images` must be an array', null, 400);
+    }
+
+    const updated = await Entity.findByIdAndUpdate(entityId, { metadata }, {
+      new: true,
+      runValidators: true,
+    });
+
+    if (!updated) return handleNotFound(res, 'Entity');
+    res.json({ success: true, data: updated });
+  } catch (err) {
+    handleError(res, 'Failed to update metadata', err);
+  }
+};
+
+export const updateEntityGeometry = async (req, res) => {
+  try {
+    const { entityId } = req.params;
+    const { geometry } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(entityId)) {
+      return handleError(res, 'Invalid entityId', null, 400);
+    }
+
+    if (!geometry?.type || !geometry?.coordinates) {
+      return handleError(res, 'Missing geometry fields', null, 400);
+    }
+
+    const updated = await Entity.findByIdAndUpdate(entityId, { geometry }, {
+      new: true,
+      runValidators: true,
+    });
+
+    if (!updated) return handleNotFound(res, 'Entity');
+    res.json({ success: true, data: updated });
+  } catch (err) {
+    handleError(res, 'Failed to update geometry', err);
   }
 };
 

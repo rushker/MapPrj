@@ -2,16 +2,14 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useAreaContext } from '../../../context/AreaContext';
 
-// Hook quản lý metadata tạm của Khu A
 export default function useAreaMetadata(onChange) {
-  const { areaMetadata, setAreaMetadata, isEditMode } = useAreaContext();
+  const { areaMetadata, setAreaMetadata, isEditMode } = useAreaContext(); // areaMetadata không chứa id
   const [errors, setErrors] = useState({});
   const [initialMetadata, setInitialMetadata] = useState(null);
 
-  // Cập nhật metadata ban đầu khi areaMetadata (từ context) thay đổi
   useEffect(() => {
     setInitialMetadata(areaMetadata ? { ...areaMetadata } : null);
-  }, [areaMetadata?.id]);
+  }, [areaMetadata]);
 
   const validate = () => {
     const newErrors = {};
@@ -26,32 +24,19 @@ export default function useAreaMetadata(onChange) {
     const value = e?.target?.value ?? e;
     const updated = { ...areaMetadata, [field]: value };
     setAreaMetadata(updated);
-    if (onChange) onChange(updated);
-  };
-
-  const handleCheckboxChange = (field) => (e) => {
-    if (!isEditMode) return;
-    const updated = { ...areaMetadata, [field]: e.target.checked };
-    setAreaMetadata(updated);
-    if (onChange) onChange(updated);
+    onChange?.(updated);
   };
 
   const handleOpacityChange = (value) => {
     if (!isEditMode) return;
     const updated = { ...areaMetadata, opacity: value };
     setAreaMetadata(updated);
-    if (onChange) onChange(updated);
-  };
-
-  const resetInitial = () => {
-    if (initialMetadata && isEditMode) {
-      setAreaMetadata({ ...initialMetadata });
-    }
+    onChange?.(updated);
   };
 
   const isUnchanged = useMemo(() => {
     if (!initialMetadata) return false;
-    return ['name', 'type', 'description', 'opacity', 'lockedZoom'].every(
+    return ['name', 'type', 'description', 'opacity'].every(
       (key) => areaMetadata?.[key] === initialMetadata?.[key]
     );
   }, [areaMetadata, initialMetadata]);
@@ -68,8 +53,6 @@ export default function useAreaMetadata(onChange) {
     isValid,
     isUnchanged,
     handleInputChange,
-    handleCheckboxChange,
     handleOpacityChange,
-    resetInitial,
   };
 }

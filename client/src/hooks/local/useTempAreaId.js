@@ -1,19 +1,17 @@
 // hooks/local/useTempAreaId.js
-import { useContext } from 'react';
+import { useContext, useState } from 'react';
 import { AreaContext } from '../../context/AreaContext';
 
 const LOCAL_KEY = 'currentAreaId';
 const LOCAL_MAP_KEY = 'areaCoordinatesMap';
 
-/**
- * Hook quản lý tạm areaId và map từ areaId → coordinates.
- * Đảm bảo an toàn khi gọi ở bất kỳ component nào, kể cả khi không có AreaContext.
- */
 export function useTempAreaId() {
+  // Nếu không dùng Context, ta dùng local state tạm
+  const [tempCoordinates, setTempCoordinates] = useState(null);
+
   let areaId = null;
   let setAreaId = () => {};
 
-  // Nếu trong Context Provider, thì sử dụng nó
   try {
     const context = useContext(AreaContext);
     if (context) {
@@ -21,10 +19,9 @@ export function useTempAreaId() {
       setAreaId = context.setAreaId;
     }
   } catch (err) {
-    // Không làm gì — nghĩa là đang ở ngoài Provider
+    // Không có context → an toàn bỏ qua
   }
 
-  // Lấy toàn bộ bản đồ areaId → coordinates
   const getCoordinatesMap = () => {
     try {
       return JSON.parse(localStorage.getItem(LOCAL_MAP_KEY)) || {};
@@ -34,7 +31,7 @@ export function useTempAreaId() {
   };
 
   const saveAreaId = (id, coords) => {
-    if (!id || id === areaId) return;
+    if (!id) return;
     const map = getCoordinatesMap();
     map[id] = coords;
     localStorage.setItem(LOCAL_MAP_KEY, JSON.stringify(map));
@@ -47,5 +44,14 @@ export function useTempAreaId() {
     setAreaId?.(null);
   };
 
-  return { areaId, saveAreaId, clearAreaId, getCoordinatesMap };
+  return {
+    areaId,
+    saveAreaId,
+    clearAreaId,
+    getCoordinatesMap,
+    tempCoordinates,
+    setTempCoordinates,
+    hasTempCoordinates: !!tempCoordinates,
+    canCreateArea: !!tempCoordinates && !areaId
+  };
 }

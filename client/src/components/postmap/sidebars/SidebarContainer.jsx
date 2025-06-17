@@ -2,6 +2,8 @@
 import { lazy, Suspense, memo } from 'react';
 import { useSidebarContext } from '../../../context/SidebarContext';
 import { useAreaContext } from '../../../context/AreaContext';
+import { isValidAreaId } from '../../../utils/areaUtils.js';
+
 
 const KhuASidebar = lazy(() => import('./areas/KhuASidebar'));
 const EntitySidebar = lazy(() => import('./entities/EntitySidebar'));
@@ -21,7 +23,8 @@ function SidebarContainer({ onSaveAreaMetadata, onSaveEntity }) {
     handleDelete,
   } = useSidebarContext();
 
-  const { isEditMode } = useAreaContext();
+  const {areaId, isEditMode } = useAreaContext();
+  if (!isValidAreaId(areaId)) return null;
 
   if (!sidebarOpen) return null;
 

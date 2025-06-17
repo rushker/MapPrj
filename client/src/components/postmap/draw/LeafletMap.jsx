@@ -5,36 +5,21 @@ import useGeomanEvents from './useGeomanEvents';
 import AreaLayer from './layers/AreaLayer';
 import EntityLayer from './layers/EntityLayer';
 import { useAreaContext } from '../../../context/AreaContext';
+import { isValidAreaId } from '../../../utils/areaUtils';
 
 /**
- * LeafletMap là component trung tâm quản lý bản đồ tương tác:
+ * LeafletMap là component trung tâm quản lý bản đồ tương tác.
+ * 
+ * ---
+ * 📌 Chức năng liên quan đến handleCreateArea:
+ * 
+ * Khi người dùng vẽ xong hình chữ nhật (rectangle) để tạo khu vực mới (Khu A),
+ * callback `onCreateArea()` được gọi với dữ liệu GeoJSON của polygon đó.
  *
- * Mục đích chính:
- * - Hiển thị khu vực chính (Area/Khu A) với polygon và metadata
- * - Hiển thị tất cả các entity con (marker, polygon nhỏ - Khu C) của khu vực đó
- * - Tích hợp thư viện leaflet-geoman hỗ trợ vẽ, chỉnh sửa, kéo thả, xóa đối tượng trên bản đồ
- * - Quản lý callback khi user hoàn thành vẽ khu vực hoặc entity mới
- *
- * Luồng dữ liệu và quản lý trạng thái:
- * - areaMetadata: polygon + metadata của khu vực chính, nhận từ props (được fetch và quản lý bên ngoài)
- * - entities: KHÔNG nhận qua props mà được lấy trực tiếp từ AreaContext (toàn bộ entities của khu vực hiện tại)
- * - selectedEntityId & onSelectEntity: props truyền xuống để xử lý focus và tương tác chọn entity con
- * - areaId lấy từ context để đồng bộ id khu vực cho các thao tác vẽ và lưu dữ liệu mới
- *
- * Các control flags (props) cho phép bật tắt các tính năng của leaflet-geoman:
- * - enableDraw, drawShape: bật chế độ vẽ và xác định kiểu shape đang vẽ (Rectangle, Polygon, Marker)
- * - enableEdit: bật chỉnh sửa toàn cục
- * - enableDrag: bật kéo thả toàn cục
- * - enableRemove: bật chế độ xóa
- *
- * Callback:
- * - onCreateArea: khi user vẽ xong polygon khu vực mới
- * - onCreateEntity: khi user vẽ xong một entity mới (polygon/marker)
- *
- * Lưu ý:
- * - areaId   được quản lý trong AreaContext để tránh truyền prop rườm rà, đồng thời đồng bộ dễ dàng
- * - entities được quản lý trong AreaContext để tránh truyền prop rườm rà, đồng thời đồng bộ dễ dàng
- * - LeafletMap chỉ chịu trách nhiệm hiển thị và tương tác, không lưu trữ trực tiếp dữ liệu entities
+ * ❗Tại thời điểm này chưa tồn tại `areaId`, vì vậy LeafletMap KHÔNG được gắn `areaId` vào callback.
+ * Trách nhiệm tạo `areaId` (gọi API createArea, hiển thị toast, lưu context) nằm ở component cha `PostMapWrapper`.
+ * 
+ * ✅ LeafletMap chỉ đóng vai trò "phát hiện người dùng đã vẽ xong" và truyền raw polygon lên callback cha.
  */
 
 export default function LeafletMap({
@@ -53,23 +38,28 @@ export default function LeafletMap({
   onCreateArea = () => {},
   onCreateEntity = () => {},
   onUpdatePolygon = () => {},
+  onUpdateEntityGeometry = () => {},
 }) {
   const mapRef = useRef(null);
   const { areaId, isEditMode } = useAreaContext();
 
-  // Callback khi vẽ xong khu vực (polygon Khu A)
+  // ✅ Callback khi vẽ xong khu vực mới (rectangle - Khu A)
   const handleCreateArea = (polygon) => {
-    // Gắn thêm areaId để đồng bộ với context
-    onCreateArea({ ...polygon, areaId });
+    const coordinates = polygon.coordinates;
+
+    // ❌ KHÔNG truyền areaId vì đây là giai đoạn khởi tạo (chưa gọi API)
+    // ✅ Đẩy dữ liệu polygon thô về component cha để xử lý createArea
+    onCreateArea({ coordinates, polygon, maxZoom: 18 });
   };
 
-  // Callback khi vẽ xong entity (polygon/marker Khu C)
+  // ✅ Callback khi vẽ xong entity con (polygon/marker - Khu C)
   const handleCreateEntity = (entity) => {
-    // Gắn thêm areaId để liên kết entity với khu vực hiện tại
+    if (!isValidAreaId(areaId)) return null;
+
+    // ✅ Với entity thì cần gắn areaId để backend biết entity thuộc khu nào
     onCreateEntity({ ...entity, areaId });
   };
 
-  // Đăng ký sự kiện leaflet-geoman với các flags và callback xử lý
   useGeomanEvents({
     mapRef,
     enableDraw,
@@ -80,6 +70,7 @@ export default function LeafletMap({
     onCreateKhuA: handleCreateArea,
     onCreateEntity: handleCreateEntity,
     onUpdatePolygon,
+    onUpdateEntityGeometry,
     isEditMode,
   });
 
@@ -104,7 +95,6 @@ export default function LeafletMap({
       <EntityLayer
         selectedEntityId={selectedEntityId}
         onSelectEntity={onSelectEntity}
-        isEditMode={isEditMode} 
       />
     </MapContainer>
   );

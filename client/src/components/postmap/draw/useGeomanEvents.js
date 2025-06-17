@@ -28,6 +28,7 @@ const useGeomanEvents = ({
   onCreateKhuA,
   onCreateEntity,
   onUpdatePolygon,
+  onUpdateEntityGeometry,
   isEditMode = false,
 }) => {
   useEffect(() => {
@@ -88,16 +89,39 @@ const useGeomanEvents = ({
     };
 
     const handleUpdate = (e) => {
-      const layer = e.layer;
-      const geoJson = layer.toGeoJSON();
+  const layer = e.layer;
+  const geoJson = layer.toGeoJSON();
 
-      if (
-        geoJson.geometry?.type === 'Polygon' &&
-        typeof onUpdatePolygon === 'function'
-      ) {
-        onUpdatePolygon({ coordinates: geoJson.geometry.coordinates });
-      }
-    };
+  // Khu A polygon
+  if (
+    geoJson.geometry?.type === 'Polygon' &&
+    typeof onUpdatePolygon === 'function' &&
+    layer.options?.isAreaLayer
+  ) {
+    onUpdatePolygon({ coordinates: geoJson.geometry.coordinates });
+  }
+
+  // Entity polygon or marker
+  if (
+    typeof onUpdateEntityGeometry === 'function' &&
+    geoJson.properties?.entityId
+  ) {
+    const updatedCoords =
+      geoJson.geometry.type === 'Polygon'
+        ? geoJson.geometry.coordinates
+        : geoJson.geometry.type === 'Point'
+        ? geoJson.geometry.coordinates
+        : null;
+
+    if (updatedCoords) {
+      onUpdateEntityGeometry({
+        entityId: geoJson.properties.entityId,
+        coordinates: updatedCoords,
+      });
+    }
+  }
+};
+
 
     map.on('pm:create', handleCreate);
     map.on('pm:update', handleUpdate);

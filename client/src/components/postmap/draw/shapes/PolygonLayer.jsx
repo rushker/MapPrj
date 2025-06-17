@@ -3,7 +3,9 @@ import { Polygon, Popup, useMap } from 'react-leaflet';
 import { useEffect, useRef } from 'react';
 import { geoToLatLng } from '../../../../utils/geometry';
 import L from 'leaflet';
-import { useAreaContext } from '../../../../context/AreaContext';
+import { useSafeAreaContext } from '../../../../context/useSafeAreaContext.js';
+import { isAreaIdReady } from '../../../../utils/areaUtils.js';
+
 const defaultStyle = {
   color: '#3388ff',
   weight: 2,
@@ -16,59 +18,57 @@ const selectedStyle = {
   fillOpacity: 0.4,
 };
 
-const PolygonLayer = ({ entities = [], selectedEntityId, onSelectEntity}) => {
+const PolygonLayer = ({ selectedEntityId, onSelectEntity, entities: overrideEntities }) => {
   const map = useMap();
   const polygonRefs = useRef({});
-  const { isEditMode } = useAreaContext();
+  const safeContext = useSafeAreaContext();
+  if (!safeContext) return null;
+
+  const { areaId, isEditMode, isCreatingArea, entities } = safeContext;
+  const polygons = (overrideEntities ?? entities).filter(e => e.type === 'polygon' && e.geometry?.coordinates);
 
   useEffect(() => {
+    if (!isAreaIdReady({ areaId, isEditMode }) || isCreatingArea) return;
     if (!isEditMode || !selectedEntityId) return;
 
-    const selected = entities.find(e => e._id === selectedEntityId && e.type === 'polygon');
+    const selected = polygons.find(e => e._id === selectedEntityId);
     if (selected?.geometry?.coordinates) {
       const latLngs = geoToLatLng(selected.geometry.coordinates);
       const bounds = L.latLngBounds(latLngs);
-      if (bounds.isValid()) {
-        map.flyToBounds(bounds, { padding: [50, 50], duration: 0.5 });
-      }
+      if (bounds.isValid()) map.flyToBounds(bounds, { padding: [50, 50], duration: 0.5 });
     }
 
-    const polygon = polygonRefs.current[selectedEntityId];
-    if (polygon) polygon.openPopup();
-  }, [selectedEntityId, entities, map,isEditMode]);
+    polygonRefs.current[selectedEntityId]?.openPopup();
+  }, [selectedEntityId, polygons, map, isEditMode, areaId, isCreatingArea]);
 
   return (
     <>
-      {entities
-        .filter(e => e.type === 'polygon' && e.geometry?.coordinates)
-        .map(entity => {
-          const latlngs = geoToLatLng(entity.geometry.coordinates);
-          return (
-            <Polygon
-              key={entity._id}
-              positions={latlngs}
-              pathOptions={entity._id === selectedEntityId ? selectedStyle : defaultStyle}
-              eventHandlers={
-                isEditMode
-                  ? {} // Không cho click nếu readOnly
-                  : {
-                      click: () => onSelectEntity?.(entity._id),
-                    }
-              }
-              ref={ref => {
-                if (ref) {
-                  polygonRefs.current[entity._id] = ref;
-                }
-              }}
-            >
-              <Popup>
-                <strong>{entity.name || 'Khu vực'}</strong>
-                <br />
-                {entity.description || 'Không có mô tả'}
-              </Popup>
-            </Polygon>
-          );
-        })}
+      {polygons.map(entity => {
+        const latlngs = geoToLatLng(entity.geometry.coordinates);
+        return (
+          <Polygon
+            key={entity._id}
+            positions={latlngs}
+            pathOptions={entity._id === selectedEntityId ? selectedStyle : defaultStyle}
+            eventHandlers={
+              isEditMode
+                ? {}
+                : {
+                    click: () => onSelectEntity?.(entity._id),
+                  }
+            }
+            ref={ref => {
+              if (ref) polygonRefs.current[entity._id] = ref;
+            }}
+          >
+            <Popup>
+              <strong>{entity.name || 'Khu vực'}</strong>
+              <br />
+              {entity.description || 'Không có mô tả'}
+            </Popup>
+          </Polygon>
+        );
+      })}
     </>
   );
 };

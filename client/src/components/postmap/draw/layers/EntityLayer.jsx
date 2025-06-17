@@ -1,29 +1,25 @@
 // src/components/postmap/draw/layers/EntityLayer.jsx
 import PolygonLayer from '../shapes/PolygonLayer';
 import MarkerLayer from '../shapes/MarkerLayer';
-import useSeparateEntities from '../../../../hooks/useSeparateEntities';
-import { useAreaContext } from '../../../../context/AreaContext';
+import { useSafeAreaContext } from '../../../../context/useSafeAreaContext';
+import { isAreaIdReady } from '../../../../utils/areaUtils.js';
 
 /**
  * @param {string} selectedEntityId - ID của entity đang được chọn.
  * @param {function} onSelectEntity - Callback khi người dùng click chọn một entity.
  */
 const EntityLayer = ({ selectedEntityId, onSelectEntity }) => {
-  const { entities, isEditMode } = useAreaContext();
-  const { khuCs, markers } = useSeparateEntities(entities, !isEditMode); // Sử dụng !isEditMode cho readOnly
-  
+  const safeContext = useSafeAreaContext();
+  if (!safeContext) return null;
+
+  const { areaId, isEditMode, isCreatingArea } = safeContext;
+
+  if (!isAreaIdReady({ areaId, isEditMode }) || isCreatingArea) return null;
+
   return (
     <>
-      <PolygonLayer
-        entities={khuCs}
-        selectedEntityId={selectedEntityId}
-        onSelectEntity={onSelectEntity}
-      />
-      <MarkerLayer
-        entities={markers}
-        selectedEntityId={selectedEntityId}
-        onSelectEntity={onSelectEntity}
-      />
+      <PolygonLayer selectedEntityId={selectedEntityId} onSelectEntity={onSelectEntity} />
+      <MarkerLayer selectedEntityId={selectedEntityId} onSelectEntity={onSelectEntity} />
     </>
   );
 };

@@ -45,7 +45,7 @@ export default function ViewMapPage() {
         <h1 className="text-xl font-semibold">Chế độ xem bản đồ</h1>
         <button
           className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-          onClick={() => navigate(`/projects/${khuA.project}/areas/${khuA._id}/edit`)}
+          onClick={() => navigate(`/areas/${khuA._id}/edit`)}
         >
           Quay lại chỉnh sửa
         </button>

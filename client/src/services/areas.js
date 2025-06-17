@@ -21,12 +21,13 @@ export const getAreaById = async (areaId) => {
 
 // ✅ Tạo mới Khu A sau khi người dùng vẽ polygon xong
 /**
- * Gửi request tạo mới Area chỉ với coordinates và maxZoom
+ * Gửi request tạo mới Area chỉ với coordinates, polygon và maxZoom
  * Metadata sẽ được cập nhật sau.
  */
-export const createArea = async ({ coordinates, maxZoom }) => {
+export const createArea = async ({ coordinates, polygon, maxZoom }) => {
   const res = await axios.post('/api/areas', {
     coordinates,
+    polygon,
     maxZoom,
   });
   return res.data;

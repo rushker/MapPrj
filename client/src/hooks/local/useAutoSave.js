@@ -1,22 +1,14 @@
 // hooks/local/useAutoSave.js
 import { useEffect, useRef, useCallback } from 'react';
 import { updateArea } from '../../services/areas';
-import { updateEntity } from '../../services/entities';
+import {
+  updateEntityMetadata,
+  updateEntityGeometry,
+} from '../../services/entities';
 import { useAreaContext } from '../../context/AreaContext';
+import { isValidAreaId } from '../../utils/areaUtils';
 import toast from 'react-hot-toast';
 import isEqual from 'lodash/isEqual';
-/**
- * Hook này cung cấp tính năng tự động lưu (auto-save) và lưu thủ công (manual-save) 
- * cho dữ liệu Area (Khu A) và Entities (Khu C: Polygon, Marker).
- * 
- * Chỉ lưu khi:
- * - Area có thay đổi so với lần lưu trước.
- * - Entity có thay đổi so với lần lưu trước.
- * - Đảm bảo areaId tồn tại và areaMetadata.name không rỗng.
- * 
- * Các ref (`prevAreaRef`, `prevEntityMapRef`) dùng để so sánh dữ liệu hiện tại 
- * với dữ liệu đã lưu trước đó, tránh lưu dư thừa.
- */
 
 const DEBOUNCE_INTERVAL = 20000;
 
@@ -51,7 +43,7 @@ export default function useAutoSave() {
   }, []);
 
   const hasUnsavedChanges = useCallback(() => {
-    if (!areaId || !areaMetadata?.name) return false;
+    if (!isValidAreaId(areaId) || !areaMetadata?.name) return false;
 
     const areaChanged = hasAreaChanged(areaMetadata, prevAreaRef.current);
     const entityChanged = entities.some(entity => {
@@ -63,34 +55,54 @@ export default function useAutoSave() {
   }, [areaId, areaMetadata, entities, hasAreaChanged, hasEntityChanged]);
 
   const saveChanges = useCallback(async () => {
-    if (!areaId || !areaMetadata?.name || isSavingRef.current) return;
+    if (!isValidAreaId(areaId) || !areaMetadata?.name || isSavingRef.current) return;
 
     isSavingRef.current = true;
-
     const changes = { area: false, entities: [] };
 
     try {
-      // AREA
+      // SAVE AREA
       if (hasAreaChanged(areaMetadata, prevAreaRef.current)) {
         await updateArea(areaId, areaMetadata);
         changes.area = true;
       }
 
-      // ENTITIES
-      const updatePromises = entities
-        .filter(entity => {
-          const prev = prevEntityMapRef.current.get(entity._id);
-          return hasEntityChanged(entity, prev);
-        })
-        .map(entity =>
-          updateEntity(entity._id, entity)
-            .then(() => entity._id)
-            .catch(() => null)
-        );
+      // SAVE CHANGED ENTITIES
+      const updatePromises = entities.flatMap(entity => {
+        const prev = prevEntityMapRef.current.get(entity._id);
+        const promises = [];
+
+        if (!isValidAreaId(entity.areaId)) return [];
+
+        if (!isEqual(entity.metadata, prev?.metadata)) {
+          promises.push(
+            updateEntityMetadata(entity._id, entity.metadata)
+              .then(() => entity._id)
+              .catch(err => {
+                console.error(`Metadata update failed for entity ${entity._id}`, err);
+                return null;
+              })
+          );
+        }
+
+        if (!isEqual(entity.geometry, prev?.geometry)) {
+          promises.push(
+            updateEntityGeometry(entity._id, entity.geometry)
+              .then(() => entity._id)
+              .catch(err => {
+                console.error(`Geometry update failed for entity ${entity._id}`, err);
+                return null;
+              })
+          );
+        }
+
+        return promises;
+      });
 
       const updatedIds = (await Promise.all(updatePromises)).filter(Boolean);
       changes.entities = updatedIds;
 
+      // Success
       if (changes.area || changes.entities.length > 0) {
         toast.success('Đã tự động lưu bản nháp');
         prevAreaRef.current = { ...areaMetadata };
@@ -105,10 +117,10 @@ export default function useAutoSave() {
     } finally {
       isSavingRef.current = false;
     }
-  }, [areaId, areaMetadata, entities, hasAreaChanged, hasEntityChanged]);
+  }, [areaId, areaMetadata, entities, hasAreaChanged]);
 
   useEffect(() => {
-    if (!areaId || !areaMetadata?.name) return;
+    if (!isValidAreaId(areaId) || !areaMetadata?.name) return;
 
     // Init refs
     if (!prevAreaRef.current) {
@@ -122,10 +134,7 @@ export default function useAutoSave() {
     }
 
     debounceTimeoutRef.current = setTimeout(saveChanges, DEBOUNCE_INTERVAL);
-
-    return () => {
-      clearTimeout(debounceTimeoutRef.current);
-    };
+    return () => clearTimeout(debounceTimeoutRef.current);
   }, [areaId, areaMetadata, entities, saveChanges]);
 
   const manualSave = useCallback(async () => {
@@ -140,4 +149,3 @@ export default function useAutoSave() {
     wasManuallySaved: wasManuallySavedRef.current,
   };
 }
-

@@ -1,5 +1,5 @@
 // src/components/postmap/PostMapWrapper.jsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import LeafletMap from './draw/LeafletMap';
 import SidebarContainer from './sidebars/SidebarContainer';
@@ -10,33 +10,49 @@ import useAutoSave from '../../hooks/local/useAutoSave';
 import { useEnsureValidAreaId } from '../../utils/useEnsureValidAreaId';
 
 export default function PostMapWrapper() {
-  // --------------------- ENSURE VALID AREA ID ---------------------
-  // Hook validate/restore/create areaId based on drawn coordinates
+  // ------------------------- AREA ID INIT -------------------------
   const getCoordinates = () => {
-    // TODO: Implement extraction of current rectangle coords from map layer
+    // TODO: Extract from drawn layer (refactor later)
     return null;
   };
-  // defaultMaxZoom can be parameterized or config
   useEnsureValidAreaId(getCoordinates, 18);
 
-  // --------------------------- AUTO SAVE ---------------------------
+  // ---------------------- CONTEXT & STATE ----------------------
+  const { saveAreaId } = useTempAreaId();
+  const {
+    areaId,
+    areaMetadata,
+    setAreaMetadata,
+    addEntity,
+    updateEntityMetadata,
+    updateEntityGeometry,
+    clearEntities,
+  } = useAreaContext();
+
+  const [selectedEntityId, setSelectedEntityId] = useState(null);
+  const [isCreatingArea, setIsCreatingArea] = useState(false);
+
+  // Reset entity selection when areaId changes
+  useEffect(() => {
+    setSelectedEntityId(null);
+    clearEntities?.(); // optional: clear entities when switching area
+  }, [areaId]);
+
+  // ------------------------ AUTO SAVE ------------------------
   useAutoSave();
 
-  // ------------------------ CONTEXT & STATE ------------------------
-  const { saveAreaId } = useTempAreaId();
-  const { areaId, areaMetadata, setAreaMetadata, addEntity, updateEntity } = useAreaContext();
-  const [selectedEntityId, setSelectedEntityId] = useState(null);
-
-  // ----------------------- CREATE AREA HANDLER -----------------------
-  const handleCreateArea = async (coordinates, maxZoom) => {
+  // --------------------- AREA CREATE HANDLER ---------------------
+  const handleCreateArea = async ({ coordinates, polygon, maxZoom }) => {
     if (!window.confirm('Bạn có chắc muốn tạo khu vực này?')) return;
+    if (isCreatingArea) return;
+    setIsCreatingArea(true);
 
     try {
-      // Payload: chỉ gồm coords và maxZoom, metadata cập nhật sau
-      const res = await createArea({ coordinates, maxZoom });
+      const res = await createArea({ coordinates, polygon, maxZoom });
       if (!res.success || !res.data?._id) {
         throw new Error('Tạo khu vực thất bại từ phía backend');
       }
+
       const newId = res.data._id;
       saveAreaId(newId, coordinates);
       toast.success('Đã tạo khu vực thành công!');
@@ -45,19 +61,21 @@ export default function PostMapWrapper() {
       console.error(err);
       toast.error('Tạo khu vực thất bại: ' + err.message);
       return null;
+    } finally {
+      setIsCreatingArea(false);
     }
   };
 
-  // --------------------- UPDATE POLYGON HANDLER ---------------------
-  const handleUpdatePolygon = async (updatedPolygonCoords) => {
+  // ------------------- AREA POLYGON UPDATE -------------------
+  const handleUpdatePolygon = async ({ coordinates }) => {
     if (!areaId) {
       toast.error('Chưa có khu vực để cập nhật polygon');
       return;
     }
     try {
-      const response = await updateAreaPolygon(areaId, { polygon: updatedPolygonCoords });
-      if (!response.success) throw new Error('Backend cập nhật polygon thất bại');
-      setAreaMetadata(response.data);
+      const res = await updateAreaPolygon(areaId, { polygon: coordinates });
+      if (!res.success) throw new Error('Backend cập nhật polygon thất bại');
+      setAreaMetadata(res.data);
       toast.success('Cập nhật polygon thành công!');
     } catch (err) {
       console.error(err);
@@ -65,7 +83,20 @@ export default function PostMapWrapper() {
     }
   };
 
-  // ---------------------- CREATE ENTITY HANDLER ----------------------
+  // ------------------- ENTITY GEOMETRY UPDATE -------------------
+  const handleUpdateEntityGeometry = async ({ entityId, coordinates }) => {
+  try {
+    await updateEntityGeometry(entityId, { coordinates });
+    updateEntityGeometry(entityId, { coordinates }); // local update từ AreaContext
+    toast.success('Đã cập nhật vị trí/thể hiện hình học của đối tượng');
+  } catch (err) {
+    console.error(err);
+    toast.error('Cập nhật hình học thất bại');
+  }
+};
+
+
+  // ------------------- CREATE ENTITY HANDLER -------------------
   const handleCreateEntity = (entity) => {
     if (!areaId) {
       toast.error('Vui lòng tạo khu vực trước khi thêm đối tượng');
@@ -75,27 +106,26 @@ export default function PostMapWrapper() {
     setSelectedEntityId(entity._id);
   };
 
-  // ---------------------- SAVE AREA METADATA ----------------------
+  // ---------------------- SAVE METADATA ----------------------
   const handleSaveAreaMetadata = async (metadata) => {
     if (!areaId) {
       toast.error('Không tìm thấy areaId để lưu metadata');
       return;
     }
     try {
-      const response = await updateArea(areaId, metadata);
-      if (!response.success) throw new Error('Lưu metadata thất bại từ server');
-      setAreaMetadata(response.data);
-      return response.data;
+      const res = await updateArea(areaId, metadata);
+      if (!res.success) throw new Error('Lưu metadata thất bại từ server');
+      setAreaMetadata(res.data);
+      return res.data;
     } catch (err) {
       console.error(err);
       throw err;
     }
   };
 
-  // --------------------- SAVE ENTITY METADATA ---------------------
   const handleSaveEntityMetadata = async (entityId, updatedMetadata) => {
     try {
-      updateEntity(entityId, updatedMetadata);
+      await updateEntityMetadata(entityId, updatedMetadata);
       toast.success('Đã lưu metadata của đối tượng');
     } catch (err) {
       console.error(err);
@@ -103,29 +133,30 @@ export default function PostMapWrapper() {
     }
   };
 
+  // ------------------------ RENDER ------------------------
   return (
-    
-      <div className="flex h-screen w-full">
-        <div className="flex-1">
-          <LeafletMap
-            areaMetadata={areaMetadata}
-            selectedEntityId={selectedEntityId}
-            onSelectEntity={setSelectedEntityId}
-            enableDraw={true}
-            drawShape={null}
-            enableEdit={true}
-            enableDrag={true}
-            enableRemove={true}
-            onCreateArea={handleCreateArea}
-            onUpdatePolygon={handleUpdatePolygon}
-            onCreateEntity={handleCreateEntity}
-          />
-        </div>
-        <SidebarContainer
-          onSaveAreaMetadata={handleSaveAreaMetadata}
-          onSaveEntity={handleSaveEntityMetadata}
+    <div className="flex h-screen w-full">
+      <div className="flex-1">
+        <LeafletMap
+          areaMetadata={areaMetadata}
+          selectedEntityId={selectedEntityId}
+          onSelectEntity={setSelectedEntityId}
+          enableDraw={true}
+          drawShape={null}
+          enableEdit={true}
+          enableDrag={true}
+          enableRemove={true}
+          onCreateArea={handleCreateArea}
+          onUpdatePolygon={handleUpdatePolygon}
+          onUpdateEntityGeometry={handleUpdateEntityGeometry}
+          onCreateEntity={handleCreateEntity}
+          isCreatingArea={isCreatingArea}
         />
       </div>
-   
+      <SidebarContainer
+        onSaveAreaMetadata={handleSaveAreaMetadata}
+        onSaveEntity={handleSaveEntityMetadata}
+      />
+    </div>
   );
 }

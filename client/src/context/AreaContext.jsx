@@ -1,12 +1,20 @@
-// contexts/AreaContext.jsx
+// src/context/AreaContext.jsx
 import { createContext, useContext, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 
-const AreaContext = createContext();
+export const AreaContext = createContext();
 
-export function AreaProvider({ children,isEditMode = false }) {
+export function AreaProvider({ children, isEditMode: forcedMode }) {
+  const location = useLocation();
+
+  // Auto detect nếu không truyền isEditMode
+  const autoEdit = location.pathname.includes('/edit');
+  const isEditMode = forcedMode ?? autoEdit;
+
   const [areaId, setAreaId] = useState(null);
   const [areaMetadata, setAreaMetadata] = useState(null);
   const [entities, setEntities] = useState([]);
+  const [isCreatingArea, setIsCreatingArea] = useState(false);
 
   const value = {
     areaId,
@@ -15,19 +23,33 @@ export function AreaProvider({ children,isEditMode = false }) {
     setAreaMetadata,
     entities,
     setEntities,
+    isCreatingArea,
+    setIsCreatingArea,
+    updateEntityMetadata,
+  updateEntityGeometry,
     isEditMode,
-   addEntity: (entity) => {
-      if (!isEditMode) return; // Chỉ cho phép thêm entity khi ở chế độ chỉnh sửa
+
+    // Các hàm quản lý entity (chặn nếu không ở editMode)
+    addEntity: (entity) => {
+      if (!isEditMode || !areaId) return;
       setEntities(prev => [...prev, entity]);
     },
-    updateEntity: (id, updates) => {
-      if (!isEditMode) return; // Chỉ cho phép cập nhật khi ở chế độ chỉnh sửa
-      setEntities(prev => prev.map(e => e._id === id ? {...e, ...updates} : e));
-    },
+    updateEntityMetadata: (id, metadata) => {
+  if (!isEditMode || !areaId) return;
+  setEntities(prev =>
+    prev.map(e => (e._id === id ? { ...e, ...metadata } : e))
+  );
+},
+updateEntityGeometry: (id, geometry) => {
+  if (!isEditMode || !areaId) return;
+  setEntities(prev =>
+    prev.map(e => (e._id === id ? { ...e, coordinates: geometry.coordinates } : e))
+  );
+},
     removeEntity: (id) => {
-      if (!isEditMode) return; // Chỉ cho phép xóa khi ở chế độ chỉnh sửa
+      if (!isEditMode || !areaId) return;
       setEntities(prev => prev.filter(e => e._id !== id));
-    }
+    },
   };
 
   return <AreaContext.Provider value={value}>{children}</AreaContext.Provider>;

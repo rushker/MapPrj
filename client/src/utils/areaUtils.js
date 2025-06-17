@@ -25,3 +25,8 @@ export function findMatchingAreaIdByCoordinates(coords) {
   }
   return null;
 }
+export const isValidAreaId = (areaId) => 
+  areaId && typeof areaId === 'string' && areaId.length > 0;
+
+export const isAreaIdReady = (context) => 
+  isValidAreaId(context?.areaId) && context?.isEditMode;

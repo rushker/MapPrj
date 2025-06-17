@@ -1,6 +1,8 @@
 //server/controller/areaController.js
 import Area from '../models/Area.js';
 import { handleError, handleNotFound } from '../utils/errorHandler.js';
+import { convertToGeoJSON, convertPolygonToGeoJSON } from '../utils/geoUtils.js';
+
 
 /* ─────────────────────── READ ─────────────────────── */
 
@@ -30,34 +32,30 @@ export const getAreaById = async (req, res) => {
 
 export const createArea = async (req, res) => {
   try {
-    const { coordinates, maxZoom } = req.body;
+    const { coordinates, maxZoom, polygon: frontendPolygon } = req.body;
 
     if (!coordinates || !Array.isArray(coordinates)) {
       return res.status(400).json({ success: false, message: 'Thiếu toạ độ' });
     }
 
-    // Chuyển coordinates (LatLng) sang dạng Polygon GeoJSON hợp lệ
-    const polygon = {
+    const converted = convertToGeoJSON(coordinates);
+    const defaultPolygon = {
       type: 'Polygon',
-      coordinates: [[...coordinates, coordinates[0]]], // Phải đóng vòng polygon
+      coordinates: [[...converted, converted[0]]], // đóng vòng
     };
 
     const newArea = new Area({
-      polygon,
+      polygon: frontendPolygon || defaultPolygon, // ưu tiên polygon từ frontend
       maxZoom,
-      // Metadata chưa nhập => dùng default trong model
     });
 
     await newArea.save();
-
-    res.status(201).json({
-      success: true,
-      data: newArea,
-    });
+    res.status(201).json({ success: true, data: newArea });
   } catch (err) {
     handleError(res, 'Failed to create area', err, 400);
   }
 };
+
 
 /* ─────────────────────── UPDATE ─────────────────────── */
 
@@ -79,20 +77,26 @@ export const updatePolygon = async (req, res) => {
     const area = await Area.findById(areaId);
     if (!area) return handleNotFound(res, 'Area', areaId);
 
-    const geoJsonPolygon = req.body.polygon.map(ring =>
-      ring.map(([lat, lng]) => [lng, lat])
-    );
+    const { polygon } = req.body;
+
+    if (!polygon || !Array.isArray(polygon)) {
+      return res.status(400).json({ success: false, message: 'Thiếu polygon hợp lệ' });
+    }
+
+    const geoJsonPolygon = convertPolygonToGeoJSON(polygon);
 
     area.polygon = {
       type: 'Polygon',
-      coordinates: [geoJsonPolygon],
+      coordinates: geoJsonPolygon,
     };
+
     await area.save();
     res.json({ success: true, data: area });
   } catch (err) {
     handleError(res, 'Failed to update polygon', err);
   }
 };
+
 
 // Đánh dấu đã publish
 export const publishArea = async (req, res) => {
