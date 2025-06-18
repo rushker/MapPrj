@@ -11,7 +11,7 @@ import useAutoSave from '../../hooks/local/useAutoSave';
 import { useEnsureValidAreaId } from '../../utils/useEnsureValidAreaId';
 import { SidebarProvider } from '../../context/SidebarContext';
 
-export default function PostMapWrapper() {
+export default function PostMapWrapper(isCreatingArea, setIsCreatingArea ) {
   // ------------------------- AREA ID INIT -------------------------
   const getCoordinates = () => {
     // TODO: Extract from drawn layer (refactor later)
@@ -170,7 +170,8 @@ export default function PostMapWrapper() {
           onUpdatePolygon={handleUpdatePolygon}
           onUpdateEntityGeometry={handleUpdateEntityGeometry}
           onCreateEntity={handleCreateEntity}
-          isCreatingArea={isCreatingArea}
+          isCreatingArea={isCreatingArea} // TRUYỀN XUỐNG LEAFETMAP
+            onDrawEnd={() => setIsCreatingArea(false)} // CALLBACK KHI VẼ XONG
         />
       </div>
       <SidebarContainer

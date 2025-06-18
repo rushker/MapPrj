@@ -1,31 +1,21 @@
 // components/postmap/draw/LeafletMap.jsx
 import { MapContainer, TileLayer } from 'react-leaflet';
-import { useRef } from 'react';
+import { useRef, useEffect } from 'react';
 import useGeomanEvents from './useGeomanEvents';
 import AreaLayer from './layers/AreaLayer';
 import EntityLayer from './layers/EntityLayer';
 import { useAreaContext } from '../../../context/AreaContext';
 import { isValidAreaId } from '../../../utils/areaUtils';
 
-/**
- * LeafletMap là component trung tâm quản lý bản đồ tương tác.
- * 
- * ---
- * 📌 Chức năng liên quan đến handleCreateArea:
- * 
- * Khi người dùng vẽ xong hình chữ nhật (rectangle) để tạo khu vực mới (Khu A),
- * callback `onCreateArea()` được gọi với dữ liệu GeoJSON của polygon đó.
- *
- * ❗Tại thời điểm này chưa tồn tại `areaId`, vì vậy LeafletMap KHÔNG được gắn `areaId` vào callback.
- * Trách nhiệm tạo `areaId` (gọi API createArea, hiển thị toast, lưu context) nằm ở component cha `PostMapWrapper`.
- * 
- * ✅ LeafletMap chỉ đóng vai trò "phát hiện người dùng đã vẽ xong" và truyền raw polygon lên callback cha.
- */
+// Import Geoman thay thế cho leaflet.pm
+import '@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css';
 
 export default function LeafletMap({
   areaMetadata = null,
   selectedEntityId = null,
   onSelectEntity = () => {},
+  isCreatingArea,
+  onDrawEnd,
 
   // Geoman control flags
   enableDraw = false,
@@ -46,20 +36,54 @@ export default function LeafletMap({
   // ✅ Callback khi vẽ xong khu vực mới (rectangle - Khu A)
   const handleCreateArea = (polygon) => {
     const coordinates = polygon.coordinates;
-
-    // ❌ KHÔNG truyền areaId vì đây là giai đoạn khởi tạo (chưa gọi API)
-    // ✅ Đẩy dữ liệu polygon thô về component cha để xử lý createArea
     onCreateArea({ coordinates, polygon, maxZoom: 18 });
   };
 
   // ✅ Callback khi vẽ xong entity con (polygon/marker - Khu C)
   const handleCreateEntity = (entity) => {
     if (!isValidAreaId(areaId)) return null;
-
-    // ✅ Với entity thì cần gắn areaId để backend biết entity thuộc khu nào
     onCreateEntity({ ...entity, areaId });
   };
 
+  // Sử dụng Geoman thay vì leaflet.pm
+  useEffect(() => {
+    if (!mapRef.current || !isCreatingArea) return;
+    
+    const map = mapRef.current;
+    
+    // Kích hoạt chế độ vẽ rectangle
+    map.pm.enableDraw('Rectangle', {
+      snappable: true,
+      snapDistance: 20,
+    });
+    
+    // Xử lý khi hoàn thành vẽ
+    const handleCreate = (e) => {
+      const layer = e.layer;
+      const latLngs = layer.getLatLngs();
+      
+      // Chuyển đổi sang GeoJSON format
+      const coordinates = latLngs[0].map(latLng => [latLng.lng, latLng.lat]);
+      const polygon = {
+        type: 'Polygon',
+        coordinates: [coordinates]
+      };
+      
+      handleCreateArea({ polygon, coordinates });
+      map.removeLayer(layer); // Xóa layer tạm
+      map.pm.disableDraw(); // Tắt chế độ vẽ
+      onDrawEnd(); // Thông báo hoàn thành
+    };
+    
+    map.on('pm:create', handleCreate);
+    
+    return () => {
+      map.off('pm:create', handleCreate);
+      map.pm.disableDraw();
+    };
+  }, [isCreatingArea, onDrawEnd]);
+
+  // Hook sự kiện Geoman
   useGeomanEvents({
     mapRef,
     enableDraw,
@@ -67,10 +91,10 @@ export default function LeafletMap({
     enableEdit,
     enableDrag,
     enableRemove,
-    onCreateKhuA: handleCreateArea,
-    onCreateEntity: handleCreateEntity,
-    onUpdatePolygon,
-    onUpdateEntityGeometry,
+    onCreateKhuA: handleCreateArea, // Xử lý rectangle
+  onCreateEntity: handleCreateEntity, // Xử lý polygon/marker
+  onUpdatePolygon: handleUpdatePolygon,
+  onUpdateEntityGeometry: handleUpdateEntityGeometry,
     isEditMode,
   });
 
@@ -81,17 +105,21 @@ export default function LeafletMap({
       style={{ height: '100%', width: '100%' }}
       whenCreated={(mapInstance) => {
         mapRef.current = mapInstance;
+        // Kích hoạt Geoman
+        mapInstance.pm.addControls({  
+          position: 'topleft',
+          drawCircle: false,
+        });
       }}
+      pmIgnore={false} // Cho phép Geoman hoạt động
     >
       <TileLayer
         attribution='&copy; <a href="https://osm.org">OpenStreetMap</a>'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
 
-      {/* Hiển thị polygon khu vực chính (Khu A) */}
       {areaMetadata && <AreaLayer area={areaMetadata} />}
 
-      {/* Hiển thị các entity con (marker, polygon nhỏ) lấy từ context */}
       <EntityLayer
         selectedEntityId={selectedEntityId}
         onSelectEntity={onSelectEntity}

@@ -17,6 +17,7 @@
     "axios": "^1.9.0",
     "leaflet": "^1.9.4",
     "leaflet-draw": "^1.0.4",
+    "leaflet.pm": "^2.2.0",
     "lucide-react": "^0.511.0",
     "prop-types": "^15.8.1",
     "react": "^19.1.0",

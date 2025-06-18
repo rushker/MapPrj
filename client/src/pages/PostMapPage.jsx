@@ -24,7 +24,7 @@ function PostMapContent() {
   const navigate = useNavigate();
   const { areaId } = useAreaContext();
   const { manualSave } = useAutoSave();
-
+  const [isCreatingArea, setIsCreatingArea] = useState(false); // Thêm state này
   /**
    * Triggers manual save (auto-save chạy theo debounce),
    * rồi gọi API publish/upload area và chuyển hướng.
@@ -59,7 +59,15 @@ function PostMapContent() {
         >
           ← Quay lại danh sách
         </button>
+
         <div className="flex gap-2">
+          <button
+            onClick={() => setIsCreatingArea(true)}
+            disabled={isCreatingArea}
+            className="btn btn-primary"
+          >
+            🟩 Vẽ Rectangle
+          </button>
           <button
             onClick={handleUpload}
             disabled={!areaId}
@@ -79,7 +87,12 @@ function PostMapContent() {
 
       {/* Map & Sidebar */}
       <main className="flex-1">
-        <PostMapWrapper />
+          {/* TRUYỀN STATE XUỐNG WRAPPER */}
+        <PostMapWrapper 
+        isCreatingArea={isCreatingArea} 
+        setIsCreatingArea={setIsCreatingArea} 
+        />
+
       </main>
     </div>
   );

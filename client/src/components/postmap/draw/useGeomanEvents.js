@@ -31,16 +31,16 @@ const useGeomanEvents = ({
   onUpdateEntityGeometry,
   isEditMode = false,
 }) => {
+  // Khởi tạo Geoman controls
   useEffect(() => {
     const map = mapRef.current;
-     if (!map || !isEditMode) return;
+    if (!map || !isEditMode) return;
 
-    // Khởi tạo controls leaflet-geoman (chỉ gọi 1 lần)
     map.pm.addControls({
       position: 'topleft',
-      drawPolygon: false,
-      drawMarker: false,
-      drawRectangle: false,
+      drawPolygon: true,
+      drawMarker: true,
+      drawRectangle: false, // Tắt vẽ rectangle trong controls
       editMode: false,
       dragMode: false,
       removalMode: false,
@@ -49,13 +49,14 @@ const useGeomanEvents = ({
     return () => {
       map.pm.removeControls();
     };
-  }, [mapRef]);
+  }, [mapRef, isEditMode]);
 
+  // Xử lý các sự kiện vẽ và chỉnh sửa
   useEffect(() => {
     const map = mapRef.current;
-    if (!map) return;
+    if (!map || !isEditMode) return;
 
-    // Tắt hết các chế độ cũ trước khi bật mới
+    // Tắt các chế độ cũ
     map.pm.disableGlobalEditMode();
     map.pm.disableGlobalDragMode();
     map.pm.disableGlobalRemovalMode();
@@ -63,76 +64,94 @@ const useGeomanEvents = ({
       map.pm.disableDraw(drawShape);
     }
 
+    // Bật các chế độ mới theo props
     if (enableDraw && drawShape) {
       map.pm.enableDraw(drawShape);
     }
-
+    
     if (enableEdit) map.pm.enableGlobalEditMode();
     if (enableDrag) map.pm.enableGlobalDragMode();
     if (enableRemove) map.pm.enableGlobalRemovalMode();
 
+    // Xử lý sự kiện tạo hình
     const handleCreate = (e) => {
       const { layer, shape } = e;
       const geoJson = layer.toGeoJSON();
       const coords = geoJson.geometry.coordinates;
 
+      // Xử lý cho Khu A (rectangle)
       if (shape === 'Rectangle' && typeof onCreateKhuA === 'function') {
-        onCreateKhuA({ type: 'polygon', coordinates: coords });
-      } else if (shape === 'Polygon' && typeof onCreateEntity === 'function') {
-        onCreateEntity({ type: 'polygon', coordinates: coords });
-      } else if (shape === 'Marker' && typeof onCreateEntity === 'function') {
-        const latlng = layer.getLatLng();
-        onCreateEntity({ type: 'marker', coordinates: [latlng.lng, latlng.lat] });
+        const coordinates = geoJson.geometry.coordinates[0];
+        onCreateKhuA({ 
+          type: 'polygon', 
+          coordinates,
+          polygon: geoJson.geometry
+        });
+      } 
+      // Xử lý cho các entity khác
+      else if (
+        (shape === 'Polygon' || shape === 'Marker') && 
+        typeof onCreateEntity === 'function'
+      ) {
+        onCreateEntity({ 
+          type: shape.toLowerCase(),
+          coordinates: shape === 'Marker' 
+            ? coords // [lng, lat] cho marker
+            : coords[0] // [[lng, lat], ...] cho polygon
+        });
       }
 
-      layer.remove(); // luôn remove layer tạm vẽ sau tạo
+      layer.remove();
     };
 
+    // Xử lý sự kiện cập nhật hình
     const handleUpdate = (e) => {
-  const layer = e.layer;
-  const geoJson = layer.toGeoJSON();
+      const layer = e.layer;
+      const geoJson = layer.toGeoJSON();
+      
+      // Cập nhật Khu A (polygon)
+      if (
+        geoJson.geometry?.type === 'Polygon' &&
+        typeof onUpdatePolygon === 'function' &&
+        layer.options?.isAreaLayer
+      ) {
+        onUpdatePolygon({ coordinates: geoJson.geometry.coordinates });
+      }
+      
+      // Cập nhật entity
+      if (
+        typeof onUpdateEntityGeometry === 'function' &&
+        geoJson.properties?.entityId
+      ) {
+        const updatedCoords =
+          geoJson.geometry.type === 'Polygon'
+            ? geoJson.geometry.coordinates[0]
+            : geoJson.geometry.type === 'Point'
+            ? geoJson.geometry.coordinates
+            : null;
 
-  // Khu A polygon
-  if (
-    geoJson.geometry?.type === 'Polygon' &&
-    typeof onUpdatePolygon === 'function' &&
-    layer.options?.isAreaLayer
-  ) {
-    onUpdatePolygon({ coordinates: geoJson.geometry.coordinates });
-  }
+        if (updatedCoords) {
+          onUpdateEntityGeometry({
+            entityId: geoJson.properties.entityId,
+            coordinates: updatedCoords,
+          });
+        }
+      }
+    };
 
-  // Entity polygon or marker
-  if (
-    typeof onUpdateEntityGeometry === 'function' &&
-    geoJson.properties?.entityId
-  ) {
-    const updatedCoords =
-      geoJson.geometry.type === 'Polygon'
-        ? geoJson.geometry.coordinates
-        : geoJson.geometry.type === 'Point'
-        ? geoJson.geometry.coordinates
-        : null;
-
-    if (updatedCoords) {
-      onUpdateEntityGeometry({
-        entityId: geoJson.properties.entityId,
-        coordinates: updatedCoords,
-      });
-    }
-  }
-};
-
-
+    // Đăng ký sự kiện
     map.on('pm:create', handleCreate);
     map.on('pm:update', handleUpdate);
 
+    // Cleanup
     return () => {
       map.off('pm:create', handleCreate);
       map.off('pm:update', handleUpdate);
-
+      
       map.pm.disableGlobalEditMode();
       map.pm.disableGlobalDragMode();
       map.pm.disableGlobalRemovalMode();
+      
       if (drawShape) {
         map.pm.disableDraw(drawShape);
       }
@@ -147,6 +166,7 @@ const useGeomanEvents = ({
     onCreateKhuA,
     onCreateEntity,
     onUpdatePolygon,
+    onUpdateEntityGeometry,
     isEditMode,
   ]);
 };
