@@ -20,11 +20,11 @@ import { useEffect } from 'react';
  */
 const useGeomanEvents = ({
   mapRef,
-  enableDraw = false,
-  drawShape = null,
-  enableEdit = false,
-  enableDrag = false,
-  enableRemove = false,
+  enableDraw ,
+  drawShape ,
+  enableEdit ,
+  enableDrag ,
+  enableRemove ,
   onCreateKhuA,
   onCreateEntity,
   onUpdatePolygon,
@@ -75,34 +75,33 @@ const useGeomanEvents = ({
 
     // Xử lý sự kiện tạo hình
     const handleCreate = (e) => {
-      const { layer, shape } = e;
-      const geoJson = layer.toGeoJSON();
-      const coords = geoJson.geometry.coordinates;
+  const { layer, shape } = e;
+  const geoJson = layer.toGeoJSON();
+  const coords = geoJson.geometry.coordinates;
 
-      // Xử lý cho Khu A (rectangle)
-      if (shape === 'Rectangle' && typeof onCreateKhuA === 'function') {
-        const coordinates = geoJson.geometry.coordinates[0];
-        onCreateKhuA({ 
-          type: 'polygon', 
-          coordinates,
-          polygon: geoJson.geometry
-        });
-      } 
-      // Xử lý cho các entity khác
-      else if (
-        (shape === 'Polygon' || shape === 'Marker') && 
-        typeof onCreateEntity === 'function'
-      ) {
-        onCreateEntity({ 
-          type: shape.toLowerCase(),
-          coordinates: shape === 'Marker' 
-            ? coords // [lng, lat] cho marker
-            : coords[0] // [[lng, lat], ...] cho polygon
-        });
-      }
+  if (shape === 'Rectangle' && typeof onCreateKhuA === 'function') {
+    const coordinates = geoJson.geometry.coordinates[0];
+    onCreateKhuA({ 
+      type: 'polygon', 
+      coordinates,
+      polygon: geoJson.geometry
+    });
+  } 
+  else if ((shape === 'Polygon' || shape === 'Marker') && typeof onCreateEntity === 'function') {
+    onCreateEntity({ 
+      type: shape.toLowerCase(),
+      coordinates: shape === 'Marker' 
+        ? coords
+        : coords[0]
+    });
+  }
 
-      layer.remove();
-    };
+  if (typeof options?.onDrawEnd === 'function') {
+    options.onDrawEnd(); // ✅ GỌI CALLBACK SAU KHI VẼ XONG
+  }
+
+  layer.remove();
+};
 
     // Xử lý sự kiện cập nhật hình
     const handleUpdate = (e) => {

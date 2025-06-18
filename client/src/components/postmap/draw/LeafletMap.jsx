@@ -96,7 +96,8 @@ export default function LeafletMap({
     onCreateEntity: handleCreateEntity, // Xử lý polygon/marker
     onUpdatePolygon,
     onUpdateEntityGeometry,
-    isEditMode,
+    isEditMode: true,
+    onDrawEnd,
   });
 
   return (

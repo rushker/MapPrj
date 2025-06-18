@@ -161,7 +161,7 @@ export default function PostMapWrapper({ isCreatingArea, setIsCreatingArea }) {
           selectedEntityId={selectedEntityId}
           onSelectEntity={setSelectedEntityId}
           enableDraw={true}
-          drawShape={null}
+          drawShape={isCreatingArea ? 'Rectangle' : null}
           enableEdit={true}
           enableDrag={true}
           enableRemove={true}
