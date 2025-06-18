@@ -64,11 +64,8 @@ function PostMapContent() {
         <div className="flex gap-2">
           <button
             onClick={() => {
-              console.log('TOAST TYPE:', typeof toast, toast);
-              console.trace();
-              toast.info('🟩 Kích hoạt chế độ vẽ Rectangle. Click lên bản đồ để bắt đầu.');
               setIsCreatingArea(true);
-            }}
+              }}    
             disabled={isCreatingArea}
             className="btn btn-primary"
           >
