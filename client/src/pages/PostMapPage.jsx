@@ -1,5 +1,6 @@
 // src/pages/PostMapPage.jsx
 import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { ROUTES } from '../routes';
 import { AreaProvider, useAreaContext } from '../context/AreaContext';
@@ -62,7 +63,10 @@ function PostMapContent() {
 
         <div className="flex gap-2">
           <button
-            onClick={() => setIsCreatingArea(true)}
+            onClick={() => {
+              toast.info('🟩 Kích hoạt chế độ vẽ Rectangle. Click lên bản đồ để bắt đầu.');
+              setIsCreatingArea(true);
+            }}
             disabled={isCreatingArea}
             className="btn btn-primary"
           >

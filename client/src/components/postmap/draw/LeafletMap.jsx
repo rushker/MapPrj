@@ -52,10 +52,12 @@ export default function LeafletMap({
     const map = mapRef.current;
     
     // Kích hoạt chế độ vẽ rectangle
-    map.pm.enableDraw('Rectangle', {
-      snappable: true,
-      snapDistance: 20,
-    });
+    if (!map.pm._drawing) {
+  map.pm.enableDraw('Rectangle', {
+    snappable: true,
+    snapDistance: 20,
+  });
+}
     
     // Xử lý khi hoàn thành vẽ
     const handleCreate = (e) => {
@@ -86,15 +88,15 @@ export default function LeafletMap({
   // Hook sự kiện Geoman
   useGeomanEvents({
     mapRef,
-    enableDraw: true,
-  drawShape: 'Polygon', // Hoặc 'Marker'
-  enableEdit: true,
+    enableDraw,
+    drawShape,
+    enableEdit,
     enableDrag,
     enableRemove,
     onCreateKhuA: handleCreateArea, // Xử lý rectangle
     onCreateEntity: handleCreateEntity, // Xử lý polygon/marker
-    onUpdatePolygon: handleUpdatePolygon,
-    onUpdateEntityGeometry: handleUpdateEntityGeometry,
+    onUpdatePolygon,
+    onUpdateEntityGeometry,
     isEditMode,
   });
 

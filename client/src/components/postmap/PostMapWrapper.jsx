@@ -11,7 +11,7 @@ import useAutoSave from '../../hooks/local/useAutoSave';
 import { useEnsureValidAreaId } from '../../utils/useEnsureValidAreaId';
 import { SidebarProvider } from '../../context/SidebarContext';
 
-export default function PostMapWrapper(isCreatingArea, setIsCreatingArea ) {
+export default function PostMapWrapper({ isCreatingArea, setIsCreatingArea }) {
   // ------------------------- AREA ID INIT -------------------------
   const getCoordinates = () => {
     // TODO: Extract from drawn layer (refactor later)
