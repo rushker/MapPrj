@@ -34,12 +34,7 @@ export function AreaProvider({ children, isEditMode: forcedMode }) {
       if (!isEditMode || !areaId) return;
       setEntities(prev => [...prev, entity]);
     },
-    updateEntityMetadata: (id, metadata) => {
-  if (!isEditMode || !areaId) return;
-  setEntities(prev =>
-    prev.map(e => (e._id === id ? { ...e, ...metadata } : e))
-  );
-},
+   
 updateEntityMetadata: (id, metadata) => {
     if (!isEditMode || !areaId) return;
     setEntities(prev =>

@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import LeafletMap from './draw/LeafletMap';
 import SidebarContainer from './sidebars/SidebarContainer';
 import { createArea, updateAreaPolygon, updateArea } from '../../services/areas';
+import {updateEntityMetadata,updateEntityGeometry} from'../../services/entities';
 import { useTempAreaId } from '../../hooks/local/useTempAreaId';
 import { useAreaContext } from '../../context/AreaContext';
 import useAutoSave from '../../hooks/local/useAutoSave';
@@ -112,14 +113,15 @@ export default function PostMapWrapper() {
     setSelectedEntityId(entity._id);
   };
 
-  // ---------------------- SAVE METADATA ----------------------
-  const handleSaveAreaMetadata = async (entityId, updatedMetadata) => {
+  // ------------------- SAVE AREA METADATA ----------------------
+  
+  const handleSaveAreaMetadata = async (metadata) => {
     if (!areaId) {
       toast.error('Không tìm thấy areaId để lưu metadata');
       return;
     }
     try {
-      await updateEntityMetadata(areaId, entityId, updatedMetadata);
+      const res = await updateArea(areaId, metadata);
       if (!res.success) throw new Error('Lưu metadata thất bại từ server');
       setAreaMetadata(res.data);
       return res.data;
@@ -128,7 +130,7 @@ export default function PostMapWrapper() {
       throw err;
     }
   };
-
+  // ------------------- SAVE ENTITY METADATA ----------------------
   const handleSaveEntityMetadata = async (entityId, metadata) => {
   if (!areaId) {
     toast.error('Vui lòng chọn khu vực trước');
