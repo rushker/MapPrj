@@ -30,7 +30,7 @@ export default function KhuASidebar({ onSave, onClose, isEditMode }) {
         placeholder="Tên khu A"
         value={areaMetadata.name || ''}
         onChange={handleInputChange('name')}
-         isEditMode={false}
+        readOnly={!isEditMode}
         className="w-full border rounded px-3 py-2"
       />
       {errors.name && <p className="text-red-600">{errors.name}</p>}
@@ -39,7 +39,7 @@ export default function KhuASidebar({ onSave, onClose, isEditMode }) {
         placeholder="Mô tả"
         value={areaMetadata.description || ''}
         onChange={handleInputChange('description')}
-        isEditMode={false}
+        readOnly={!isEditMode}
         className="w-full border rounded px-3 py-2"
       />
 
@@ -47,7 +47,7 @@ export default function KhuASidebar({ onSave, onClose, isEditMode }) {
         placeholder="Loại khu (type)"
         value={areaMetadata.type || ''}
         onChange={handleInputChange('type')}
-         isEditMode={false}
+        readOnly={!isEditMode}
         className="w-full border rounded px-3 py-2"
       />
       {errors.type && <p className="text-red-600">{errors.type}</p>}
