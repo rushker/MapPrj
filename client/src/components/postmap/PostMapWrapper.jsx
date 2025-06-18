@@ -32,7 +32,6 @@ export default function PostMapWrapper(isCreatingArea, setIsCreatingArea ) {
   } = useAreaContext();
 
   const [selectedEntityId, setSelectedEntityId] = useState(null);
-  const [isCreatingArea, setIsCreatingArea] = useState(false);
 
   // Reset entity selection when areaId changes
   useEffect(() => {

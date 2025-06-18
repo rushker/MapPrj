@@ -86,15 +86,15 @@ export default function LeafletMap({
   // Hook sự kiện Geoman
   useGeomanEvents({
     mapRef,
-    enableDraw,
-    drawShape,
-    enableEdit,
+    enableDraw: true,
+  drawShape: 'Polygon', // Hoặc 'Marker'
+  enableEdit: true,
     enableDrag,
     enableRemove,
     onCreateKhuA: handleCreateArea, // Xử lý rectangle
-  onCreateEntity: handleCreateEntity, // Xử lý polygon/marker
-  onUpdatePolygon: handleUpdatePolygon,
-  onUpdateEntityGeometry: handleUpdateEntityGeometry,
+    onCreateEntity: handleCreateEntity, // Xử lý polygon/marker
+    onUpdatePolygon: handleUpdatePolygon,
+    onUpdateEntityGeometry: handleUpdateEntityGeometry,
     isEditMode,
   });
 
