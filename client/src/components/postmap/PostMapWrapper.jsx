@@ -153,6 +153,7 @@ export default function PostMapWrapper() {
 
   // ------------------------ RENDER ------------------------
   return (
+    <SidebarProvider>
     <div className="flex h-screen w-full">
       <div className="flex-1">
         <LeafletMap
@@ -176,5 +177,6 @@ export default function PostMapWrapper() {
         onSaveEntity={handleSaveEntityMetadata}
       />
     </div>
+    </SidebarProvider>
   );
 }
