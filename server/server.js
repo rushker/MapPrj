@@ -3,36 +3,39 @@ import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import connectDB from './config/db.js';
-import { ROUTES } from './utils/routes.js';
-
-import areaRoutes from './routes/areas.js';
-import entityRoutes from './routes/entities.js';
-import mediaRoutes from './routes/media.js';
+import apiRoutes from './routes/index.js';
+import { ROUTES } from './utils/routes.js'; // Giữ lại nếu cần cho redirect
 
 dotenv.config();
 connectDB();
 
 const app = express();
 
+// Middleware
 app.use(cors({
   origin: process.env.ALLOWED_ORIGINS?.split(',') || '*',
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json({ limit: '10mb' }));
 
-// API routes
-app.use('/api/areas', areaRoutes);
-app.use('/api/areas/:areaId/entities', entityRoutes);
-app.use('/api/media', mediaRoutes);
+// API routes (sử dụng router tổng từ index.js)
+app.use('/api', apiRoutes);
 
-// 404 handler
+// 404 Handler
 app.use((req, res) => {
-  res.status(404).json({ success: false, message: 'API route not found' });
+  res.status(404).json({ 
+    success: false, 
+    message: 'API route not found',
+    availableRoutes: Object.keys(ROUTES).map(key => ROUTES[key])
+  });
 });
 
-// Global error handler
+// Global Error Handler
 app.use((err, req, res, next) => {
   const statusCode = err.statusCode || 500;
   const message = err.message || 'Internal Server Error';
+  
   res.status(statusCode).json({
     success: false,
     message,
@@ -42,5 +45,9 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`✅ Server running on http://localhost:${PORT}`);
+  console.log(`
+  🚀 Server running in ${process.env.NODE_ENV || 'development'} mode
+  ✅ Listening on port ${PORT}
+  🌐 Allowed origins: ${process.env.ALLOWED_ORIGINS || 'all'}
+  `);
 });

@@ -26,7 +26,7 @@ export function AreaProvider({ children, isEditMode: forcedMode }) {
     isCreatingArea,
     setIsCreatingArea,
     updateEntityMetadata,
-  updateEntityGeometry,
+    updateEntityGeometry,
     isEditMode,
 
     // Các hàm quản lý entity (chặn nếu không ở editMode)
@@ -40,11 +40,14 @@ export function AreaProvider({ children, isEditMode: forcedMode }) {
     prev.map(e => (e._id === id ? { ...e, ...metadata } : e))
   );
 },
-updateEntityGeometry: (id, geometry) => {
-  if (!isEditMode || !areaId) return;
-  setEntities(prev =>
-    prev.map(e => (e._id === id ? { ...e, coordinates: geometry.coordinates } : e))
-  );
+updateEntityMetadata: (id, metadata) => {
+    if (!isEditMode || !areaId) return;
+    setEntities(prev =>
+      prev.map(e => 
+        e._id === id 
+          ? { ...e, metadata } 
+          : e)
+        );
 },
     removeEntity: (id) => {
       if (!isEditMode || !areaId) return;

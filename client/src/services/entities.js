@@ -1,6 +1,4 @@
 // services/entities.js
-//API cho entity (Khu C / Marker)
-
 import axios from './axiosInstance';
 
 export const getEntitiesByArea = async (areaId) => {
@@ -23,12 +21,27 @@ export const deleteEntity = async (areaId, entityId) => {
   return res.data;
 };
 
-export const updateEntityGeometry = async (entityId, geometry) => {
-  const res = await axios.patch(`/api/entities/${entityId}/geometry`, { geometry });
+// ✅ Updated: include areaId in route for verification
+export const updateEntityGeometry = async (areaId, entityId, geometry) => {
+  const res = await axios.patch(`/api/areas/${areaId}/entities/${entityId}/geometry`, { geometry });
   return res.data;
 };
 
-export const updateEntityMetadata = async (entityId, metadata) => {
-  const res = await axios.patch(`/api/entities/${entityId}/metadata`, { metadata });
-  return res.data;
+export const updateEntityMetadata = async (areaId, entityId, metadata) => {
+  try {
+    const res = await axios.patch(
+      `/api/areas/${areaId}/entities/${entityId}/metadata`,
+      { metadata },
+      { timeout: 10000 }
+    );
+    
+    if (!res.data.success) {
+      throw new Error(res.data.message || 'Metadata update failed');
+    }
+    
+    return res.data;
+  } catch (err) {
+    console.error(`Update metadata failed for entity ${entityId}:`, err);
+    throw new Error(err.response?.data?.message || err.message);
+  }
 };

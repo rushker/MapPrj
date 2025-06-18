@@ -1,3 +1,4 @@
+//controllers/entityControllers
 import Entity from '../models/Entity.js';
 import mongoose from 'mongoose';
 import { handleError, handleNotFound } from '../utils/errorHandler.js';
@@ -28,76 +29,102 @@ export const createEntity = async (req, res) => {
 
 export const updateEntity = async (req, res) => {
   try {
-    const { entityId } = req.params;
-    if (!mongoose.Types.ObjectId.isValid(entityId)) {
-      return handleError(res, 'Invalid entityId', null, 400);
+    const { areaId, entityId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(entityId) || !mongoose.Types.ObjectId.isValid(areaId)) {
+      return handleError(res, 'Invalid areaId or entityId', null, 400);
     }
 
     if (req.body.metadata?.images && !Array.isArray(req.body.metadata.images)) {
       return handleError(res, '`metadata.images` must be an array', null, 400);
     }
 
-    const updated = await Entity.findByIdAndUpdate(entityId, req.body, {
-      new: true,
-      runValidators: true,
-    });
+    const entity = await Entity.findOneAndUpdate(
+      { _id: entityId, areaId },
+      req.body,
+      { new: true, runValidators: true }
+    );
 
-    if (!updated) return handleNotFound(res, 'Entity');
-    res.json({ success: true, data: updated });
+    if (!entity) return handleNotFound(res, 'Entity not found in this area');
+
+    res.json({ success: true, data: entity });
   } catch (err) {
     handleError(res, 'Failed to update entity', err);
   }
 };
 
+
 export const updateEntityMetadata = async (req, res) => {
   try {
-    const { entityId } = req.params;
+    const { areaId, entityId } = req.params;
     const { metadata } = req.body;
 
-    if (!mongoose.Types.ObjectId.isValid(entityId)) {
-      return handleError(res, 'Invalid entityId', null, 400);
+    // Kiểm tra ID hợp lệ
+    if (!mongoose.Types.ObjectId.isValid(entityId) || !mongoose.Types.ObjectId.isValid(areaId)) {
+      return handleError(res, 'Invalid areaId or entityId', null, 400);
     }
 
-    if (metadata?.images && !Array.isArray(metadata.images)) {
-      return handleError(res, '`metadata.images` must be an array', null, 400);
+    // Validate metadata
+    if (typeof metadata !== 'object' || metadata === null) {
+      return handleError(res, 'Metadata must be an object', null, 400);
     }
 
-    const updated = await Entity.findByIdAndUpdate(entityId, { metadata }, {
-      new: true,
-      runValidators: true,
-    });
+    // Validate images array
+    if (metadata.images) {
+      if (!Array.isArray(metadata.images)) {
+        return handleError(res, '`metadata.images` must be an array', null, 400);
+      }
+      
+      // Kiểm tra định dạng URL ảnh
+      const isValidImage = metadata.images.every(url => 
+        /^https?:\/\/.+\.(jpg|jpeg|png|gif|webp)$/i.test(url)
+      );
+      
+      if (!isValidImage) {
+        return handleError(res, 'Invalid image URL format', null, 400);
+      }
+    }
 
-    if (!updated) return handleNotFound(res, 'Entity');
-    res.json({ success: true, data: updated });
+    // Tìm và cập nhật entity
+    const entity = await Entity.findOneAndUpdate(
+      { _id: entityId, areaId },
+      { metadata },
+      { new: true, runValidators: true }
+    );
+
+    if (!entity) return handleNotFound(res, 'Entity not found in this area');
+    res.json({ success: true, data: entity });
   } catch (err) {
     handleError(res, 'Failed to update metadata', err);
   }
 };
 
+
 export const updateEntityGeometry = async (req, res) => {
   try {
-    const { entityId } = req.params;
+    const { areaId, entityId } = req.params;
     const { geometry } = req.body;
 
-    if (!mongoose.Types.ObjectId.isValid(entityId)) {
-      return handleError(res, 'Invalid entityId', null, 400);
+    if (!mongoose.Types.ObjectId.isValid(entityId) || !mongoose.Types.ObjectId.isValid(areaId)) {
+      return handleError(res, 'Invalid areaId or entityId', null, 400);
     }
 
     if (!geometry?.type || !geometry?.coordinates) {
       return handleError(res, 'Missing geometry fields', null, 400);
     }
 
-    const updated = await Entity.findByIdAndUpdate(entityId, { geometry }, {
-      new: true,
-      runValidators: true,
-    });
+    const entity = await Entity.findOne({ _id: entityId, areaId });
+    if (!entity) return handleNotFound(res, 'Entity not found in this area');
 
-    if (!updated) return handleNotFound(res, 'Entity');
-    res.json({ success: true, data: updated });
+    entity.geometry = geometry;
+    await entity.save();
+
+    res.json({ success: true, data: entity });
   } catch (err) {
     handleError(res, 'Failed to update geometry', err);
   }
 };
+
 
 export const deleteEntity = async (req, res) => {
   try {

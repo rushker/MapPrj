@@ -49,9 +49,12 @@ const entitySchema = new mongoose.Schema({
       },
     },
   },
-  metadata: {
-    type: metadataSchema,
-    default: () => ({}),
+   metadata: {
+    type: new mongoose.Schema({
+      description: String,
+      images: [String]
+    }, { _id: false }),
+    default: () => ({})
   },
   areaId: {
     type: mongoose.Schema.Types.ObjectId,

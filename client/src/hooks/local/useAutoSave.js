@@ -69,35 +69,37 @@ export default function useAutoSave() {
 
       // SAVE CHANGED ENTITIES
       const updatePromises = entities.flatMap(entity => {
-        const prev = prevEntityMapRef.current.get(entity._id);
-        const promises = [];
+      const prev = prevEntityMapRef.current.get(entity._id);
+      const promises = [];
 
-        if (!isValidAreaId(entity.areaId)) return [];
+      if (!isValidAreaId(entity.areaId)) return [];
 
-        if (!isEqual(entity.metadata, prev?.metadata)) {
-          promises.push(
-            updateEntityMetadata(entity._id, entity.metadata)
-              .then(() => entity._id)
-              .catch(err => {
-                console.error(`Metadata update failed for entity ${entity._id}`, err);
-                return null;
-              })
-          );
-        }
+      // FIX: THÊM entity.areaId
+      if (!isEqual(entity.metadata, prev?.metadata)) {
+        promises.push(
+          updateEntityMetadata(entity.areaId, entity._id, entity.metadata)
+            .then(() => entity._id)
+            .catch(err => {
+              console.error(`Metadata update failed for entity ${entity._id}`, err);
+              return null;
+            })
+        );
+      }
 
-        if (!isEqual(entity.geometry, prev?.geometry)) {
-          promises.push(
-            updateEntityGeometry(entity._id, entity.geometry)
-              .then(() => entity._id)
-              .catch(err => {
-                console.error(`Geometry update failed for entity ${entity._id}`, err);
-                return null;
-              })
-          );
-        }
+      // FIX: THÊM entity.areaId
+      if (!isEqual(entity.geometry, prev?.geometry)) {
+        promises.push(
+          updateEntityGeometry(entity.areaId, entity._id, entity.geometry)
+            .then(() => entity._id)
+            .catch(err => {
+              console.error(`Geometry update failed for entity ${entity._id}`, err);
+              return null;
+            })
+        );
+      }
 
-        return promises;
-      });
+      return promises;
+    });
 
       const updatedIds = (await Promise.all(updatePromises)).filter(Boolean);
       changes.entities = updatedIds;

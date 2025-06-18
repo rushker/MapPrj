@@ -84,16 +84,22 @@ export default function PostMapWrapper() {
   };
 
   // ------------------- ENTITY GEOMETRY UPDATE -------------------
-  const handleUpdateEntityGeometry = async ({ entityId, coordinates }) => {
-  try {
-    await updateEntityGeometry(entityId, { coordinates });
-    updateEntityGeometry(entityId, { coordinates }); // local update từ AreaContext
-    toast.success('Đã cập nhật vị trí/thể hiện hình học của đối tượng');
-  } catch (err) {
-    console.error(err);
-    toast.error('Cập nhật hình học thất bại');
-  }
-};
+   const handleUpdateEntityGeometry = async ({ entityId, coordinates }) => {
+    if (!areaId) {
+      toast.error('Không tìm thấy areaId');
+      return;
+    }
+    
+    try {
+      // FIX: THÊM areaId
+      await updateEntityGeometry(areaId, entityId, { coordinates });
+      updateEntityGeometry(entityId, { coordinates }); // local update
+      toast.success('Đã cập nhật vị trí/thể hiện hình học của đối tượng');
+    } catch (err) {
+      console.error(err);
+      toast.error('Cập nhật hình học thất bại');
+    }
+  };
 
 
   // ------------------- CREATE ENTITY HANDLER -------------------
@@ -107,13 +113,13 @@ export default function PostMapWrapper() {
   };
 
   // ---------------------- SAVE METADATA ----------------------
-  const handleSaveAreaMetadata = async (metadata) => {
+  const handleSaveAreaMetadata = async (entityId, updatedMetadata) => {
     if (!areaId) {
       toast.error('Không tìm thấy areaId để lưu metadata');
       return;
     }
     try {
-      const res = await updateArea(areaId, metadata);
+      await updateEntityMetadata(areaId, entityId, updatedMetadata);
       if (!res.success) throw new Error('Lưu metadata thất bại từ server');
       setAreaMetadata(res.data);
       return res.data;
@@ -123,15 +129,25 @@ export default function PostMapWrapper() {
     }
   };
 
-  const handleSaveEntityMetadata = async (entityId, updatedMetadata) => {
-    try {
-      await updateEntityMetadata(entityId, updatedMetadata);
-      toast.success('Đã lưu metadata của đối tượng');
-    } catch (err) {
-      console.error(err);
-      toast.error('Lưu metadata thất bại');
-    }
-  };
+  const handleSaveEntityMetadata = async (entityId, metadata) => {
+  if (!areaId) {
+    toast.error('Vui lòng chọn khu vực trước');
+    return;
+  }
+  
+  try {
+    // Gọi API cập nhật metadata
+    await updateEntityMetadata(areaId, entityId, metadata);
+    
+    // Cập nhật state local
+    updateEntityMetadata(entityId, metadata);
+    
+    toast.success('Đã cập nhật thông tin đối tượng');
+  } catch (err) {
+    console.error('Lỗi khi lưu metadata:', err);
+    toast.error(`Lỗi: ${err.message}`);
+  }
+};
 
   // ------------------------ RENDER ------------------------
   return (

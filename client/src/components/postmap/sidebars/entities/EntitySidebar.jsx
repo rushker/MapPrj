@@ -55,19 +55,24 @@ export default function EntitySidebar({
   };
 
   const handleSaveClick = async () => {
-    if (!isEditMode) return;
-    if (!validate()) return;
-    setIsLoading(true);
-    try {
-      await onSave(currentEntity); // ✅ Gửi toàn bộ entity
-      toast.success('Đã lưu entity thành công');
-    } catch (err) {
-      console.error(err);
-      toast.error('Lưu thất bại. Vui lòng thử lại.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  if (!isEditMode) return;
+  if (!validate()) return;
+  setIsLoading(true);
+  
+  try {
+    // Chỉ gửi metadata, không gửi toàn bộ entity
+    await onSave(
+      currentEntity._id, 
+      currentEntity.metadata || {}
+    );
+    
+    toast.success('Đã lưu thông tin thành công');
+  } catch (err) {
+    toast.error(`Lỗi khi lưu: ${err.message}`);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const saveDisabled = !isValid || isUnchanged || isLoading || !isEditMode;
 

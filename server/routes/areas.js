@@ -10,6 +10,7 @@ import {
   getAllAreas,
   searchAreas
 } from '../controllers/areaController.js';
+import { checkAreaExists } from '../middleware/areaMiddleware.js';
 
 const router = express.Router({ mergeParams: true });
 
@@ -20,13 +21,13 @@ router.route('/')
 
 router.get('/search', searchAreas);  // Tìm kiếm nâng cao
 
-router.route('/:areaId')
+router.route('/:areaId', checkAreaExists)
   .get(getAreaById)          // Lấy chi tiết 1 Khu A
   .put(updateArea)           // Cập nhật metadata Khu A
   .delete(deleteArea);       // Xóa Khu A
 
 // Các route đặc biệt:
-router.put('/:areaId/polygon', updatePolygon);     // Cập nhật polygon
-router.put('/:areaId/publish', publishArea);       // Publish Khu A
+router.put('/:areaId/polygon',checkAreaExists, updatePolygon);     // Cập nhật polygon
+router.put('/:areaId/publish',checkAreaExists, publishArea);       // Publish Khu A
 
 export default router;
