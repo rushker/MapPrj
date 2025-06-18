@@ -86,7 +86,7 @@ export default function EntitySidebar({
         className={`w-full border px-2 py-1 rounded mb-3 ${!isEditMode ? 'bg-gray-100' : ''}`}
         value={currentEntity.name || ''}
         onChange={isEditMode ? (e) => handleInputChange('name')(e.target.value) : undefined}
-        isEditMode={false}
+        readOnly={!isEditMode}
         placeholder="Nhập tên"
       />
 
@@ -96,7 +96,7 @@ export default function EntitySidebar({
         className={`w-full border px-2 py-1 rounded mb-3 ${!isEditMode ? 'bg-gray-100' : ''}`}
         value={currentEntity.metadata?.description || ''}
         onChange={isEditMode ? (e) => handleInputChange('metadata.description')(e.target.value) : undefined}
-        isEditMode={false}
+        readOnly={!isEditMode}
         placeholder="Mô tả ngắn"
       />
 

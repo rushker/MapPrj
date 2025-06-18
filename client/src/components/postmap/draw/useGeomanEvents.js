@@ -147,7 +147,7 @@ const useGeomanEvents = ({
     onCreateKhuA,
     onCreateEntity,
     onUpdatePolygon,
-    readOnly,
+    isEditMode,
   ]);
 };
 
