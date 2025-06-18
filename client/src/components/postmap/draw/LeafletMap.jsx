@@ -47,17 +47,16 @@ export default function LeafletMap({
 
   // Sử dụng Geoman thay vì leaflet.pm
   useEffect(() => {
+     const map = mapRef.current;
     if (!mapRef.current || !isCreatingArea) return;
     
-    const map = mapRef.current;
-    
     // Kích hoạt chế độ vẽ rectangle
-    if (!map.pm._drawing) {
+    
   map.pm.enableDraw('Rectangle', {
     snappable: true,
     snapDistance: 20,
   });
-}
+
     
     // Xử lý khi hoàn thành vẽ
     const handleCreate = (e) => {
