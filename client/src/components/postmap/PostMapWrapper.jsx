@@ -25,8 +25,8 @@ export default function PostMapWrapper() {
     areaMetadata,
     setAreaMetadata,
     addEntity,
-    updateEntityMetadata,
-    updateEntityGeometry,
+    updateEntityMetadata: contextUpdateEntityMetadata, // ✅ Đổi tên để tránh xung đột
+  updateEntityGeometry: contextUpdateEntityGeometry,
     clearEntities,
   } = useAreaContext();
 
@@ -94,7 +94,7 @@ export default function PostMapWrapper() {
     try {
       // FIX: THÊM areaId
       await updateEntityGeometry(areaId, entityId, { coordinates });
-      updateEntityGeometry(entityId, { coordinates }); // local update
+      contextUpdateEntityGeometry(entityId, { coordinates }); // local update
       toast.success('Đã cập nhật vị trí/thể hiện hình học của đối tượng');
     } catch (err) {
       console.error(err);
@@ -138,11 +138,11 @@ export default function PostMapWrapper() {
   }
   
   try {
-    // Gọi API cập nhật metadata
+    // ✅ Gọi API service với đầy đủ 3 tham số
     await updateEntityMetadata(areaId, entityId, metadata);
     
-    // Cập nhật state local
-    updateEntityMetadata(entityId, metadata);
+    // ✅ Sử dụng hàm context đã đổi tên
+    contextUpdateEntityMetadata(entityId, metadata);
     
     toast.success('Đã cập nhật thông tin đối tượng');
   } catch (err) {
