@@ -40,7 +40,7 @@ const useGeomanEvents = ({
       position: 'topleft',
       drawPolygon: true,
       drawMarker: true,
-      drawRectangle: false, // Tắt vẽ rectangle trong controls
+      drawRectangle: drawShape === 'Rectangle', // Tắt vẽ rectangle trong controls
       editMode: false,
       dragMode: false,
       removalMode: false,

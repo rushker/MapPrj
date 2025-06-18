@@ -1,6 +1,6 @@
 // components/postmap/draw/LeafletMap.jsx
 import { MapContainer, TileLayer } from 'react-leaflet';
-import { useRef, useEffect } from 'react';
+import { useRef } from 'react';
 import useGeomanEvents from './useGeomanEvents';
 import AreaLayer from './layers/AreaLayer';
 import EntityLayer from './layers/EntityLayer';
@@ -45,46 +45,7 @@ export default function LeafletMap({
     onCreateEntity({ ...entity, areaId });
   };
 
-  // Sử dụng Geoman thay vì leaflet.pm
-  useEffect(() => {
-     const map = mapRef.current;
-    if (!mapRef.current || !isCreatingArea) return;
-    
-    // Kích hoạt chế độ vẽ rectangle
-    
-  map.pm.enableDraw('Rectangle', {
-    snappable: true,
-    snapDistance: 20,
-  });
-
-    
-    // Xử lý khi hoàn thành vẽ
-    const handleCreate = (e) => {
-      const layer = e.layer;
-      const latLngs = layer.getLatLngs();
-      
-      // Chuyển đổi sang GeoJSON format
-      const coordinates = latLngs[0].map(latLng => [latLng.lng, latLng.lat]);
-      const polygon = {
-        type: 'Polygon',
-        coordinates: [coordinates]
-      };
-      
-      handleCreateArea({ polygon, coordinates });
-      map.removeLayer(layer); // Xóa layer tạm
-      map.pm.disableDraw(); // Tắt chế độ vẽ
-      onDrawEnd(); // Thông báo hoàn thành
-    };
-    
-    map.on('pm:create', handleCreate);
-    
-    return () => {
-      map.off('pm:create', handleCreate);
-      map.pm.disableDraw();
-    };
-  }, [isCreatingArea, onDrawEnd]);
-
-  // Hook sự kiện Geoman
+  // ✅ Hook sự kiện Geoman (vẽ, sửa, xóa)
   useGeomanEvents({
     mapRef,
     enableDraw,
@@ -92,8 +53,8 @@ export default function LeafletMap({
     enableEdit,
     enableDrag,
     enableRemove,
-    onCreateKhuA: handleCreateArea, // Xử lý rectangle
-    onCreateEntity: handleCreateEntity, // Xử lý polygon/marker
+    onCreateKhuA: handleCreateArea,
+    onCreateEntity: handleCreateEntity,
     onUpdatePolygon,
     onUpdateEntityGeometry,
     isEditMode: true,
@@ -107,13 +68,12 @@ export default function LeafletMap({
       style={{ height: '100%', width: '100%' }}
       whenCreated={(mapInstance) => {
         mapRef.current = mapInstance;
-        // Kích hoạt Geoman
-        mapInstance.pm.addControls({  
+        mapInstance.pm.addControls({
           position: 'topleft',
           drawCircle: false,
         });
       }}
-      pmIgnore={false} // Cho phép Geoman hoạt động
+      pmIgnore={false}
     >
       <TileLayer
         attribution='&copy; <a href="https://osm.org">OpenStreetMap</a>'
