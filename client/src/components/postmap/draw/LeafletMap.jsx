@@ -68,9 +68,18 @@ export default function LeafletMap({
       style={{ height: '100%', width: '100%' }}
       whenCreated={(mapInstance) => {
         mapRef.current = mapInstance;
+        // KÍCH HOẠT NÚT VẼ RECTANGLE MẶC ĐỊNH
         mapInstance.pm.addControls({
           position: 'topleft',
           drawCircle: false,
+          drawMarker: true,
+          drawPolyline: false,
+          drawCircleMarker: false,
+          drawRectangle: true, // ✅ KÍCH HOẠT NÚT VẼ RECTANGLE
+          drawPolygon: true,
+          editMode: isEditMode,
+          dragMode: isEditMode,
+          removalMode: isEditMode,
         });
       }}
       pmIgnore={false}

@@ -19,12 +19,12 @@ import { useEffect } from 'react';
  * @param {function} [options.onUpdatePolygon] - callback khi cập nhật polygon (sau khi edit)
  */
 const useGeomanEvents = ({
-  mapRef,
-  enableDraw ,
-  drawShape ,
-  enableEdit ,
-  enableDrag ,
-  enableRemove ,
+ mapRef,
+  enableDraw,
+  drawShape,
+  enableEdit,
+  enableDrag,
+  enableRemove,
   onCreateKhuA,
   onCreateEntity,
   onUpdatePolygon,
@@ -75,33 +75,29 @@ const useGeomanEvents = ({
 
     // Xử lý sự kiện tạo hình
     const handleCreate = (e) => {
-  const { layer, shape } = e;
-  const geoJson = layer.toGeoJSON();
-  const coords = geoJson.geometry.coordinates;
+      const { layer, shape } = e;
+      const geoJson = layer.toGeoJSON();
+      const coords = geoJson.geometry.coordinates;
 
-  if (shape === 'Rectangle' && typeof onCreateKhuA === 'function') {
-    const coordinates = geoJson.geometry.coordinates[0];
-    onCreateKhuA({ 
-      type: 'polygon', 
-      coordinates,
-      polygon: geoJson.geometry
-    });
-  } 
-  else if ((shape === 'Polygon' || shape === 'Marker') && typeof onCreateEntity === 'function') {
-    onCreateEntity({ 
-      type: shape.toLowerCase(),
-      coordinates: shape === 'Marker' 
-        ? coords
-        : coords[0]
-    });
-  }
+      // XỬ LÝ KHI VẼ RECTANGLE
+      if (shape === 'Rectangle' && typeof onCreateKhuA === 'function') {
+        const coordinates = geoJson.geometry.coordinates[0];
+        onCreateKhuA({ 
+          type: 'polygon', 
+          coordinates,
+          polygon: geoJson.geometry
+        });
+      } 
+      // XỬ LÝ KHI VẼ POLYGON/MARKER
+      else if ((shape === 'Polygon' || shape === 'Marker') && typeof onCreateEntity === 'function') {
+        onCreateEntity({ 
+          type: shape.toLowerCase(),
+          coordinates: shape === 'Marker' ? coords : coords[0]
+        });
+      }
 
-  if (typeof options?.onDrawEnd === 'function') {
-    options.onDrawEnd(); // ✅ GỌI CALLBACK SAU KHI VẼ XONG
-  }
-
-  layer.remove();
-};
+      layer.remove();
+    };
 
     // Xử lý sự kiện cập nhật hình
     const handleUpdate = (e) => {

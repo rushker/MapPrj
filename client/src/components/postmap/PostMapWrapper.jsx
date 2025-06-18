@@ -152,32 +152,31 @@ export default function PostMapWrapper({ isCreatingArea, setIsCreatingArea }) {
 };
 
   // ------------------------ RENDER ------------------------
-  return (
+ return (
     <SidebarProvider>
-    <div className="flex h-screen w-full">
-      <div className="flex-1">
-        <LeafletMap
-          areaMetadata={areaMetadata}
-          selectedEntityId={selectedEntityId}
-          onSelectEntity={setSelectedEntityId}
-          enableDraw={true}
-          drawShape={isCreatingArea ? 'Rectangle' : null}
-          enableEdit={true}
-          enableDrag={true}
-          enableRemove={true}
-          onCreateArea={handleCreateArea}
-          onUpdatePolygon={handleUpdatePolygon}
-          onUpdateEntityGeometry={handleUpdateEntityGeometry}
-          onCreateEntity={handleCreateEntity}
-          isCreatingArea={isCreatingArea} // TRUYỀN XUỐNG LEAFETMAP
-            onDrawEnd={() => setIsCreatingArea(false)} // CALLBACK KHI VẼ XONG
+      <div className="flex h-screen w-full">
+        <div className="flex-1">
+          <LeafletMap
+            areaMetadata={areaMetadata}
+            selectedEntityId={selectedEntityId}
+            onSelectEntity={setSelectedEntityId}
+            // SỬ DỤNG CHẾ ĐỘ VẼ MẶC ĐỊNH CỦA GEOMAN
+            enableDraw={true}
+            drawShape={null} // Không cần chỉ định shape cụ thể
+            enableEdit={true}
+            enableDrag={true}
+            enableRemove={true}
+            onCreateArea={handleCreateArea}
+            onUpdatePolygon={handleUpdatePolygon}
+            onUpdateEntityGeometry={handleUpdateEntityGeometry}
+            onCreateEntity={handleCreateEntity}
+          />
+        </div>
+        <SidebarContainer
+          onSaveAreaMetadata={handleSaveAreaMetadata}
+          onSaveEntity={handleSaveEntityMetadata}
         />
       </div>
-      <SidebarContainer
-        onSaveAreaMetadata={handleSaveAreaMetadata}
-        onSaveEntity={handleSaveEntityMetadata}
-      />
-    </div>
     </SidebarProvider>
   );
 }

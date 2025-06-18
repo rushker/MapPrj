@@ -25,13 +25,8 @@ function PostMapContent() {
   const navigate = useNavigate();
   const { areaId } = useAreaContext();
   const { manualSave } = useAutoSave();
-  const [isCreatingArea, setIsCreatingArea] = useState(false); // Thêm state này
-  /**
-   * Triggers manual save (auto-save chạy theo debounce),
-   * rồi gọi API publish/upload area và chuyển hướng.
-   */
+
   const handleUpload = async () => {
-    // 1. Lưu tất cả thay đổi còn chờ
     await manualSave();
     if (!areaId) {
       toast.error('Thiếu areaId để upload');
@@ -39,10 +34,8 @@ function PostMapContent() {
     }
 
     try {
-      // 2. Gọi API uploadArea (tương tự publish)
       await api.publishArea(areaId);
       toast.success('Upload bản đồ thành công');
-      // 3. Điều hướng sang trang xem public
       navigate(ROUTES.VIEW_MAP(areaId));
     } catch (error) {
       console.error('Upload failed', error);
@@ -52,8 +45,7 @@ function PostMapContent() {
 
   return (
     <div className="flex flex-col h-screen">
-      {/* Header */}
-      <header className="flex justify-between p-4 bg-gray-100">
+      <header className="flex justify-between p-4 bg-gray-100 sticky top-0 z-50">
         <button
           onClick={() => navigate(ROUTES.MANAGER_PAGE)}
           className="text-blue-600 hover:underline"
@@ -62,15 +54,7 @@ function PostMapContent() {
         </button>
 
         <div className="flex gap-2">
-          <button
-            onClick={() => {
-              setIsCreatingArea(true);
-              }}    
-            disabled={isCreatingArea}
-            className="btn btn-primary"
-          >
-            🟩 Vẽ Rectangle
-          </button>
+          {/* ĐÃ LOẠI BỎ NÚT VẼ RECTANGLE TÙY CHỈNH */}
           <button
             onClick={handleUpload}
             disabled={!areaId}
@@ -88,14 +72,9 @@ function PostMapContent() {
         </div>
       </header>
 
-      {/* Map & Sidebar */}
       <main className="flex-1">
-          {/* TRUYỀN STATE XUỐNG WRAPPER */}
-        <PostMapWrapper 
-        isCreatingArea={isCreatingArea} 
-        setIsCreatingArea={setIsCreatingArea} 
-        />
-
+        {/* ĐÃ LOẠI BỎ isCreatingArea */}
+        <PostMapWrapper />
       </main>
     </div>
   );
