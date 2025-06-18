@@ -41,14 +41,12 @@ function SidebarContainer({ onSaveAreaMetadata, onSaveEntity }) {
       ? {
           metadata: editingData,
            onSave: isEditMode ? onSaveAreaMetadata : null, // Chỉ cho phép lưu khi chỉnh sửa
-           isEditMode,
           ...commonProps,
         }
       : {
            entity: editingData,
           onChange: isEditMode ? setEditingData : null, // Chỉ cho phép thay đổi khi chỉnh sửa
           onSave: isEditMode ? onSaveEntity : null, // Chỉ cho phép lưu khi chỉnh sửa
-          isEditMode,
           ...commonProps,
         };
 
