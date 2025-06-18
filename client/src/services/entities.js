@@ -28,6 +28,7 @@ export const updateEntityGeometry = async (areaId, entityId, geometry) => {
 };
 
 export const updateEntityMetadata = async (areaId, entityId, metadata) => {
+   console.log("[API] Updating metadata for", { areaId, entityId, metadata });
   try {
     const res = await axios.patch(
       `/api/areas/${areaId}/entities/${entityId}/metadata`,
