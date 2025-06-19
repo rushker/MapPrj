@@ -15,8 +15,8 @@ const AreaSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    required: true,
     trim: true,
+    default: '',
   },
   opacity: {
     type: Number,

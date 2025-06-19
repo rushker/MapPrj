@@ -68,12 +68,14 @@ export const createArea = async (req, res) => {
     const newArea = new Area({
       polygon: frontendPolygon || defaultPolygon,
       maxZoom,
+      type: '',
     });
 
     await newArea.save();
     res.status(201).json({ success: true, data: newArea });
   } catch (err) {
-    handleError(res, 'Failed to create area', err, 400);
+    console.error('🔥 CREATE AREA ERROR:', err);
+    return res.status(400).json({ success: false, message: 'Failed to create area', error: err.message });      
   }
 };
 
