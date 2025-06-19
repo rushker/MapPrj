@@ -1,3 +1,4 @@
+// components/postmap/handler/areaHandlers
 import toast from 'react-hot-toast';
 import { createArea, updateAreaPolygon, updateArea } from '../../services/areas';
 
