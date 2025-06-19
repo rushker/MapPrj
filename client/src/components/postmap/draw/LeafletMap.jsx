@@ -53,30 +53,39 @@ export default function LeafletMap({
           : gj.geometry.coordinates?.[0] ?? [];
 
       const handleCreate = (e) => {
-        const { layer, shape } = e;
-        const gj = layer.toGeoJSON();
-        const coords = extractCoordinates(gj, shape);
+      const { layer, shape } = e;
+      const gj = layer.toGeoJSON();
+      const coords = extractCoordinates(gj, shape);
 
-        if (shape === 'Rectangle') {
-          const maxZoom = map.getZoom(); // ✅ Lấy zoom từ map khi tạo
-          onCreateArea({
-            type: 'polygon',
-            coordinates: gj.geometry.coordinates[0],
-            polygon: gj.geometry,
-            maxZoom,
-          });
-        } else if (
-          (shape === 'Polygon' || shape === 'Marker') &&
-          isValidAreaId(areaId)
-        ) {
-          onCreateEntity({
-            type: shape.toLowerCase(),
-            coordinates: coords,
-          });
-        }
+    if (shape === 'Rectangle') {
+      const maxZoom = map.getZoom(); // ✅ Lấy zoom tại thời điểm tạo
+      const userConfirmed = window.confirm('Bạn có chắc muốn tạo khu vực này?');
 
-        layer.remove();
-      };
+    if (userConfirmed) {
+      onCreateArea({
+        type: 'polygon',
+        coordinates: gj.geometry.coordinates[0],
+        polygon: gj.geometry,
+        maxZoom,
+      });
+
+      // ❌ KHÔNG xoá layer: để AreaLayer render lại sau khi backend xác nhận
+      // ✅ Tuỳ chọn: có thể ẩn hoặc làm mờ layer này nếu muốn
+    } else {
+      layer.remove(); // ✅ Nếu người dùng từ chối → xoá layer
+    }
+  } else if (
+    (shape === 'Polygon' || shape === 'Marker') &&
+    isValidAreaId(areaId)
+  ) {
+    onCreateEntity({
+      type: shape.toLowerCase(),
+      coordinates: coords,
+    });
+
+    layer.remove(); // Entity luôn xoá sau khi tạo vì được vẽ lại qua EntityLayer
+  }
+};
 
       // 3) onUpdate handler
       const handleUpdate = (e) => {

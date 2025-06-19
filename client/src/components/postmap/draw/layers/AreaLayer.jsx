@@ -8,8 +8,8 @@ const AreaLayer = ({ area }) => {
 
   const latlngs = geoToLatLng(geoCoords); // → [[lat, lng], ...]
   const style = {
-    color: '#FF5733',
-    fillOpacity: area.opacity ?? 0.2,
+    color: '#FF5733',        // viền đỏ cam
+    fill: false,             // 🚫 bỏ fill hoàn toàn
     weight: 2,
   };
   return <Polygon positions={latlngs} pathOptions={style} />;
