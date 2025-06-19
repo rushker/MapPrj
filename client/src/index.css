@@ -19,13 +19,18 @@ body,
   z-index: 1000 !important;
 }
 
-.leaflet-pm-toolbar {
+/*.leaflet-pm-toolbar {
   z-index: 1001 !important;
   background: white;
   border-radius: 4px;
   box-shadow: 0 1px 5px rgba(0,0,0,0.4);
   margin-top: 10px;
   margin-left: 10px;
+}*/
+.leaflet-pm-toolbar {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 
 .leaflet-pm-toolbar .leaflet-buttons-control-button {
