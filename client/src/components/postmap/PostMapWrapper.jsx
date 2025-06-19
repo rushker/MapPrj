@@ -25,7 +25,6 @@ export default function PostMapWrapper({
     areaMetadata,
     setAreaMetadata,
     addEntity,
-    updateEntityMetadata: contextUpdateEntityMetadata,
     updateEntityGeometry: contextUpdateEntityGeometry,
     clearEntities,
     isEditMode,
