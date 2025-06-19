@@ -31,14 +31,20 @@ const useGeomanEvents = ({
   onUpdatePolygon,
   onUpdateEntityGeometry,
   isEditMode = false,
+  mapReady = false,
 }) => {
   useEffect(() => {
+     // Chỉ khởi tạo khi map đã sẵn sàng
+    if (!mapReady) {
+      console.log("🕒 Waiting for map to be ready...");
+      return;
+    }
     const map = mapRef.current;
      if (!map || !map.pm || !isEditMode) {
       console.log("Geoman events not initialized: map or map.pm not ready");
       return;
     }
-
+     console.log("✅ Initializing Geoman events");
     // Xử lý sự kiện tạo hình
     const handleCreate = (e) => {
       const { layer, shape } = e;
@@ -139,6 +145,7 @@ const useGeomanEvents = ({
     onUpdatePolygon,
     onUpdateEntityGeometry,
     isEditMode,
+    mapReady,
   ]);
 };
 

@@ -27,6 +27,7 @@ export default function LeafletMap({
 }) {
   const mapRef = useRef(null);
   const { areaId, isEditMode } = useAreaContext();
+  const [mapReady, setMapReady] = useState(false);
 
   // ✅ Callback khi tạo khu vực
   const handleCreateArea = (polygon) => {
@@ -53,19 +54,34 @@ export default function LeafletMap({
     onUpdatePolygon,
     onUpdateEntityGeometry,
     isEditMode,
+    mapReady,
   });
 
-  // ✅ Khởi tạo bản đồ và thêm thanh công cụ Geoman
+ // ✅ Khởi tạo bản đồ
   const handleMapCreated = (mapInstance) => {
     mapRef.current = mapInstance;
-
-    if (!mapInstance.pm) {
-      console.error('❌ Geoman plugin chưa sẵn sàng trên map');
-      return;
-    }
-
     console.log('✅ Leaflet map created');
-    mapInstance.pm.addControls({
+    
+    // Thêm timeout để đảm bảo map hoàn toàn khởi tạo
+    setTimeout(() => {
+      if (mapInstance.pm) {
+        console.log('✅ Geoman plugin available');
+        setMapReady(true);
+      } else {
+        console.error('❌ Geoman plugin not available');
+      }
+    }, 300);
+  };
+
+  // ✅ Thêm điều khiển Geoman khi map sẵn sàng
+  useEffect(() => {
+    if (!mapReady || !mapRef.current) return;
+    const map = mapRef.current;
+    
+    console.log('🚀 Adding Geoman controls');
+    
+    // Thêm điều khiển Geoman
+    map.pm.addControls({
       position: 'topleft',
       drawCircle: false,
       drawMarker: true,
@@ -77,7 +93,17 @@ export default function LeafletMap({
       dragMode: enableDrag,
       removalMode: enableRemove,
     });
-  };
+
+    // Đảm bảo thanh công cụ hiển thị
+    const toolbar = document.querySelector('.leaflet-pm-toolbar');
+    if (toolbar) {
+      toolbar.style.display = 'block';
+      toolbar.style.visibility = 'visible';
+      toolbar.style.opacity = '1';
+    }
+
+  }, [mapReady, enableEdit, enableDrag, enableRemove, enableDraw]);
+
 
   return (
     <MapContainer
