@@ -1,5 +1,5 @@
 // src/components/postmap/PostMapWrapper.jsx
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import toast from 'react-hot-toast';
 import LeafletMap from './draw/LeafletMap';
 import SidebarContainer from './sidebars/SidebarContainer';
@@ -12,11 +12,12 @@ import { useEnsureValidAreaId } from '../../utils/useEnsureValidAreaId';
 import { SidebarProvider } from '../../context/SidebarContext';
 
 export default function PostMapWrapper() {
-  // ------------------------- AREA ID INIT -------------------------
+  // ----------------- INIT -----------------
+  const mapRef = useRef(null);
   const getCoordinates = () => null;
   useEnsureValidAreaId(getCoordinates, 18);
 
-  // ---------------------- CONTEXT & STATE ----------------------
+  // ----------------- CONTEXT -----------------
   const { saveAreaId } = useTempAreaId();
   const {
     areaId,
@@ -39,8 +40,8 @@ export default function PostMapWrapper() {
 
   useAutoSave();
 
-  // --------------------- AREA CREATE HANDLER ---------------------
-  const handleCreateArea = async ({ coordinates, polygon, maxZoom }) => {
+  // ----------------- CREATE AREA -----------------
+  const handleCreateArea = async ({ coordinates, polygon }) => {
     if (!window.confirm('Bạn có chắc muốn tạo khu vực này?')) return;
     if (isCreatingArea) return;
 
@@ -59,6 +60,10 @@ export default function PostMapWrapper() {
       toast.error('Tọa độ không hợp lệ để tạo khu vực');
       return;
     }
+
+    // ✅ Lấy zoom hiện tại từ mapRef
+    const currentZoom = mapRef.current?.getZoom();
+    const maxZoom = typeof currentZoom === 'number' ? currentZoom : 18;
 
     setIsCreatingArea(true);
     try {
@@ -87,7 +92,7 @@ export default function PostMapWrapper() {
     }
   };
 
-  // ------------------- AREA POLYGON UPDATE -------------------
+  // ----------------- UPDATE POLYGON -----------------
   const handleUpdatePolygon = async ({ coordinates }) => {
     if (!areaId) {
       toast.error('Chưa có khu vực để cập nhật polygon');
@@ -104,7 +109,7 @@ export default function PostMapWrapper() {
     }
   };
 
-  // ------------------- ENTITY GEOMETRY UPDATE -------------------
+  // ----------------- ENTITY GEOMETRY UPDATE -----------------
   const handleUpdateEntityGeometry = async ({ entityId, coordinates }) => {
     if (!areaId) {
       toast.error('Không tìm thấy areaId');
@@ -121,7 +126,7 @@ export default function PostMapWrapper() {
     }
   };
 
-  // ------------------- CREATE ENTITY HANDLER -------------------
+  // ----------------- CREATE ENTITY -----------------
   const handleCreateEntity = (entity) => {
     if (!areaId) {
       toast.error('Vui lòng tạo khu vực trước khi thêm đối tượng');
@@ -131,7 +136,7 @@ export default function PostMapWrapper() {
     setSelectedEntityId(entity._id);
   };
 
-  // ------------------- SAVE AREA METADATA ----------------------
+  // ----------------- SAVE AREA METADATA -----------------
   const handleSaveAreaMetadata = async (metadata) => {
     if (!areaId) {
       toast.error('Không tìm thấy areaId để lưu metadata');
@@ -148,7 +153,7 @@ export default function PostMapWrapper() {
     }
   };
 
-  // ------------------- SAVE ENTITY METADATA ----------------------
+  // ----------------- SAVE ENTITY METADATA -----------------
   const handleSaveEntityMetadata = async (entityId, metadata) => {
     if (!areaId) {
       toast.error('Vui lòng chọn khu vực trước');
@@ -165,7 +170,7 @@ export default function PostMapWrapper() {
     }
   };
 
-  // ------------------------ RENDER ------------------------
+  // ----------------- RENDER -----------------
   return (
     <SidebarProvider>
       <div className="flex h-screen w-full">
@@ -185,6 +190,7 @@ export default function PostMapWrapper() {
             onUpdateEntityGeometry={handleUpdateEntityGeometry}
             onCreateEntity={handleCreateEntity}
             isCreatingArea={isCreatingArea}
+            mapRef={mapRef} // ✅ truyền ref xuống LeafletMap
           />
         </div>
         <SidebarContainer

@@ -1,12 +1,11 @@
-// components/postmap/draw/LeafletMap.jsx
-import { MapContainer, TileLayer, useMapEvent } from 'react-leaflet'
-import '@geoman-io/leaflet-geoman-free'
-import '@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css'
-import AreaLayer from './layers/AreaLayer'
-import EntityLayer from './layers/EntityLayer'
-import { useAreaContext } from '../../../context/AreaContext'
-import { isValidAreaId } from '../../../utils/areaUtils'
-import { useEffect } from 'react'
+import { MapContainer, TileLayer, useMapEvent } from 'react-leaflet';
+import '@geoman-io/leaflet-geoman-free';
+import '@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css';
+import AreaLayer from './layers/AreaLayer';
+import EntityLayer from './layers/EntityLayer';
+import { useAreaContext } from '../../../context/AreaContext';
+import { isValidAreaId } from '../../../utils/areaUtils';
+import { useEffect } from 'react';
 
 export default function LeafletMap({
   areaMetadata,
@@ -16,16 +15,21 @@ export default function LeafletMap({
   onCreateEntity,
   onUpdatePolygon,
   onUpdateEntityGeometry,
-  
+  mapRef, // ✅ Nhận prop từ PostMapWrapper
 }) {
-  const { areaId, isEditMode } = useAreaContext()
+  const { areaId, isEditMode } = useAreaContext();
 
   // Helper component that runs _once_ after the map is created:
   function PMInit() {
-    const map = useMapEvent('pm:mounted', () => {})
+    const map = useMapEvent('pm:mounted', () => {});
 
     useEffect(() => {
-      if (!map.pm) return
+      if (!map.pm) return;
+
+      // ✅ Gán map instance vào ref truyền từ cha
+      if (mapRef) {
+        mapRef.current = map;
+      }
 
       // 1) Add toolbar
       map.pm.addControls({
@@ -39,73 +43,75 @@ export default function LeafletMap({
         editMode: isEditMode,
         dragMode: isEditMode,
         removalMode: isEditMode,
-      })
+      });
 
       // 2) onCreate handler
       const extractCoordinates = (gj, shape) =>
-      shape === 'Marker'
-    ? gj.geometry.coordinates
-    : gj.geometry.coordinates?.[0] ?? [];
+        shape === 'Marker'
+          ? gj.geometry.coordinates
+          : gj.geometry.coordinates?.[0] ?? [];
 
       const handleCreate = (e) => {
-      const { layer, shape } = e;
-      const gj = layer.toGeoJSON();
-      const coords = extractCoordinates(gj, shape);
+        const { layer, shape } = e;
+        const gj = layer.toGeoJSON();
+        const coords = extractCoordinates(gj, shape);
 
-      if (shape === 'Rectangle') {
-    const maxZoom = map.getZoom(); // ✅ lấy zoom level tại thời điểm tạo
-    onCreateArea({
-      type: 'polygon',
-      coordinates: gj.geometry.coordinates[0],
-      polygon: gj.geometry,
-      maxZoom, // ✅ truyền xuống
-    });
-    } else if ((shape === 'Polygon' || shape === 'Marker') && isValidAreaId(areaId)) {
-    onCreateEntity({
-      type: shape.toLowerCase(),
-      coordinates: coords,
-    });
-  }
+        if (shape === 'Rectangle') {
+          const maxZoom = map.getZoom(); // ✅ Lấy zoom từ map khi tạo
+          onCreateArea({
+            type: 'polygon',
+            coordinates: gj.geometry.coordinates[0],
+            polygon: gj.geometry,
+            maxZoom,
+          });
+        } else if (
+          (shape === 'Polygon' || shape === 'Marker') &&
+          isValidAreaId(areaId)
+        ) {
+          onCreateEntity({
+            type: shape.toLowerCase(),
+            coordinates: coords,
+          });
+        }
 
-  layer.remove();
-};
-
+        layer.remove();
+      };
 
       // 3) onUpdate handler
       const handleUpdate = (e) => {
-        const gj = e.layer.toGeoJSON()
+        const gj = e.layer.toGeoJSON();
 
         if (
           gj.geometry.type === 'Polygon' &&
           e.layer.options.isAreaLayer &&
           onUpdatePolygon
         ) {
-          onUpdatePolygon({ coordinates: gj.geometry.coordinates })
+          onUpdatePolygon({ coordinates: gj.geometry.coordinates });
         }
 
         if (gj.properties?.entityId && onUpdateEntityGeometry) {
           const coords =
             gj.geometry.type === 'Point'
               ? gj.geometry.coordinates
-              : gj.geometry.coordinates[0]
+              : gj.geometry.coordinates[0];
           onUpdateEntityGeometry({
             entityId: gj.properties.entityId,
             coordinates: coords,
-          })
+          });
         }
-      }
+      };
 
-      map.on('pm:create', handleCreate)
-      map.on('pm:update', handleUpdate)
+      map.on('pm:create', handleCreate);
+      map.on('pm:update', handleUpdate);
 
       return () => {
-        map.off('pm:create', handleCreate)
-        map.off('pm:update', handleUpdate)
-        map.pm.removeControls()
-      }
-    }, [map, isEditMode, areaId])
+        map.off('pm:create', handleCreate);
+        map.off('pm:update', handleUpdate);
+        map.pm.removeControls();
+      };
+    }, [map, isEditMode, areaId]);
 
-    return null
+    return null;
   }
 
   return (
@@ -119,14 +125,12 @@ export default function LeafletMap({
         attribution='&copy; <a href="https://osm.org">OpenStreetMap</a>'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
-
       <PMInit />
-
       {areaMetadata && <AreaLayer area={areaMetadata} />}
       <EntityLayer
         selectedEntityId={selectedEntityId}
         onSelectEntity={onSelectEntity}
       />
     </MapContainer>
-  )
+  );
 }
