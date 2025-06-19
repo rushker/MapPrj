@@ -6,10 +6,10 @@ import { ROUTES } from '../routes';
 import { AreaProvider, useAreaContext } from '../context/AreaContext';
 import useAutoSave from '../hooks/local/useAutoSave';
 import PostMapWrapper from '../components/postmap/PostMapWrapper';
-import { SidebarProvider,useSidebarContext } from '../context/SidebarContext';
+import { SidebarProvider, useSidebarContext } from '../context/SidebarContext';
 import { isValidAreaId } from '../utils/areaUtils';
 import * as api from '../services/areas'; // 🔧 đảm bảo đã import đúng
-
+import { openAreaEditorHandler } from '../components/postmap/postmapHandlers';
 export default function PostMapPage() {
   return (
      <AreaProvider isEditMode={true}>
@@ -24,10 +24,12 @@ function PostMapContent() {
   const navigate = useNavigate();
   const { areaId, areaMetadata } = useAreaContext();
   const { manualSave } = useAutoSave();
-  const { sidebarOpen, editingType } = useSidebarContext();
+  const { sidebarOpen, editingType,openSidebar } = useSidebarContext();
   const [uploading, setUploading] = useState(false);
-  // để nhận lại openSidebar từ PostMapWrapper
-  const [openSidebarFunc, setOpenSidebarFunc] = useState(null);
+  const handleOpenAreaEditor = openAreaEditorHandler({
+    areaMetadata,
+    openSidebar
+  });
 
   const handleUpload = async () => {
   if (uploading) return;
@@ -51,13 +53,6 @@ function PostMapContent() {
     setUploading(false);
   }
 };
-
-  const handleOpenSidebar = () => {
-    if (typeof openSidebarFunc === 'function') {
-      openSidebarFunc('area', areaMetadata);
-    }
-  };
-
   return (
     <div className="flex flex-col h-screen">
       <header className="flex justify-between p-4 bg-gray-100 sticky top-0 z-50">
@@ -89,15 +84,14 @@ function PostMapContent() {
       {/* Nút chỉnh sửa Khu A */}
       {isValidAreaId(areaId) && !sidebarOpen && editingType !== 'area' && (
         <button
-          onClick={handleOpenSidebar}
+          onClick={handleOpenAreaEditor}
           className="absolute top-4 left-4 z-[1000] bg-white border border-gray-300 px-4 py-2 rounded shadow hover:bg-gray-100 transition"
         >
           ✏️ Chỉnh sửa Khu A
         </button>
       )}
-
       <main className="flex-1 relative">
-        <PostMapWrapper onExposeSidebar={setOpenSidebarFunc} />
+        <PostMapWrapper/>
       </main>
     </div>
   );

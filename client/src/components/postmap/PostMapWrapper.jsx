@@ -6,7 +6,7 @@ import { useTempAreaId } from '../../hooks/local/useTempAreaId';
 import { useAreaContext } from '../../context/AreaContext';
 import useAutoSave from '../../hooks/local/useAutoSave';
 import { useEnsureValidAreaId } from '../../utils/useEnsureValidAreaId';
-import { SidebarProvider, useSidebarContext } from '../../context/SidebarContext';
+import { useSidebarContext } from '../../context/SidebarContext';
 import {
   createAreaHandler,
   updatePolygonHandler,
@@ -16,7 +16,7 @@ import {
   saveEntityMetadataHandler,
 } from './postmapHandlers';
 
-export default function PostMapWrapper({ onExposeSidebar }) {
+export default function PostMapWrapper({  }) {
   const mapRef = useRef(null);
   useEnsureValidAreaId(() => null, 18);
 
@@ -42,13 +42,12 @@ export default function PostMapWrapper({ onExposeSidebar }) {
     setSelectedEntityId(null);
     clearEntities?.();
   }, [areaId]);
-
-  useEffect(() => {
-    if (typeof onExposeSidebar === 'function') {
-      onExposeSidebar(openSidebar);
-    }
-  }, [onExposeSidebar, openSidebar]);
-
+  const handleCreateArea = createAreaHandler({
+    mapRef,
+    setIsCreatingArea,
+    saveAreaId,
+    openSidebar,
+  });
   return (
       <div className="flex h-screen w-full relative">
         <div className="flex-1">
@@ -62,25 +61,18 @@ export default function PostMapWrapper({ onExposeSidebar }) {
             enableEdit={isEditMode}
             enableDrag={isEditMode}
             enableRemove={isEditMode}
-            onCreateArea={createAreaHandler({
-              coordinates: null,
-              polygon: null,
-              mapRef,
-              setIsCreatingArea,
-              saveAreaId,
-              openSidebar,
-            })}
-            onUpdatePolygon={({ coordinates }) =>
-              updatePolygonHandler({ areaId, coordinates, setAreaMetadata })
-            }
-            onUpdateEntityGeometry={({ entityId, coordinates }) =>
-              updateEntityGeometryHandler({
-                areaId,
-                entityId,
-                coordinates,
-                contextUpdateEntityGeometry,
-              })
-            }
+            onCreateArea={handleCreateArea} // SỬA THÀNH HANDLER ĐÃ TẠO
+            onUpdatePolygon={({ coordinates }) => 
+            updatePolygonHandler({ areaId, coordinates, setAreaMetadata })
+          }
+          onUpdateEntityGeometry={({ entityId, coordinates }) => 
+            updateEntityGeometryHandler({
+              areaId,
+              entityId,
+              coordinates,
+              contextUpdateEntityGeometry, // THÊM DÒNG NÀY
+            })
+          }
             onCreateEntity={createEntityHandler({
               areaId,
               addEntity,

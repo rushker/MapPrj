@@ -3,17 +3,22 @@ import toast from 'react-hot-toast';
 import { createArea, updateAreaPolygon, updateArea } from '../../services/areas';
 import { updateEntityGeometry, updateEntityMetadata } from '../../services/entities';
 
-export function createAreaHandler({
-  coordinates,
-  polygon,
-  mapRef,
-  setIsCreatingArea,
-  saveAreaId,
-  openSidebar,
-}) {
-  return async () => {
+export function createAreaHandler({ mapRef, setIsCreatingArea, saveAreaId, openSidebar }) {
+  return async ({ coordinates, polygon }) => {
     if (!window.confirm('Bạn có chắc muốn tạo khu vực này?')) return;
-    if (!coordinates || coordinates.length < 3 || coordinates.some((c) => !Array.isArray(c) || c.includes(undefined))) {
+    
+    // Kiểm tra coordinates hợp lệ (giống luồng cũ)
+    if (
+      !coordinates ||
+      !Array.isArray(coordinates) ||
+      coordinates.length < 3 ||
+      coordinates.some(c => 
+        !Array.isArray(c) || 
+        c.length !== 2 || 
+        c.includes(undefined) || 
+        c.includes(null)
+      )
+    ) {
       toast.error('Tọa độ không hợp lệ để tạo khu vực');
       return;
     }
@@ -24,12 +29,17 @@ export function createAreaHandler({
     setIsCreatingArea(true);
     try {
       const res = await createArea({ coordinates, polygon, maxZoom });
-      if (!res.success || !res.data?._id) throw new Error('Tạo khu vực thất bại từ phía backend');
+      if (!res.success || !res.data?._id) throw new Error('Tạo khu vực thất bại');
 
       const newId = res.data._id;
       saveAreaId(newId, coordinates);
       toast.success('Đã tạo khu vực thành công!');
-      openSidebar('area', res.data);
+      
+      // CHỈ MỞ SIDEBAR KHI THÀNH CÔNG
+      if (res.data && openSidebar) {
+        openSidebar('area', res.data);
+      }
+      
       return newId;
     } catch (err) {
       console.error(err);
