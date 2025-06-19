@@ -1,6 +1,6 @@
 // components/postmap/handler/entityHandlers
 import toast from 'react-hot-toast';
-import { updateEntityGeometry, updateEntityMetadata, createEntity  } from '../../services/entities';
+import { updateEntityGeometry, updateEntityMetadata, createEntity  } from '../../../services/entities';
 ///////////// Entity handler//////////////
 export async function updateEntityGeometryHandler({
   areaId,
