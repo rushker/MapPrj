@@ -1,23 +1,24 @@
-// src/components/postmap/PostMapWrapper.jsx
+//  Refactored PostMapWrapper.jsx 
 import { useState, useEffect, useRef } from 'react';
 import toast from 'react-hot-toast';
 import LeafletMap from './draw/LeafletMap';
 import SidebarContainer from './sidebars/SidebarContainer';
-import { createArea, updateAreaPolygon, updateArea } from '../../services/areas';
-import { updateEntityMetadata, updateEntityGeometry } from '../../services/entities';
+import { createArea, updateAreaPolygon} from '../../services/areas';
+import { updateEntityGeometry } from '../../services/entities';
 import { useTempAreaId } from '../../hooks/local/useTempAreaId';
 import { useAreaContext } from '../../context/AreaContext';
-import useAutoSave from '../../hooks/local/useAutoSave';
+import { SidebarProvider, useSidebarContext } from '../../context/SidebarContext';
 import { useEnsureValidAreaId } from '../../utils/useEnsureValidAreaId';
-import { SidebarProvider,useSidebarContext  } from '../../context/SidebarContext';
 
-export default function PostMapWrapper() {
-  // ----------------- INIT -----------------
+export default function PostMapWrapper({
+  onSaveAreaMetadata,
+  onSaveEntityMetadata,
+  onCreateAreaSuccess,
+}) {
   const mapRef = useRef(null);
   const getCoordinates = () => null;
   useEnsureValidAreaId(getCoordinates, 18);
 
-  // ----------------- CONTEXT -----------------
   const { saveAreaId } = useTempAreaId();
   const {
     areaId,
@@ -33,14 +34,13 @@ export default function PostMapWrapper() {
   const [selectedEntityId, setSelectedEntityId] = useState(null);
   const [isCreatingArea, setIsCreatingArea] = useState(false);
 
+  const { sidebarOpen, editingType, openSidebar } = useSidebarContext();
+
   useEffect(() => {
     setSelectedEntityId(null);
     clearEntities?.();
   }, [areaId]);
 
-  useAutoSave();
-
-  // ----------------- CREATE AREA -----------------
   const handleCreateArea = async ({ coordinates, polygon }) => {
     if (!window.confirm('Bạn có chắc muốn tạo khu vực này?')) return;
     if (isCreatingArea) return;
@@ -61,18 +61,11 @@ export default function PostMapWrapper() {
       return;
     }
 
-    // ✅ Lấy zoom hiện tại từ mapRef
     const currentZoom = mapRef.current?.getZoom();
     const maxZoom = typeof currentZoom === 'number' ? currentZoom : 18;
 
     setIsCreatingArea(true);
     try {
-      console.log('🔧 Tạo khu vực - dữ liệu gửi:', {
-        coordinates,
-        polygon,
-        maxZoom,
-      });
-
       const res = await createArea({ coordinates, polygon, maxZoom });
 
       if (!res.success || !res.data?._id) {
@@ -82,6 +75,10 @@ export default function PostMapWrapper() {
       const newId = res.data._id;
       saveAreaId(newId, coordinates);
       toast.success('Đã tạo khu vực thành công!');
+
+      openSidebar('area', res.data);
+      onCreateAreaSuccess?.(res.data);
+
       return newId;
     } catch (err) {
       console.error(err);
@@ -92,7 +89,6 @@ export default function PostMapWrapper() {
     }
   };
 
-  // ----------------- UPDATE POLYGON -----------------
   const handleUpdatePolygon = async ({ coordinates }) => {
     if (!areaId) {
       toast.error('Chưa có khu vực để cập nhật polygon');
@@ -109,13 +105,11 @@ export default function PostMapWrapper() {
     }
   };
 
-  // ----------------- ENTITY GEOMETRY UPDATE -----------------
   const handleUpdateEntityGeometry = async ({ entityId, coordinates }) => {
     if (!areaId) {
       toast.error('Không tìm thấy areaId');
       return;
     }
-
     try {
       await updateEntityGeometry(areaId, entityId, { coordinates });
       contextUpdateEntityGeometry(entityId, { coordinates });
@@ -126,7 +120,6 @@ export default function PostMapWrapper() {
     }
   };
 
-  // ----------------- CREATE ENTITY -----------------
   const handleCreateEntity = (entity) => {
     if (!areaId) {
       toast.error('Vui lòng tạo khu vực trước khi thêm đối tượng');
@@ -136,44 +129,18 @@ export default function PostMapWrapper() {
     setSelectedEntityId(entity._id);
   };
 
-  // ----------------- SAVE AREA METADATA -----------------
-  const handleSaveAreaMetadata = async (metadata) => {
-    if (!areaId) {
-      toast.error('Không tìm thấy areaId để lưu metadata');
-      return;
-    }
-    try {
-      const res = await updateArea(areaId, metadata);
-      if (!res.success) throw new Error('Lưu metadata thất bại từ server');
-      setAreaMetadata(res.data);
-      return res.data;
-    } catch (err) {
-      console.error(err);
-      throw err;
-    }
-  };
-
-  // ----------------- SAVE ENTITY METADATA -----------------
-  const handleSaveEntityMetadata = async (entityId, metadata) => {
-    if (!areaId) {
-      toast.error('Vui lòng chọn khu vực trước');
-      return;
-    }
-
-    try {
-      await updateEntityMetadata(areaId, entityId, metadata);
-      contextUpdateEntityMetadata(entityId, metadata);
-      toast.success('Đã cập nhật thông tin đối tượng');
-    } catch (err) {
-      console.error('Lỗi khi lưu metadata:', err);
-      toast.error(`Lỗi: ${err.message}`);
-    }
-  };
-
-  // ----------------- RENDER -----------------
   return (
     <SidebarProvider>
-      <div className="flex h-screen w-full">
+      <div className="flex h-screen w-full relative">
+        {areaId && (!sidebarOpen || editingType !== 'area') && (
+          <button
+            className="absolute top-4 left-4 z-[1000] bg-white border border-gray-300 px-4 py-2 rounded shadow hover:bg-gray-100 transition"
+            onClick={() => openSidebar('area', areaMetadata)}
+          >
+            ✏️ Chỉnh sửa Khu A
+          </button>
+        )}
+
         <div className="flex-1">
           <LeafletMap
             areaMetadata={areaMetadata}
@@ -190,12 +157,13 @@ export default function PostMapWrapper() {
             onUpdateEntityGeometry={handleUpdateEntityGeometry}
             onCreateEntity={handleCreateEntity}
             isCreatingArea={isCreatingArea}
-            mapRef={mapRef} // ✅ truyền ref xuống LeafletMap
+            mapRef={mapRef}
           />
         </div>
+
         <SidebarContainer
-          onSaveAreaMetadata={handleSaveAreaMetadata}
-          onSaveEntity={handleSaveEntityMetadata}
+          onSaveAreaMetadata={onSaveAreaMetadata}
+          onSaveEntity={onSaveEntityMetadata}
         />
       </div>
     </SidebarProvider>
