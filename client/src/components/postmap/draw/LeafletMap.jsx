@@ -52,28 +52,19 @@ export default function LeafletMap({
           ? gj.geometry.coordinates
           : gj.geometry.coordinates?.[0] ?? [];
 
-      const handleCreate = (e) => {
-      const { layer, shape } = e;
-      const gj = layer.toGeoJSON();
-      const coords = extractCoordinates(gj, shape);
+      const handleCreate = async (e) => {
+  const { layer, shape } = e;
+  const gj = layer.toGeoJSON();
+  const coords = extractCoordinates(gj, shape);
 
-    if (shape === 'Rectangle') {
-      const maxZoom = map.getZoom(); // ✅ Lấy zoom tại thời điểm tạo
-      const userConfirmed = window.confirm('Bạn có chắc muốn tạo khu vực này?');
-
-    if (userConfirmed) {
-      onCreateArea({
-        type: 'polygon',
-        coordinates: gj.geometry.coordinates[0],
-        polygon: gj.geometry,
-        maxZoom,
-      });
-
-      // ❌ KHÔNG xoá layer: để AreaLayer render lại sau khi backend xác nhận
-      // ✅ Tuỳ chọn: có thể ẩn hoặc làm mờ layer này nếu muốn
-    } else {
-      layer.remove(); // ✅ Nếu người dùng từ chối → xoá layer
-    }
+  if (shape === 'Rectangle') {
+    await onCreateArea({
+      type: 'polygon',
+      coordinates: coords,
+      polygon: gj.geometry,
+      maxZoom: map.getZoom(),
+    });
+    // Không remove layer, chờ AreaLayer render
   } else if (
     (shape === 'Polygon' || shape === 'Marker') &&
     isValidAreaId(areaId)
@@ -83,10 +74,9 @@ export default function LeafletMap({
       coordinates: coords,
     });
 
-    layer.remove(); // Entity luôn xoá sau khi tạo vì được vẽ lại qua EntityLayer
+    layer.remove(); // Marker & Polygon luôn remove
   }
 };
-
       // 3) onUpdate handler
       const handleUpdate = (e) => {
         const gj = e.layer.toGeoJSON();

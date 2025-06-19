@@ -4,45 +4,38 @@ import { createArea, updateAreaPolygon, updateArea } from '../../services/areas'
 import { updateEntityGeometry, updateEntityMetadata } from '../../services/entities';
 
 export function createAreaHandler({ mapRef, setIsCreatingArea, saveAreaId, openSidebar }) {
-  return async ({ coordinates, polygon }) => {
+  return async ({ coordinates, polygon, maxZoom }) => {
     if (!window.confirm('Bạn có chắc muốn tạo khu vực này?')) return;
-    
-    // Kiểm tra coordinates hợp lệ (giống luồng cũ)
+
     if (
       !coordinates ||
       !Array.isArray(coordinates) ||
       coordinates.length < 3 ||
-      coordinates.some(c => 
-        !Array.isArray(c) || 
-        c.length !== 2 || 
-        c.includes(undefined) || 
-        c.includes(null)
+      coordinates.some(c =>
+        !Array.isArray(c) || c.length !== 2 || c.includes(undefined) || c.includes(null)
       )
     ) {
       toast.error('Tọa độ không hợp lệ để tạo khu vực');
       return;
     }
 
-    const currentZoom = mapRef.current?.getZoom();
-    const maxZoom = typeof currentZoom === 'number' ? currentZoom : 18;
+    const zoom = typeof maxZoom === 'number'
+      ? maxZoom
+      : mapRef.current?.getZoom() ?? 18;
 
     setIsCreatingArea(true);
     try {
-      const res = await createArea({ coordinates, polygon, maxZoom });
+      const res = await createArea({ coordinates, polygon, maxZoom: zoom });
+      console.log('>>> API RESPONSE:', res);
       if (!res.success || !res.data?._id) throw new Error('Tạo khu vực thất bại');
 
-      const newId = res.data._id;
-      saveAreaId(newId, coordinates);
+      saveAreaId(res.data._id, coordinates);
       toast.success('Đã tạo khu vực thành công!');
-      
-      // CHỈ MỞ SIDEBAR KHI THÀNH CÔNG
-      if (res.data && openSidebar) {
-        openSidebar('area', res.data);
-      }
-      
-      return newId;
+
+      openSidebar?.('area', res.data);
+      return res.data._id;
     } catch (err) {
-      console.error(err);
+      console.error('>>> CREATE ERROR:', err);
       toast.error('Tạo khu vực thất bại: ' + err.message);
       return null;
     } finally {
@@ -50,6 +43,7 @@ export function createAreaHandler({ mapRef, setIsCreatingArea, saveAreaId, openS
     }
   };
 }
+
 // THÊM HÀM MỚI CHO EDIT AREA
 export const openAreaEditorHandler = ({ areaMetadata, openSidebar }) => {
   return () => {
