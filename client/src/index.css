@@ -15,23 +15,46 @@ body,
   width: 100%;
   z-index: 0;
 }
-.leaflet-top {
-  z-index: 999 !important;
+.leaflet-top.leaflet-left {
+  z-index: 1000 !important;
 }
+
 .leaflet-pm-toolbar {
-  margin-top: 10px;
-  margin-left: 10px;
+  z-index: 1001 !important;
   background: white;
   border-radius: 4px;
   box-shadow: 0 1px 5px rgba(0,0,0,0.4);
+  margin-top: 10px;
+  margin-left: 10px;
 }
 
 .leaflet-pm-toolbar .leaflet-buttons-control-button {
-  width: 30px;
+   width: 30px;
   height: 30px;
   line-height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .leaflet-pm-toolbar .leaflet-buttons-control-button:hover {
   background-color: #f4f4f4;
+}
+/* Hiển thị rõ các icon */
+.leaflet-pm-icon-marker:after {
+  content: "📍";
+  font-size: 18px;
+  line-height: 1;
+}
+
+.leaflet-pm-icon-polygon:after {
+  content: "⬢";
+  font-size: 20px;
+  line-height: 1;
+}
+
+.leaflet-pm-icon-rectangle:after {
+  content: "⬚";
+  font-size: 22px;
+  line-height: 1;
 }

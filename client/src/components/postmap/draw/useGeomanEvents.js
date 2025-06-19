@@ -34,7 +34,10 @@ const useGeomanEvents = ({
 }) => {
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !isEditMode) return;
+     if (!map || !map.pm || !isEditMode) {
+      console.log("Geoman events not initialized: map or map.pm not ready");
+      return;
+    }
 
     // Xử lý sự kiện tạo hình
     const handleCreate = (e) => {
@@ -111,6 +114,7 @@ const useGeomanEvents = ({
 
     // Cleanup
     return () => {
+       if (!map || !map.pm) return;
       map.off('pm:create', handleCreate);
       map.off('pm:update', handleUpdate);
       
