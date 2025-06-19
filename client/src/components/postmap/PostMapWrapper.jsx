@@ -47,6 +47,7 @@ export default function PostMapWrapper({  }) {
     setIsCreatingArea,
     saveAreaId,
     openSidebar,
+    setAreaMetadata,
   });
   return (
       <div className="flex h-screen w-full relative">
