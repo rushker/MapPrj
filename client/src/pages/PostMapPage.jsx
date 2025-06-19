@@ -23,26 +23,32 @@ function PostMapContent() {
   const { areaId, areaMetadata } = useAreaContext();
   const { manualSave } = useAutoSave();
   const { sidebarOpen, editingType } = useSidebarContext();
-
+  const [uploading, setUploading] = useState(false);
   // để nhận lại openSidebar từ PostMapWrapper
   const [openSidebarFunc, setOpenSidebarFunc] = useState(null);
 
   const handleUpload = async () => {
-    await manualSave();
-    if (!areaId) {
-      toast.error('Thiếu areaId để upload');
-      return;
-    }
+  if (uploading) return;
+  setUploading(true);
+  await manualSave();
 
-    try {
-      await api.publishArea(areaId);
-      toast.success('Upload bản đồ thành công');
-      navigate(ROUTES.VIEW_MAP(areaId));
-    } catch (error) {
-      console.error('Upload failed', error);
-      toast.error('Upload bản đồ thất bại');
-    }
-  };
+  if (!areaId) {
+    toast.error('Thiếu areaId để upload');
+    setUploading(false);
+    return;
+  }
+
+  try {
+    await api.publishArea(areaId);
+    toast.success('Upload bản đồ thành công');
+    navigate(ROUTES.VIEW_MAP(areaId));
+  } catch (error) {
+    console.error('Upload failed', error);
+    toast.error('Upload bản đồ thất bại');
+  } finally {
+    setUploading(false);
+  }
+};
 
   const handleOpenSidebar = () => {
     if (typeof openSidebarFunc === 'function') {
@@ -63,10 +69,10 @@ function PostMapContent() {
         <div className="flex gap-2">
           <button
             onClick={handleUpload}
-            disabled={!areaId}
+            disabled={!areaId || uploading}
             className="btn btn-primary"
           >
-            📤 Upload bản đồ
+          {uploading ? '⏳ Đang upload...' : '📤 Upload bản đồ'}
           </button>
           <button
             onClick={() => navigate(ROUTES.VIEW_MAP(areaId))}
