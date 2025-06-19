@@ -50,6 +50,14 @@ export function createAreaHandler({ mapRef, setIsCreatingArea, saveAreaId, openS
     }
   };
 }
+// THÊM HÀM MỚI CHO EDIT AREA
+export const openAreaEditorHandler = ({ areaMetadata, openSidebar }) => {
+  return () => {
+    if (areaMetadata && openSidebar) {
+      openSidebar('area', areaMetadata);
+    }
+  };
+};
 
 export async function updatePolygonHandler({ areaId, coordinates, setAreaMetadata }) {
   if (!areaId) {

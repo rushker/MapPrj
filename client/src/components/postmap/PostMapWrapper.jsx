@@ -42,7 +42,7 @@ export default function PostMapWrapper({  }) {
     setSelectedEntityId(null);
     clearEntities?.();
   }, [areaId]);
-  const handleCreateArea = createAreaHandler({
+  const onCreateArea = createAreaHandler({
     mapRef,
     setIsCreatingArea,
     saveAreaId,
@@ -61,7 +61,7 @@ export default function PostMapWrapper({  }) {
             enableEdit={isEditMode}
             enableDrag={isEditMode}
             enableRemove={isEditMode}
-            onCreateArea={handleCreateArea} // SỬA THÀNH HANDLER ĐÃ TẠO
+            onCreateArea={onCreateArea} 
             onUpdatePolygon={({ coordinates }) => 
             updatePolygonHandler({ areaId, coordinates, setAreaMetadata })
           }
