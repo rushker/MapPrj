@@ -12,8 +12,10 @@ import * as api from '../services/areas'; // 🔧 đảm bảo đã import đún
 
 export default function PostMapPage() {
   return (
-    <AreaProvider isEditMode={true}>
-      <PostMapContent />
+     <AreaProvider isEditMode={true}>
+      <SidebarProvider> {/* 👈 di chuyển lên đây */}
+        <PostMapContent />
+      </SidebarProvider>
     </AreaProvider>
   );
 }

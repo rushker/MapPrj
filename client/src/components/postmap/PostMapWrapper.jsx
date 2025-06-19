@@ -50,7 +50,6 @@ export default function PostMapWrapper({ onExposeSidebar }) {
   }, [onExposeSidebar, openSidebar]);
 
   return (
-    <SidebarProvider>
       <div className="flex h-screen w-full relative">
         <div className="flex-1">
           <LeafletMap
@@ -106,6 +105,5 @@ export default function PostMapWrapper({ onExposeSidebar }) {
           }
         />
       </div>
-    </SidebarProvider>
   );
 }
