@@ -56,6 +56,7 @@ export default function LeafletMap({
     if (!mapRef.current) return;
     const map = mapRef.current;
     
+    
     // Thêm điều khiển Geoman
     map.pm.addControls({
       position: 'topleft',
@@ -83,6 +84,7 @@ export default function LeafletMap({
       style={{ height: '100%', width: '100%' }}
       whenCreated={(mapInstance) => {
         mapRef.current = mapInstance;
+        console.log("Geoman instance", mapInstance.pm);
       }}
       pmIgnore={false} // Quan trọng: cho phép Geoman
     >
