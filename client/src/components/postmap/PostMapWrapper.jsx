@@ -33,6 +33,7 @@ export default function PostMapWrapper() {
   } = useAreaContext();
 
   const [selectedEntityId, setSelectedEntityId] = useState(null);
+  const [isCreatingArea, setIsCreatingArea] = useState(false);
 
   // Reset entity selection when areaId changes
   useEffect(() => {
@@ -45,28 +46,30 @@ export default function PostMapWrapper() {
 
   // --------------------- AREA CREATE HANDLER ---------------------
   const handleCreateArea = async ({ coordinates, polygon, maxZoom }) => {
-    if (!window.confirm('Bạn có chắc muốn tạo khu vực này?')) return;
-    if (isCreatingArea) return;
-    setIsCreatingArea(true);
+  if (!window.confirm('Bạn có chắc muốn tạo khu vực này?')) return;
+  if (isCreatingArea) return;
 
-    try {
-      const res = await createArea({ coordinates, polygon, maxZoom });
-      if (!res.success || !res.data?._id) {
-        throw new Error('Tạo khu vực thất bại từ phía backend');
-      }
+  setIsCreatingArea(true);
 
-      const newId = res.data._id;
-      saveAreaId(newId, coordinates);
-      toast.success('Đã tạo khu vực thành công!');
-      return newId;
-    } catch (err) {
-      console.error(err);
-      toast.error('Tạo khu vực thất bại: ' + err.message);
-      return null;
-    } finally {
-      setIsCreatingArea(false);
+  try {
+    const res = await createArea({ coordinates, polygon, maxZoom });
+
+    if (!res.success || !res.data?._id) {
+      throw new Error('Tạo khu vực thất bại từ phía backend');
     }
-  };
+
+    const newId = res.data._id;
+    saveAreaId(newId, coordinates);
+    toast.success('Đã tạo khu vực thành công!');
+    return newId;
+  } catch (err) {
+    console.error(err);
+    toast.error('Tạo khu vực thất bại: ' + err.message);
+    return null;
+  } finally {
+    setIsCreatingArea(false);
+  }
+};
 
   // ------------------- AREA POLYGON UPDATE -------------------
   const handleUpdatePolygon = async ({ coordinates }) => {
