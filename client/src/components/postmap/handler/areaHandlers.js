@@ -1,6 +1,6 @@
 // components/postmap/handler/areaHandlers
 import toast from 'react-hot-toast';
-import { createArea, updateAreaPolygon, updateArea } from '../../services/areas';
+import { createArea, updateAreaPolygon, updateArea } from '../../../services/areas';
 
 ///////////// Area Handler /////////////////////
 export function createAreaHandler({ mapRef, setIsCreatingArea, saveAreaId, openSidebar,setAreaMetadata  }) {
