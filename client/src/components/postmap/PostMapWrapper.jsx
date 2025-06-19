@@ -4,7 +4,7 @@ import toast from 'react-hot-toast';
 import LeafletMap from './draw/LeafletMap';
 import SidebarContainer from './sidebars/SidebarContainer';
 import { createArea, updateAreaPolygon, updateArea } from '../../services/areas';
-import {updateEntityMetadata,updateEntityGeometry} from'../../services/entities';
+import { updateEntityMetadata, updateEntityGeometry } from '../../services/entities';
 import { useTempAreaId } from '../../hooks/local/useTempAreaId';
 import { useAreaContext } from '../../context/AreaContext';
 import useAutoSave from '../../hooks/local/useAutoSave';
@@ -13,10 +13,7 @@ import { SidebarProvider } from '../../context/SidebarContext';
 
 export default function PostMapWrapper() {
   // ------------------------- AREA ID INIT -------------------------
-  const getCoordinates = () => {
-    // TODO: Extract from drawn layer (refactor later)
-    return null;
-  };
+  const getCoordinates = () => null;
   useEnsureValidAreaId(getCoordinates, 18);
 
   // ---------------------- CONTEXT & STATE ----------------------
@@ -26,50 +23,69 @@ export default function PostMapWrapper() {
     areaMetadata,
     setAreaMetadata,
     addEntity,
-    updateEntityMetadata: contextUpdateEntityMetadata, // ✅ Đổi tên để tránh xung đột
-  updateEntityGeometry: contextUpdateEntityGeometry,
+    updateEntityMetadata: contextUpdateEntityMetadata,
+    updateEntityGeometry: contextUpdateEntityGeometry,
     clearEntities,
-    isEditMode ,
+    isEditMode,
   } = useAreaContext();
 
   const [selectedEntityId, setSelectedEntityId] = useState(null);
   const [isCreatingArea, setIsCreatingArea] = useState(false);
 
-  // Reset entity selection when areaId changes
   useEffect(() => {
     setSelectedEntityId(null);
-    clearEntities?.(); // optional: clear entities when switching area
+    clearEntities?.();
   }, [areaId]);
 
-  // ------------------------ AUTO SAVE ------------------------
   useAutoSave();
 
   // --------------------- AREA CREATE HANDLER ---------------------
   const handleCreateArea = async ({ coordinates, polygon, maxZoom }) => {
-  if (!window.confirm('Bạn có chắc muốn tạo khu vực này?')) return;
-  if (isCreatingArea) return;
+    if (!window.confirm('Bạn có chắc muốn tạo khu vực này?')) return;
+    if (isCreatingArea) return;
 
-  setIsCreatingArea(true);
-
-  try {
-    const res = await createArea({ coordinates, polygon, maxZoom });
-
-    if (!res.success || !res.data?._id) {
-      throw new Error('Tạo khu vực thất bại từ phía backend');
+    if (
+      !coordinates ||
+      !Array.isArray(coordinates) ||
+      coordinates.length < 3 ||
+      coordinates.some(
+        (c) =>
+          !Array.isArray(c) ||
+          c.length !== 2 ||
+          c.includes(undefined) ||
+          c.includes(null)
+      )
+    ) {
+      toast.error('Tọa độ không hợp lệ để tạo khu vực');
+      return;
     }
 
-    const newId = res.data._id;
-    saveAreaId(newId, coordinates);
-    toast.success('Đã tạo khu vực thành công!');
-    return newId;
-  } catch (err) {
-    console.error(err);
-    toast.error('Tạo khu vực thất bại: ' + err.message);
-    return null;
-  } finally {
-    setIsCreatingArea(false);
-  }
-};
+    setIsCreatingArea(true);
+    try {
+      console.log('🔧 Tạo khu vực - dữ liệu gửi:', {
+        coordinates,
+        polygon,
+        maxZoom,
+      });
+
+      const res = await createArea({ coordinates, polygon, maxZoom });
+
+      if (!res.success || !res.data?._id) {
+        throw new Error('Tạo khu vực thất bại từ phía backend');
+      }
+
+      const newId = res.data._id;
+      saveAreaId(newId, coordinates);
+      toast.success('Đã tạo khu vực thành công!');
+      return newId;
+    } catch (err) {
+      console.error(err);
+      toast.error('Tạo khu vực thất bại: ' + err.message);
+      return null;
+    } finally {
+      setIsCreatingArea(false);
+    }
+  };
 
   // ------------------- AREA POLYGON UPDATE -------------------
   const handleUpdatePolygon = async ({ coordinates }) => {
@@ -89,23 +105,21 @@ export default function PostMapWrapper() {
   };
 
   // ------------------- ENTITY GEOMETRY UPDATE -------------------
-   const handleUpdateEntityGeometry = async ({ entityId, coordinates }) => {
+  const handleUpdateEntityGeometry = async ({ entityId, coordinates }) => {
     if (!areaId) {
       toast.error('Không tìm thấy areaId');
       return;
     }
-    
+
     try {
-      // FIX: THÊM areaId
       await updateEntityGeometry(areaId, entityId, { coordinates });
-      contextUpdateEntityGeometry(entityId, { coordinates }); // local update
+      contextUpdateEntityGeometry(entityId, { coordinates });
       toast.success('Đã cập nhật vị trí/thể hiện hình học của đối tượng');
     } catch (err) {
       console.error(err);
       toast.error('Cập nhật hình học thất bại');
     }
   };
-
 
   // ------------------- CREATE ENTITY HANDLER -------------------
   const handleCreateEntity = (entity) => {
@@ -118,7 +132,6 @@ export default function PostMapWrapper() {
   };
 
   // ------------------- SAVE AREA METADATA ----------------------
-  
   const handleSaveAreaMetadata = async (metadata) => {
     if (!areaId) {
       toast.error('Không tìm thấy areaId để lưu metadata');
@@ -134,29 +147,26 @@ export default function PostMapWrapper() {
       throw err;
     }
   };
+
   // ------------------- SAVE ENTITY METADATA ----------------------
   const handleSaveEntityMetadata = async (entityId, metadata) => {
-  if (!areaId) {
-    toast.error('Vui lòng chọn khu vực trước');
-    return;
-  }
-  
-  try {
-    // ✅ Gọi API service với đầy đủ 3 tham số
-    await updateEntityMetadata(areaId, entityId, metadata);
-    
-    // ✅ Sử dụng hàm context đã đổi tên
-    contextUpdateEntityMetadata(entityId, metadata);
-    
-    toast.success('Đã cập nhật thông tin đối tượng');
-  } catch (err) {
-    console.error('Lỗi khi lưu metadata:', err);
-    toast.error(`Lỗi: ${err.message}`);
-  }
-};
+    if (!areaId) {
+      toast.error('Vui lòng chọn khu vực trước');
+      return;
+    }
+
+    try {
+      await updateEntityMetadata(areaId, entityId, metadata);
+      contextUpdateEntityMetadata(entityId, metadata);
+      toast.success('Đã cập nhật thông tin đối tượng');
+    } catch (err) {
+      console.error('Lỗi khi lưu metadata:', err);
+      toast.error(`Lỗi: ${err.message}`);
+    }
+  };
 
   // ------------------------ RENDER ------------------------
- return (
+  return (
     <SidebarProvider>
       <div className="flex h-screen w-full">
         <div className="flex-1">
@@ -164,10 +174,9 @@ export default function PostMapWrapper() {
             areaMetadata={areaMetadata}
             selectedEntityId={selectedEntityId}
             onSelectEntity={setSelectedEntityId}
-            // SỬ DỤNG CHẾ ĐỘ VẼ MẶC ĐỊNH CỦA GEOMAN
-            isEditMode={isEditMode} 
+            isEditMode={isEditMode}
             enableDraw={isEditMode}
-            drawShape={null} // Không cần chỉ định shape cụ thể
+            drawShape={null}
             enableEdit={isEditMode}
             enableDrag={isEditMode}
             enableRemove={isEditMode}
@@ -175,6 +184,7 @@ export default function PostMapWrapper() {
             onUpdatePolygon={handleUpdatePolygon}
             onUpdateEntityGeometry={handleUpdateEntityGeometry}
             onCreateEntity={handleCreateEntity}
+            isCreatingArea={isCreatingArea}
           />
         </div>
         <SidebarContainer

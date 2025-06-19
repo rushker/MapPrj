@@ -33,10 +33,21 @@ export const getAreaById = async (req, res) => {
 export const createArea = async (req, res) => {
   try {
     const { coordinates, maxZoom, polygon: frontendPolygon } = req.body;
+    console.log('🛠️ CREATE AREA - INPUT');
+    console.log('coordinates:', coordinates);
+    console.log('polygon:', frontendPolygon);
+    console.log('maxZoom:', maxZoom);
 
-    if (!coordinates || !Array.isArray(coordinates)) {
-      return res.status(400).json({ success: false, message: 'Thiếu toạ độ' });
-    }
+    if (
+  !coordinates ||
+  !Array.isArray(coordinates) ||
+  coordinates.length < 3 ||
+  coordinates.some(
+    (point) => !Array.isArray(point) || point.length !== 2 || point.includes(undefined) || point.includes(null)
+  )
+) {
+  return res.status(400).json({ success: false, message: 'Toạ độ không hợp lệ' });
+}
 
     const converted = convertToGeoJSON(coordinates);
     const defaultPolygon = {

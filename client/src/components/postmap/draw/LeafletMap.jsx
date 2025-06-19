@@ -16,6 +16,7 @@ export default function LeafletMap({
   onCreateEntity,
   onUpdatePolygon,
   onUpdateEntityGeometry,
+  
 }) {
   const { areaId, isEditMode } = useAreaContext()
 
@@ -41,31 +42,32 @@ export default function LeafletMap({
       })
 
       // 2) onCreate handler
+      const extractCoordinates = (gj, shape) =>
+      shape === 'Marker'
+    ? gj.geometry.coordinates
+    : gj.geometry.coordinates?.[0] ?? [];
+
       const handleCreate = (e) => {
-        const { layer, shape } = e
-        const gj = layer.toGeoJSON()
+      const { layer, shape } = e;
+      const gj = layer.toGeoJSON();
+      const coords = extractCoordinates(gj, shape);
 
-        if (shape === 'Rectangle') {
-          onCreateArea({
-            type: 'polygon',
-            coordinates: gj.geometry.coordinates[0],
-            polygon: gj.geometry,
-          })
-        } else if (
-          (shape === 'Polygon' || shape === 'Marker') &&
-          isValidAreaId(areaId)
-        ) {
-          onCreateEntity({
-            type: shape.toLowerCase(),
-            coordinates:
-              shape === 'Marker'
-                ? gj.geometry.coordinates
-                : gj.geometry.coordinates[0],
-          })
-        }
+      if (shape === 'Rectangle') {
+    onCreateArea({
+      type: 'polygon',
+      coordinates: coords,
+      polygon: gj.geometry,
+    });
+    } else if ((shape === 'Polygon' || shape === 'Marker') && isValidAreaId(areaId)) {
+    onCreateEntity({
+      type: shape.toLowerCase(),
+      coordinates: coords,
+    });
+  }
 
-        layer.remove()
-      }
+  layer.remove();
+};
+
 
       // 3) onUpdate handler
       const handleUpdate = (e) => {

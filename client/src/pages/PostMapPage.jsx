@@ -1,6 +1,5 @@
 // src/pages/PostMapPage.jsx
 import { useNavigate } from 'react-router-dom';
-import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { ROUTES } from '../routes';
 import { AreaProvider, useAreaContext } from '../context/AreaContext';
