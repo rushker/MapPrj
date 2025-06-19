@@ -1,122 +1,121 @@
 // components/postmap/draw/LeafletMap.jsx
-import { MapContainer, TileLayer } from 'react-leaflet';
-import { useRef } from 'react';
-import useGeomanEvents from './useGeomanEvents';
-import AreaLayer from './layers/AreaLayer';
-import EntityLayer from './layers/EntityLayer';
-import { useAreaContext } from '../../../context/AreaContext';
-import { isValidAreaId } from '../../../utils/areaUtils';
-
-// Import Geoman
-import '@geoman-io/leaflet-geoman-free';
-import '@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css';
+import { MapContainer, TileLayer, useMapEvent } from 'react-leaflet'
+import 'leaflet-geoman-free'
+import AreaLayer from './layers/AreaLayer'
+import EntityLayer from './layers/EntityLayer'
+import { useAreaContext } from '../../../context/AreaContext'
+import { isValidAreaId } from '../../../utils/areaUtils'
+import { useEffect } from 'react'
 
 export default function LeafletMap({
-  areaMetadata = null,
-  selectedEntityId = null,
-  onSelectEntity = () => {},
-  enableDraw = false,
-  drawShape = null,
-  enableEdit = false,
-  enableDrag = false,
-  enableRemove = false,
-  onCreateArea = () => {},
-  onCreateEntity = () => {},
-  onUpdatePolygon = () => {},
-  onUpdateEntityGeometry = () => {},
+  areaMetadata,
+  selectedEntityId,
+  onSelectEntity,
+  onCreateArea,
+  onCreateEntity,
+  onUpdatePolygon,
+  onUpdateEntityGeometry,
 }) {
-  const mapRef = useRef(null);
-  const { areaId, isEditMode } = useAreaContext();
-  const [mapReady, setMapReady] = useState(false);
+  const { areaId, isEditMode } = useAreaContext()
 
-  // ✅ Callback khi tạo khu vực
-  const handleCreateArea = (polygon) => {
-    const coordinates = polygon.coordinates;
-    onCreateArea({ coordinates, polygon, maxZoom: 18 });
-  };
+  // Helper component that runs _once_ after the map is created:
+  function PMInit() {
+    const map = useMapEvent('pm:mounted', () => {})
 
-  // ✅ Callback khi tạo entity con
-  const handleCreateEntity = (entity) => {
-    if (!isValidAreaId(areaId)) return;
-    onCreateEntity({ ...entity, areaId });
-  };
+    useEffect(() => {
+      if (!map.pm) return
 
-  // ✅ Gắn sự kiện Geoman
-  useGeomanEvents({
-    mapRef,
-    enableDraw,
-    drawShape,
-    enableEdit,
-    enableDrag,
-    enableRemove,
-    onCreateKhuA: handleCreateArea,
-    onCreateEntity: handleCreateEntity,
-    onUpdatePolygon,
-    onUpdateEntityGeometry,
-    isEditMode,
-    mapReady,
-  });
+      // 1) Add toolbar
+      map.pm.addControls({
+        position: 'topleft',
+        drawCircle: false,
+        drawPolyline: false,
+        drawCircleMarker: false,
+        drawMarker: true,
+        drawPolygon: true,
+        drawRectangle: true,
+        editMode: isEditMode,
+        dragMode: isEditMode,
+        removalMode: isEditMode,
+      })
 
- // ✅ Khởi tạo bản đồ
-  const handleMapCreated = (mapInstance) => {
-    mapRef.current = mapInstance;
-    console.log('✅ Leaflet map created');
-    
-    // Thêm timeout để đảm bảo map hoàn toàn khởi tạo
-    setTimeout(() => {
-      if (mapInstance.pm) {
-        console.log('✅ Geoman plugin available');
-        setMapReady(true);
-      } else {
-        console.error('❌ Geoman plugin not available');
+      // 2) onCreate handler
+      const handleCreate = (e) => {
+        const { layer, shape } = e
+        const gj = layer.toGeoJSON()
+
+        if (shape === 'Rectangle') {
+          onCreateArea({
+            type: 'polygon',
+            coordinates: gj.geometry.coordinates[0],
+            polygon: gj.geometry,
+          })
+        } else if (
+          (shape === 'Polygon' || shape === 'Marker') &&
+          isValidAreaId(areaId)
+        ) {
+          onCreateEntity({
+            type: shape.toLowerCase(),
+            coordinates:
+              shape === 'Marker'
+                ? gj.geometry.coordinates
+                : gj.geometry.coordinates[0],
+          })
+        }
+
+        layer.remove()
       }
-    }, 300);
-  };
 
-  // ✅ Thêm điều khiển Geoman khi map sẵn sàng
-  useEffect(() => {
-    if (!mapReady || !mapRef.current) return;
-    const map = mapRef.current;
-    
-    console.log('🚀 Adding Geoman controls');
-    
-    // Thêm điều khiển Geoman
-    map.pm.addControls({
-      position: 'topleft',
-      drawCircle: false,
-      drawMarker: true,
-      drawPolyline: false,
-      drawCircleMarker: false,
-      drawRectangle: true,
-      drawPolygon: true,
-      editMode: enableEdit,
-      dragMode: enableDrag,
-      removalMode: enableRemove,
-    });
+      // 3) onUpdate handler
+      const handleUpdate = (e) => {
+        const gj = e.layer.toGeoJSON()
 
-    // Đảm bảo thanh công cụ hiển thị
-    const toolbar = document.querySelector('.leaflet-pm-toolbar');
-    if (toolbar) {
-      toolbar.style.display = 'block';
-      toolbar.style.visibility = 'visible';
-      toolbar.style.opacity = '1';
-    }
+        if (
+          gj.geometry.type === 'Polygon' &&
+          e.layer.options.isAreaLayer &&
+          onUpdatePolygon
+        ) {
+          onUpdatePolygon({ coordinates: gj.geometry.coordinates })
+        }
 
-  }, [mapReady, enableEdit, enableDrag, enableRemove, enableDraw]);
+        if (gj.properties?.entityId && onUpdateEntityGeometry) {
+          const coords =
+            gj.geometry.type === 'Point'
+              ? gj.geometry.coordinates
+              : gj.geometry.coordinates[0]
+          onUpdateEntityGeometry({
+            entityId: gj.properties.entityId,
+            coordinates: coords,
+          })
+        }
+      }
 
+      map.on('pm:create', handleCreate)
+      map.on('pm:update', handleUpdate)
+
+      return () => {
+        map.off('pm:create', handleCreate)
+        map.off('pm:update', handleUpdate)
+        map.pm.removeControls()
+      }
+    }, [map, isEditMode, areaId])
+
+    return null
+  }
 
   return (
     <MapContainer
       center={[10.762622, 106.660172]}
       zoom={16}
       style={{ height: '100%', width: '100%' }}
-      whenCreated={handleMapCreated}
-      pmIgnore={false} // Quan trọng để Geoman hoạt động
+      pmIgnore={false}
     >
       <TileLayer
         attribution='&copy; <a href="https://osm.org">OpenStreetMap</a>'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
+
+      <PMInit />
 
       {areaMetadata && <AreaLayer area={areaMetadata} />}
       <EntityLayer
@@ -124,5 +123,5 @@ export default function LeafletMap({
         onSelectEntity={onSelectEntity}
       />
     </MapContainer>
-  );
+  )
 }

@@ -27,11 +27,6 @@ body,
   margin-top: 10px;
   margin-left: 10px;
 }*/
-.leaflet-pm-toolbar {
-  display: block !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-}
 
 .leaflet-pm-toolbar .leaflet-buttons-control-button {
    width: 30px;
@@ -42,15 +37,7 @@ body,
   justify-content: center;
 }
 
-/* Hiển thị rõ các nút */
-.leaflet-pm-toolbar .leaflet-buttons-control-button {
-  display: inline-block !important;
-  width: 30px;
-  height: 30px;
-  line-height: 30px;
-  text-align: center;
-  font-size: 18px;
-}
+
 .leaflet-pm-icon-marker:after {
   content: "📍";
   font-size: 18px;
@@ -60,7 +47,7 @@ body,
 .leaflet-pm-icon-polygon:after {
   content: "⬢";
   font-size: 20px;
-  line-height: 1;
+  line-height: 1; 
 }
 
 .leaflet-pm-icon-rectangle:after {
