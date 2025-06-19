@@ -1,20 +1,18 @@
-//  Refactored PostMapWrapper.jsx 
+// src/components/postmap/PostMapWrapper.jsx
 import { useState, useEffect, useRef } from 'react';
 import toast from 'react-hot-toast';
 import LeafletMap from './draw/LeafletMap';
 import SidebarContainer from './sidebars/SidebarContainer';
-import { createArea, updateAreaPolygon} from '../../services/areas';
-import { updateEntityGeometry } from '../../services/entities';
+import { createArea, updateAreaPolygon, updateArea } from '../../services/areas';
+import { updateEntityMetadata, updateEntityGeometry } from '../../services/entities';
 import { useTempAreaId } from '../../hooks/local/useTempAreaId';
 import { useAreaContext } from '../../context/AreaContext';
-import { SidebarProvider, useSidebarContext } from '../../context/SidebarContext';
+import useAutoSave from '../../hooks/local/useAutoSave';
 import { useEnsureValidAreaId } from '../../utils/useEnsureValidAreaId';
+import { SidebarProvider, useSidebarContext } from '../../context/SidebarContext';
+import { isValidAreaId } from '../../utils/areaUtils';
 
-export default function PostMapWrapper({
-  onSaveAreaMetadata,
-  onSaveEntityMetadata,
-  onCreateAreaSuccess,
-}) {
+export default function PostMapWrapper({ onExposeSidebar }) {
   const mapRef = useRef(null);
   const getCoordinates = () => null;
   useEnsureValidAreaId(getCoordinates, 18);
@@ -25,6 +23,7 @@ export default function PostMapWrapper({
     areaMetadata,
     setAreaMetadata,
     addEntity,
+    updateEntityMetadata: contextUpdateEntityMetadata,
     updateEntityGeometry: contextUpdateEntityGeometry,
     clearEntities,
     isEditMode,
@@ -33,13 +32,27 @@ export default function PostMapWrapper({
   const [selectedEntityId, setSelectedEntityId] = useState(null);
   const [isCreatingArea, setIsCreatingArea] = useState(false);
 
-  const { sidebarOpen, editingType, openSidebar } = useSidebarContext();
+  useAutoSave();
 
   useEffect(() => {
     setSelectedEntityId(null);
     clearEntities?.();
   }, [areaId]);
 
+  const {
+    sidebarOpen,
+    editingType,
+    openSidebar,
+  } = useSidebarContext();
+
+  // expose openSidebar to parent
+  useEffect(() => {
+    if (onExposeSidebar && typeof onExposeSidebar === 'function') {
+      onExposeSidebar(openSidebar);
+    }
+  }, [onExposeSidebar, openSidebar]);
+
+  // ----------------- CREATE AREA -----------------
   const handleCreateArea = async ({ coordinates, polygon }) => {
     if (!window.confirm('Bạn có chắc muốn tạo khu vực này?')) return;
     if (isCreatingArea) return;
@@ -74,9 +87,7 @@ export default function PostMapWrapper({
       const newId = res.data._id;
       saveAreaId(newId, coordinates);
       toast.success('Đã tạo khu vực thành công!');
-
-      openSidebar('area', res.data);
-      onCreateAreaSuccess?.(res.data);
+      openSidebar('area', res.data); // 👈 mở sidebar khi tạo thành công
 
       return newId;
     } catch (err) {
@@ -88,6 +99,7 @@ export default function PostMapWrapper({
     }
   };
 
+  // ----------------- UPDATE POLYGON -----------------
   const handleUpdatePolygon = async ({ coordinates }) => {
     if (!areaId) {
       toast.error('Chưa có khu vực để cập nhật polygon');
@@ -109,6 +121,7 @@ export default function PostMapWrapper({
       toast.error('Không tìm thấy areaId');
       return;
     }
+
     try {
       await updateEntityGeometry(areaId, entityId, { coordinates });
       contextUpdateEntityGeometry(entityId, { coordinates });
@@ -128,18 +141,41 @@ export default function PostMapWrapper({
     setSelectedEntityId(entity._id);
   };
 
+  const handleSaveAreaMetadata = async (metadata) => {
+    if (!areaId) {
+      toast.error('Không tìm thấy areaId để lưu metadata');
+      return;
+    }
+    try {
+      const res = await updateArea(areaId, metadata);
+      if (!res.success) throw new Error('Lưu metadata thất bại từ server');
+      setAreaMetadata(res.data);
+      return res.data;
+    } catch (err) {
+      console.error(err);
+      throw err;
+    }
+  };
+
+  const handleSaveEntityMetadata = async (entityId, metadata) => {
+    if (!areaId) {
+      toast.error('Vui lòng chọn khu vực trước');
+      return;
+    }
+
+    try {
+      await updateEntityMetadata(areaId, entityId, metadata);
+      contextUpdateEntityMetadata(entityId, metadata);
+      toast.success('Đã cập nhật thông tin đối tượng');
+    } catch (err) {
+      console.error('Lỗi khi lưu metadata:', err);
+      toast.error(`Lỗi: ${err.message}`);
+    }
+  };
+
   return (
     <SidebarProvider>
       <div className="flex h-screen w-full relative">
-        {areaId && (!sidebarOpen || editingType !== 'area') && (
-          <button
-            className="absolute top-4 left-4 z-[1000] bg-white border border-gray-300 px-4 py-2 rounded shadow hover:bg-gray-100 transition"
-            onClick={() => openSidebar('area', areaMetadata)}
-          >
-            ✏️ Chỉnh sửa Khu A
-          </button>
-        )}
-
         <div className="flex-1">
           <LeafletMap
             areaMetadata={areaMetadata}
@@ -161,8 +197,8 @@ export default function PostMapWrapper({
         </div>
 
         <SidebarContainer
-          onSaveAreaMetadata={onSaveAreaMetadata}
-          onSaveEntity={onSaveEntityMetadata}
+          onSaveAreaMetadata={handleSaveAreaMetadata}
+          onSaveEntity={handleSaveEntityMetadata}
         />
       </div>
     </SidebarProvider>

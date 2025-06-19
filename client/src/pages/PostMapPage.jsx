@@ -1,12 +1,14 @@
 // src/pages/PostMapPage.jsx
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { useState } from 'react';
 import { ROUTES } from '../routes';
 import { AreaProvider, useAreaContext } from '../context/AreaContext';
 import useAutoSave from '../hooks/local/useAutoSave';
 import PostMapWrapper from '../components/postmap/PostMapWrapper';
-import { updateArea } from '../services/areas';
-import { updateEntityMetadata } from '../services/entities';
+import { useSidebarContext } from '../context/SidebarContext';
+import { isValidAreaId } from '../utils/areaUtils';
+import * as api from '../services/areas'; // 🔧 đảm bảo đã import đúng
 
 export default function PostMapPage() {
   return (
@@ -18,10 +20,13 @@ export default function PostMapPage() {
 
 function PostMapContent() {
   const navigate = useNavigate();
-  const { areaId, setAreaMetadata } = useAreaContext();
+  const { areaId, areaMetadata } = useAreaContext();
   const { manualSave } = useAutoSave();
+  const { sidebarOpen, editingType } = useSidebarContext();
 
-  // ✅ Callback upload bản đồ
+  // để nhận lại openSidebar từ PostMapWrapper
+  const [openSidebarFunc, setOpenSidebarFunc] = useState(null);
+
   const handleUpload = async () => {
     await manualSave();
     if (!areaId) {
@@ -39,44 +44,10 @@ function PostMapContent() {
     }
   };
 
-  // ✅ Callback lưu metadata khu vực
-  const handleSaveAreaMetadata = async (metadata) => {
-    if (!areaId) {
-      toast.error('Không tìm thấy areaId để lưu metadata');
-      return;
+  const handleOpenSidebar = () => {
+    if (typeof openSidebarFunc === 'function') {
+      openSidebarFunc('area', areaMetadata);
     }
-
-    try {
-      const res = await updateArea(areaId, metadata);
-      if (!res.success) throw new Error('Lưu metadata thất bại từ server');
-      setAreaMetadata(res.data);
-      return res.data;
-    } catch (err) {
-      console.error(err);
-      toast.error('Lưu metadata thất bại');
-    }
-  };
-
-  // ✅ Callback lưu metadata của entity
-  const handleSaveEntityMetadata = async (entityId, metadata) => {
-    if (!areaId) {
-      toast.error('Vui lòng chọn khu vực trước');
-      return;
-    }
-
-    try {
-      await updateEntityMetadata(areaId, entityId, metadata);
-      toast.success('Đã cập nhật thông tin đối tượng');
-    } catch (err) {
-      console.error('Lỗi khi lưu metadata:', err);
-      toast.error('Lưu metadata thất bại');
-    }
-  };
-
-  // ✅ Callback sau khi tạo area thành công
-  const handleCreateAreaSuccess = (areaData) => {
-    // Có thể dùng cho debug, toast, hoặc mở sidebar thủ công (nếu cần)
-    console.log('✅ Area vừa tạo:', areaData);
   };
 
   return (
@@ -107,12 +78,18 @@ function PostMapContent() {
         </div>
       </header>
 
-      <main className="flex-1">
-        <PostMapWrapper
-          onSaveAreaMetadata={handleSaveAreaMetadata}
-          onSaveEntityMetadata={handleSaveEntityMetadata}
-          onCreateAreaSuccess={handleCreateAreaSuccess}
-        />
+      {/* Nút chỉnh sửa Khu A */}
+      {isValidAreaId(areaId) && !sidebarOpen && editingType !== 'area' && (
+        <button
+          onClick={handleOpenSidebar}
+          className="absolute top-4 left-4 z-[1000] bg-white border border-gray-300 px-4 py-2 rounded shadow hover:bg-gray-100 transition"
+        >
+          ✏️ Chỉnh sửa Khu A
+        </button>
+      )}
+
+      <main className="flex-1 relative">
+        <PostMapWrapper onExposeSidebar={setOpenSidebarFunc} />
       </main>
     </div>
   );
