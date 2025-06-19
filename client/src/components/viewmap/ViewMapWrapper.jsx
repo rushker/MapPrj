@@ -48,6 +48,8 @@ export default function ViewMapWrapper() {
         enableEdit={false}
         enableDrag={false}
         enableRemove={false}
+        zoom={area.defaultZoom || 16}
+  maxZoom={area.maxZoom || 18}
       />
     </AreaProvider>
   );

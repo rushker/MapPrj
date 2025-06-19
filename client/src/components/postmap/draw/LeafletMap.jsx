@@ -53,10 +53,12 @@ export default function LeafletMap({
       const coords = extractCoordinates(gj, shape);
 
       if (shape === 'Rectangle') {
+    const maxZoom = map.getZoom(); // ✅ lấy zoom level tại thời điểm tạo
     onCreateArea({
       type: 'polygon',
-      coordinates: coords,
+      coordinates: gj.geometry.coordinates[0],
       polygon: gj.geometry,
+      maxZoom, // ✅ truyền xuống
     });
     } else if ((shape === 'Polygon' || shape === 'Marker') && isValidAreaId(areaId)) {
     onCreateEntity({
