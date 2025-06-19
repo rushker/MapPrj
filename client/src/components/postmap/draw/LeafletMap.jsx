@@ -1,11 +1,15 @@
 // components/postmap/draw/LeafletMap.jsx
 import { MapContainer, TileLayer } from 'react-leaflet';
-import { useRef, useEffect } from 'react'; // Thêm useEffect
+import { useRef, useEffect } from 'react';
 import useGeomanEvents from './useGeomanEvents';
 import AreaLayer from './layers/AreaLayer';
 import EntityLayer from './layers/EntityLayer';
 import { useAreaContext } from '../../../context/AreaContext';
 import { isValidAreaId } from '../../../utils/areaUtils';
+
+// ✅ Import Geoman JS + CSS đúng thứ tự
+import '@geoman-io/leaflet-geoman-free';
+import '@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css';
 
 export default function LeafletMap({
   areaMetadata = null,
@@ -24,19 +28,19 @@ export default function LeafletMap({
   const mapRef = useRef(null);
   const { areaId, isEditMode } = useAreaContext();
 
-  // ✅ Callback khi vẽ xong khu vực mới
+  // ✅ Khi tạo Area (Khu A)
   const handleCreateArea = (polygon) => {
     const coordinates = polygon.coordinates;
     onCreateArea({ coordinates, polygon, maxZoom: 18 });
   };
 
-  // ✅ Callback khi vẽ xong entity con
+  // ✅ Khi tạo entity (Marker, Polygon con)
   const handleCreateEntity = (entity) => {
-    if (!isValidAreaId(areaId)) return null;
+    if (!isValidAreaId(areaId)) return;
     onCreateEntity({ ...entity, areaId });
   };
 
-  // ✅ Hook sự kiện Geoman
+  // ✅ Hook gắn sự kiện Geoman
   useGeomanEvents({
     mapRef,
     enableDraw,
@@ -48,23 +52,24 @@ export default function LeafletMap({
     onCreateEntity: handleCreateEntity,
     onUpdatePolygon,
     onUpdateEntityGeometry,
-    isEditMode, // Truyền isEditMode từ context
+    isEditMode,
   });
 
-  // Sử dụng useEffect để thêm điều khiển khi map được tạo
+  // ✅ Hiển thị nút vẽ Geoman
   useEffect(() => {
-    if (!mapRef.current) return;
     const map = mapRef.current;
-    
-    
-    // Thêm điều khiển Geoman
+    if (!map || !map.pm) {
+      console.warn('❌ map or map.pm chưa sẵn sàng');
+      return;
+    }
+
     map.pm.addControls({
       position: 'topleft',
       drawCircle: false,
       drawMarker: true,
       drawPolyline: false,
       drawCircleMarker: false,
-      drawRectangle: true, // ✅ Kích hoạt nút vẽ Rectangle
+      drawRectangle: true,
       drawPolygon: true,
       editMode: enableEdit,
       dragMode: enableDrag,
@@ -72,7 +77,6 @@ export default function LeafletMap({
     });
 
     return () => {
-      // Dọn dẹp khi component unmount
       map.pm.removeControls();
     };
   }, [enableEdit, enableDrag, enableRemove]);
@@ -84,9 +88,10 @@ export default function LeafletMap({
       style={{ height: '100%', width: '100%' }}
       whenCreated={(mapInstance) => {
         mapRef.current = mapInstance;
-        console.log("Geoman instance", mapInstance.pm);
+        console.log('✅ map created:', mapInstance);
+        console.log('✅ map.pm:', mapInstance.pm);
       }}
-      pmIgnore={false} // Quan trọng: cho phép Geoman
+      pmIgnore={false}
     >
       <TileLayer
         attribution='&copy; <a href="https://osm.org">OpenStreetMap</a>'
@@ -94,7 +99,6 @@ export default function LeafletMap({
       />
 
       {areaMetadata && <AreaLayer area={areaMetadata} />}
-
       <EntityLayer
         selectedEntityId={selectedEntityId}
         onSelectEntity={onSelectEntity}
