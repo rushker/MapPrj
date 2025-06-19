@@ -3,13 +3,21 @@ import { useState, useEffect, useMemo } from 'react';
 import { useAreaContext } from '../../../context/AreaContext';
 
 export default function useAreaMetadata(onChange) {
-  const { areaMetadata, setAreaMetadata, isEditMode } = useAreaContext(); // areaMetadata không chứa id
+  const {
+    areaMetadata,
+    setAreaMetadata,
+    isEditMode,
+  } = useAreaContext();
+
   const [errors, setErrors] = useState({});
   const [initialMetadata, setInitialMetadata] = useState(null);
 
+  // Ghi nhận snapshot metadata lần đầu (hoặc khi areaId đổi)
   useEffect(() => {
-    setInitialMetadata(areaMetadata ? { ...areaMetadata } : null);
-  }, [areaMetadata]);
+    if (areaMetadata?._id) {
+      setInitialMetadata({ ...areaMetadata });
+    }
+  }, [areaMetadata?._id]); // 👈 đảm bảo reset khi areaId thay đổi
 
   const validate = () => {
     const newErrors = {};
@@ -35,9 +43,9 @@ export default function useAreaMetadata(onChange) {
   };
 
   const isUnchanged = useMemo(() => {
-    if (!initialMetadata) return false;
+    if (!initialMetadata || !areaMetadata) return false;
     return ['name', 'type', 'description', 'opacity'].every(
-      (key) => areaMetadata?.[key] === initialMetadata?.[key]
+      (key) => areaMetadata[key] === initialMetadata[key]
     );
   }, [areaMetadata, initialMetadata]);
 

@@ -1,9 +1,11 @@
 // components/sidebars/areas/KhuASidebar.jsx
+import { useMemo } from 'react';
 import { toast } from 'react-hot-toast';
 import OpacitySlider from './OpacitySlider';
 import useAreaMetadata from '../../../../hooks/local/metadata/useAreaMetadata';
 
-export default function KhuASidebar({ onSave, onClose, isEditMode }) {
+export default function KhuASidebar({ metadata, onSave, onClose, isEditMode }) {
+  const areaId = useMemo(() => metadata?._id, [metadata]);
   const {
     areaMetadata,
     errors,
@@ -12,13 +14,13 @@ export default function KhuASidebar({ onSave, onClose, isEditMode }) {
     isUnchanged,
     handleInputChange,
     handleOpacityChange,
-  } = useAreaMetadata(); // không truyền metadata, vì đã lấy từ context
+  } = useAreaMetadata(areaId); // ✅ Truyền đúng areaId để hook khởi tạo state
 
   if (!areaMetadata) return <div className="p-4">Chưa chọn Khu A</div>;
 
   const handleSaveClick = () => {
     if (!validate()) return;
-    onSave?.(areaMetadata); // Chỉ gửi metadata, không có id
+    onSave?.(areaMetadata);
     toast.success('Đã lưu nháp Khu A');
   };
 
@@ -67,4 +69,5 @@ export default function KhuASidebar({ onSave, onClose, isEditMode }) {
     </div>
   );
 }
+
 

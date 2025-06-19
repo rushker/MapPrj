@@ -3,7 +3,7 @@ import toast from 'react-hot-toast';
 import { createArea, updateAreaPolygon, updateArea } from '../../services/areas';
 import { updateEntityGeometry, updateEntityMetadata } from '../../services/entities';
 
-export function createAreaHandler({ mapRef, setIsCreatingArea, saveAreaId, openSidebar }) {
+export function createAreaHandler({ mapRef, setIsCreatingArea, saveAreaId, openSidebar,setAreaMetadata  }) {
   return async ({ coordinates, polygon, maxZoom }) => {
     if (!window.confirm('Bạn có chắc muốn tạo khu vực này?')) return;
 
@@ -28,6 +28,7 @@ export function createAreaHandler({ mapRef, setIsCreatingArea, saveAreaId, openS
       const res = await createArea({ coordinates, polygon, maxZoom: zoom });
       console.log('>>> API RESPONSE:', res);
       if (!res.success || !res.data?._id) throw new Error('Tạo khu vực thất bại');
+       setAreaMetadata?.(res.data);
 
       saveAreaId(res.data._id, coordinates);
       toast.success('Đã tạo khu vực thành công!');
