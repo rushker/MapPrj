@@ -1,6 +1,7 @@
 // components/postmap/draw/useGeomanEvents
 import { useEffect } from 'react';
-
+import '@geoman-io/leaflet-geoman-free';
+import '@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css';
 /**
  * Hook tích hợp leaflet-geoman với nhiều chế độ:
  * - vẽ polygon, rectangle, marker
