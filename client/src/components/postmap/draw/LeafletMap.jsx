@@ -65,16 +65,14 @@ export default function LeafletMap({
       maxZoom: map.getZoom(),
     });
     // Không remove layer, chờ AreaLayer render
-  } else if (
-    (shape === 'Polygon' || shape === 'Marker') &&
-    isValidAreaId(areaId)
-  ) {
-    onCreateEntity({
-      type: shape.toLowerCase(),
-      coordinates: coords,
-    });
-
-    layer.remove(); // Marker & Polygon luôn remove
+  } else if ((shape === 'Polygon' || shape === 'Marker') && isValidAreaId(areaId)) {
+  // Tạm giữ thông tin để user xác nhận
+  onCreateEntity({
+    type: shape.toLowerCase(),
+    coordinates: coords,
+    layer, // ✅ giữ lại layer để hiển thị hoặc remove nếu huỷ
+    geoJSON: gj, // phòng trường hợp cần
+  });
   }
 };
       // 3) onUpdate handler

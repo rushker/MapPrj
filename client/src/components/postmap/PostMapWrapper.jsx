@@ -7,14 +7,8 @@ import { useAreaContext } from '../../context/AreaContext';
 import useAutoSave from '../../hooks/local/useAutoSave';
 import { useEnsureValidAreaId } from '../../utils/useEnsureValidAreaId';
 import { useSidebarContext } from '../../context/SidebarContext';
-import {
-  createAreaHandler,
-  updatePolygonHandler,
-  updateEntityGeometryHandler,
-  createEntityHandler,
-  saveAreaMetadataHandler,
-  saveEntityMetadataHandler,
-} from './postmapHandlers';
+import { updateEntityGeometryHandler, createEntityHandler, saveEntityMetadataHandler } from './handler/entityHandlers';
+import { createAreaHandler,updatePolygonHandler, saveAreaMetadataHandler } from './handler/areaHandlers';
 
 export default function PostMapWrapper({  }) {
   const mapRef = useRef(null);
