@@ -1,6 +1,7 @@
 // components/postmap/draw/LeafletMap.jsx
 import { MapContainer, TileLayer, useMapEvent } from 'react-leaflet'
-import 'leaflet-geoman-free'
+import '@geoman-io/leaflet-geoman-free'
+import '@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css'
 import AreaLayer from './layers/AreaLayer'
 import EntityLayer from './layers/EntityLayer'
 import { useAreaContext } from '../../../context/AreaContext'
