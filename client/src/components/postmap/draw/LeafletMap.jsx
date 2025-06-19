@@ -1,13 +1,13 @@
 // components/postmap/draw/LeafletMap.jsx
 import { MapContainer, TileLayer } from 'react-leaflet';
-import { useRef, useEffect } from 'react';
+import { useRef } from 'react';
 import useGeomanEvents from './useGeomanEvents';
 import AreaLayer from './layers/AreaLayer';
 import EntityLayer from './layers/EntityLayer';
 import { useAreaContext } from '../../../context/AreaContext';
 import { isValidAreaId } from '../../../utils/areaUtils';
 
-// ✅ Import Geoman JS + CSS đúng thứ tự
+// Import Geoman
 import '@geoman-io/leaflet-geoman-free';
 import '@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css';
 
@@ -28,19 +28,19 @@ export default function LeafletMap({
   const mapRef = useRef(null);
   const { areaId, isEditMode } = useAreaContext();
 
-  // ✅ Khi tạo Area (Khu A)
+  // ✅ Callback khi tạo khu vực
   const handleCreateArea = (polygon) => {
     const coordinates = polygon.coordinates;
     onCreateArea({ coordinates, polygon, maxZoom: 18 });
   };
 
-  // ✅ Khi tạo entity (Marker, Polygon con)
+  // ✅ Callback khi tạo entity con
   const handleCreateEntity = (entity) => {
     if (!isValidAreaId(areaId)) return;
     onCreateEntity({ ...entity, areaId });
   };
 
-  // ✅ Hook gắn sự kiện Geoman
+  // ✅ Gắn sự kiện Geoman
   useGeomanEvents({
     mapRef,
     enableDraw,
@@ -55,15 +55,17 @@ export default function LeafletMap({
     isEditMode,
   });
 
-  // ✅ Hiển thị nút vẽ Geoman
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map || !map.pm) {
-      console.warn('❌ map or map.pm chưa sẵn sàng');
+  // ✅ Khởi tạo bản đồ và thêm thanh công cụ Geoman
+  const handleMapCreated = (mapInstance) => {
+    mapRef.current = mapInstance;
+
+    if (!mapInstance.pm) {
+      console.error('❌ Geoman plugin chưa sẵn sàng trên map');
       return;
     }
 
-    map.pm.addControls({
+    console.log('✅ Leaflet map created');
+    mapInstance.pm.addControls({
       position: 'topleft',
       drawCircle: false,
       drawMarker: true,
@@ -75,23 +77,15 @@ export default function LeafletMap({
       dragMode: enableDrag,
       removalMode: enableRemove,
     });
-
-    return () => {
-      map.pm.removeControls();
-    };
-  }, [enableEdit, enableDrag, enableRemove]);
+  };
 
   return (
     <MapContainer
       center={[10.762622, 106.660172]}
       zoom={16}
       style={{ height: '100%', width: '100%' }}
-      whenCreated={(mapInstance) => {
-        mapRef.current = mapInstance;
-        console.log('✅ map created:', mapInstance);
-        console.log('✅ map.pm:', mapInstance.pm);
-      }}
-      pmIgnore={false}
+      whenCreated={handleMapCreated}
+      pmIgnore={false} // Quan trọng để Geoman hoạt động
     >
       <TileLayer
         attribution='&copy; <a href="https://osm.org">OpenStreetMap</a>'
