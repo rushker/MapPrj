@@ -6,7 +6,7 @@ import { ROUTES } from '../routes';
 import { AreaProvider, useAreaContext } from '../context/AreaContext';
 import useAutoSave from '../hooks/local/useAutoSave';
 import PostMapWrapper from '../components/postmap/PostMapWrapper';
-import { useSidebarContext } from '../context/SidebarContext';
+import { SidebarProvider,useSidebarContext } from '../context/SidebarContext';
 import { isValidAreaId } from '../utils/areaUtils';
 import * as api from '../services/areas'; // 🔧 đảm bảo đã import đúng
 
