@@ -11,7 +11,7 @@ import useAutoSave from '../../hooks/local/useAutoSave';
 import { useEnsureValidAreaId } from '../../utils/useEnsureValidAreaId';
 import { SidebarProvider } from '../../context/SidebarContext';
 
-export default function PostMapWrapper({ isCreatingArea, setIsCreatingArea }) {
+export default function PostMapWrapper() {
   // ------------------------- AREA ID INIT -------------------------
   const getCoordinates = () => {
     // TODO: Extract from drawn layer (refactor later)
@@ -29,6 +29,7 @@ export default function PostMapWrapper({ isCreatingArea, setIsCreatingArea }) {
     updateEntityMetadata: contextUpdateEntityMetadata, // ✅ Đổi tên để tránh xung đột
   updateEntityGeometry: contextUpdateEntityGeometry,
     clearEntities,
+    isEditMode ,
   } = useAreaContext();
 
   const [selectedEntityId, setSelectedEntityId] = useState(null);
@@ -161,11 +162,12 @@ export default function PostMapWrapper({ isCreatingArea, setIsCreatingArea }) {
             selectedEntityId={selectedEntityId}
             onSelectEntity={setSelectedEntityId}
             // SỬ DỤNG CHẾ ĐỘ VẼ MẶC ĐỊNH CỦA GEOMAN
-            enableDraw={true}
+            isEditMode={isEditMode} 
+            enableDraw={isEditMode}
             drawShape={null} // Không cần chỉ định shape cụ thể
-            enableEdit={true}
-            enableDrag={true}
-            enableRemove={true}
+            enableEdit={isEditMode}
+            enableDrag={isEditMode}
+            enableRemove={isEditMode}
             onCreateArea={handleCreateArea}
             onUpdatePolygon={handleUpdatePolygon}
             onUpdateEntityGeometry={handleUpdateEntityGeometry}

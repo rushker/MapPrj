@@ -19,7 +19,7 @@ import { useEffect } from 'react';
  * @param {function} [options.onUpdatePolygon] - callback khi cập nhật polygon (sau khi edit)
  */
 const useGeomanEvents = ({
- mapRef,
+  mapRef,
   enableDraw,
   drawShape,
   enableEdit,
@@ -31,47 +31,9 @@ const useGeomanEvents = ({
   onUpdateEntityGeometry,
   isEditMode = false,
 }) => {
-  // Khởi tạo Geoman controls
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !isEditMode) return;
-
-    map.pm.addControls({
-      position: 'topleft',
-      drawPolygon: true,
-      drawMarker: true,
-      drawRectangle: drawShape === 'Rectangle', // Tắt vẽ rectangle trong controls
-      editMode: false,
-      dragMode: false,
-      removalMode: false,
-    });
-
-    return () => {
-      map.pm.removeControls();
-    };
-  }, [mapRef, isEditMode]);
-
-  // Xử lý các sự kiện vẽ và chỉnh sửa
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map || !isEditMode) return;
-
-    // Tắt các chế độ cũ
-    map.pm.disableGlobalEditMode();
-    map.pm.disableGlobalDragMode();
-    map.pm.disableGlobalRemovalMode();
-    if (drawShape) {
-      map.pm.disableDraw(drawShape);
-    }
-
-    // Bật các chế độ mới theo props
-    if (enableDraw && drawShape) {
-      map.pm.enableDraw(drawShape);
-    }
-    
-    if (enableEdit) map.pm.enableGlobalEditMode();
-    if (enableDrag) map.pm.enableGlobalDragMode();
-    if (enableRemove) map.pm.enableGlobalRemovalMode();
 
     // Xử lý sự kiện tạo hình
     const handleCreate = (e) => {
@@ -79,7 +41,7 @@ const useGeomanEvents = ({
       const geoJson = layer.toGeoJSON();
       const coords = geoJson.geometry.coordinates;
 
-      // XỬ LÝ KHI VẼ RECTANGLE
+      // Xử lý khi vẽ Rectangle
       if (shape === 'Rectangle' && typeof onCreateKhuA === 'function') {
         const coordinates = geoJson.geometry.coordinates[0];
         onCreateKhuA({ 
@@ -88,7 +50,7 @@ const useGeomanEvents = ({
           polygon: geoJson.geometry
         });
       } 
-      // XỬ LÝ KHI VẼ POLYGON/MARKER
+      // Xử lý khi vẽ Polygon/Marker
       else if ((shape === 'Polygon' || shape === 'Marker') && typeof onCreateEntity === 'function') {
         onCreateEntity({ 
           type: shape.toLowerCase(),
@@ -138,11 +100,20 @@ const useGeomanEvents = ({
     map.on('pm:create', handleCreate);
     map.on('pm:update', handleUpdate);
 
+    // Bật các chế độ theo props
+    if (enableEdit) map.pm.enableGlobalEditMode();
+    if (enableDrag) map.pm.enableGlobalDragMode();
+    if (enableRemove) map.pm.enableGlobalRemovalMode();
+    if (enableDraw && drawShape) {
+      map.pm.enableDraw(drawShape);
+    }
+
     // Cleanup
     return () => {
       map.off('pm:create', handleCreate);
       map.off('pm:update', handleUpdate);
       
+      // Tắt các chế độ
       map.pm.disableGlobalEditMode();
       map.pm.disableGlobalDragMode();
       map.pm.disableGlobalRemovalMode();
