@@ -39,18 +39,23 @@ export const createArea = async (req, res) => {
     console.log('polygon:', frontendPolygon);
     console.log('maxZoom:', maxZoom);
 
-    if (
-      !coordinates ||
+    // Validate coordinates
+    const isInvalidCoordinates = !coordinates ||
       !Array.isArray(coordinates) ||
       coordinates.length < 3 ||
-      coordinates.some(
-        (point) => !Array.isArray(point) || point.length !== 2 || point.includes(undefined) || point.includes(null)
-      )
-    ) {
+      coordinates.some((point) => {
+        if (!Array.isArray(point)) return true;
+        if (point.length !== 2) return true;
+        if (typeof point[0] !== 'number' || typeof point[1] !== 'number') return true;
+        return false;
+      });
+
+    if (isInvalidCoordinates) {
       return res.status(400).json({ success: false, message: 'Toạ độ không hợp lệ' });
     }
 
-    if (typeof maxZoom !== 'number' || maxZoom < 0 || maxZoom > 22) {
+    // Validate maxZoom
+    if (typeof maxZoom !== 'number' || maxZoom < 0 || maxZoom > 24) {
       return res.status(400).json({ success: false, message: 'maxZoom không hợp lệ' });
     }
 
@@ -71,8 +76,6 @@ export const createArea = async (req, res) => {
     handleError(res, 'Failed to create area', err, 400);
   }
 };
-
-
 
 /* ─────────────────────── UPDATE ─────────────────────── */
 

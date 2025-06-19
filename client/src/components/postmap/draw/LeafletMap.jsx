@@ -1,3 +1,4 @@
+//src/components/postmap/draw/LeafletMap
 import { MapContainer, TileLayer, useMapEvent } from 'react-leaflet';
 import '@geoman-io/leaflet-geoman-free';
 import '@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css';
