@@ -14,10 +14,10 @@ export default function useAreaMetadata(onChange) {
 
   // Ghi nhận snapshot metadata lần đầu (hoặc khi areaId đổi)
   useEffect(() => {
-    if (areaMetadata?._id) {
-      setInitialMetadata({ ...areaMetadata });
-    }
-  }, [areaMetadata?._id]); // 👈 đảm bảo reset khi areaId thay đổi
+  if (areaMetadata && areaMetadata._id) {
+    setInitialMetadata({ ...areaMetadata });
+  }
+}, [areaMetadata]); 
 
   const validate = () => {
     const newErrors = {};
