@@ -7,8 +7,8 @@ import { useAreaContext } from '../../context/AreaContext';
 import useAutoSave from '../../hooks/local/useAutoSave';
 import { useEnsureValidAreaId } from '../../utils/useEnsureValidAreaId';
 import { useSidebarContext } from '../../context/SidebarContext';
-import { updateEntityGeometryHandler, createEntityHandler, saveEntityMetadataHandler } from './handler/entityHandlers';
-import { createAreaHandler,updatePolygonHandler, saveAreaMetadataHandler } from './handler/areaHandlers';
+import { createAreaHandler,updatePolygonHandler, saveAreaMetadataHandler } from './handlers/areaHandlers';
+import { handleCreateEntityDispatcher,updateEntityGeometryHandler, saveEntityMetadataHandler  } from './handlers/sharedEntityUtils';
 
 export default function PostMapWrapper({  }) {
   const mapRef = useRef(null);
@@ -68,7 +68,7 @@ export default function PostMapWrapper({  }) {
               contextUpdateEntityGeometry, // THÊM DÒNG NÀY
             })
           }
-            onCreateEntity={createEntityHandler({
+            onCreateEntity={handleCreateEntityDispatcher({
               areaId,
               addEntity,
               setSelectedEntityId,

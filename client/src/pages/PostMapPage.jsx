@@ -9,7 +9,7 @@ import PostMapWrapper from '../components/postmap/PostMapWrapper';
 import { SidebarProvider, useSidebarContext } from '../context/SidebarContext';
 import { isValidAreaId } from '../utils/areaUtils';
 import * as api from '../services/areas'; // 🔧 đảm bảo đã import đúng
-import { openAreaEditorHandler } from '../components/postmap/handler/areaHandlers';
+import { openAreaEditorHandler } from '../components/postmap/handlers/areaHandlers';
 export default function PostMapPage() {
   return (
      <AreaProvider isEditMode={true}>
