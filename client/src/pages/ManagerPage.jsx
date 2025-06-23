@@ -6,7 +6,7 @@ import { getAllAreas, deleteArea } from '../services/areas';
 import { ROUTES } from '../routes';
 import { useTempAreaId } from '../hooks/local/useTempAreaId';
 import { Plus } from 'lucide-react';
-import ConfirmDialog from '../components/ConfirmDialog';
+import ConfirmDialog from '../components/ulti/ConfirmDialog';
 
 const ManagerPage = () => {
   const [areas, setAreas] = useState([]);
