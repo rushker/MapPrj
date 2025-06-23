@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import {
-  Plus, MoreVertical, MapPin, Eye, Pencil, Trash2,
+  Plus, MoreVertical, Pencil, Trash2,
 } from 'lucide-react';
 import {
   getAllAreas,
@@ -39,26 +39,24 @@ const ManagerPage = () => {
     fetchAreas();
   }, []);
 
-  const handleCreateArea = () => navigate('/areas/edit');
+  const handleCreateArea = () => navigate(ROUTES.POST_MAP());
 
-  const handleDeleteArea = async (areaId) => {
+  const handleDeleteArea = async (id) => {
     if (!window.confirm('Bạn có chắc muốn xóa khu vực này?')) return;
     try {
-      await deleteArea(areaId);
-      setAreas((prev) => prev.filter((a) => a._id !== areaId));
-      if (areaId === tempAreaId) clearAreaId();
+      await deleteArea(id);
+      setAreas((prev) => prev.filter((a) => a._id !== id));
+      if (id === tempAreaId) clearAreaId();
       toast.success('Đã xóa khu vực');
     } catch {
       toast.error('Lỗi xóa khu vực');
     }
   };
 
-  const handleEditName = async (areaId) => {
+  const handleEditName = async (id) => {
     try {
-      await updateArea(areaId, { name: editName });
-      setAreas((prev) =>
-        prev.map((a) => (a._id === areaId ? { ...a, name: editName } : a))
-      );
+      await updateArea(id, { name: editName });
+      setAreas((prev) => prev.map((a) => (a._id === id ? { ...a, name: editName } : a)));
       toast.success('Đổi tên thành công');
       setEditingId(null);
     } catch {
@@ -66,15 +64,15 @@ const ManagerPage = () => {
     }
   };
 
-  const filteredAreas = areas.filter((a) =>
+  const filtered = areas.filter(a =>
     a.name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
     <div className="min-h-screen bg-white text-gray-800">
       {/* Header */}
-      <div className="w-full border-b bg-white shadow-sm">
-        <div className="flex w-full max-w-6xl mx-auto px-4 h-16 items-center justify-between">
+      <header className="w-full border-b bg-white shadow-sm">
+        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold">Quản lý bản đồ</h2>
           <button
             onClick={handleCreateArea}
@@ -84,121 +82,130 @@ const ManagerPage = () => {
             Tạo bản đồ
           </button>
         </div>
-      </div>
+      </header>
 
       {/* Search */}
-      <div className="flex justify-center py-6">
+      <div className="max-w-6xl mx-auto px-4 mt-6">
         <input
           type="text"
           placeholder="Search"
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-64 px-4 py-2 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-400 text-sm"
+          onChange={e => setSearchTerm(e.target.value)}
+          className="w-full md:w-1/2 px-4 py-2 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-400 text-sm"
         />
       </div>
 
-      {/* Card Grid */}
-      <div className="max-w-6xl mx-auto px-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/* Table List */}
+      <div className="overflow-x-auto px-4 mt-6">
+        <div className="max-w-6xl mx-auto border border-gray-200 rounded-lg shadow-sm bg-white">
+          {/* Table Header */}
+          <div className="grid grid-cols-4 text-gray-700 bg-gray-100 border-b px-4 py-3 font-medium text-sm">
+            <div className="truncate">Tên khu vực</div>
+            <div className="truncate">Chỉnh sửa vị trí</div>
+            <div className="truncate">Xem</div>
+            <div className="text-right">Tùy chọn</div>
+          </div>
+
+          {/* Table Rows */}
           {isLoading
-            ? Array(6)
-                .fill()
-                .map((_, i) => (
-                  <div
-                    key={i}
-                    className="h-36 bg-gray-100 animate-pulse rounded-lg"
-                  />
-                ))
-            : filteredAreas.map((area) => (
+            ? Array(3).fill().map((_, i) => (
                 <div
-                  key={area._id}
-                  className="bg-white border rounded-lg shadow hover:shadow-md transition relative flex flex-col justify-between p-4"
+                  key={i}
+                  className="grid grid-cols-4 px-4 py-3 border-b animate-pulse"
                 >
-                  <div>
-                    <h3 className="text-base font-medium truncate">
-                      {area.name?.trim() || 'Khu chưa đặt tên'}
-                    </h3>
-                  </div>
-
-                  <div className="mt-4 space-y-2 text-sm text-gray-600">
-                    <button
-                      onClick={() => navigate(ROUTES.POST_MAP(area._id))}
-                      className="underline"
-                    >
-                      Chỉnh sửa vị trí
-                    </button>
-                    <button
-                      onClick={() => navigate(ROUTES.VIEW_MAP(area._id))}
-                      className="underline"
-                    >
-                      Xem
-                    </button>
-                  </div>
-
-                  <div className="absolute top-3 right-3">
-                    <button
-                      onClick={() =>
-                        setOpenMenuId(openMenuId === area._id ? null : area._id)
-                      }
-                      className="p-1 rounded hover:bg-gray-200"
-                    >
-                      <MoreVertical size={20} />
-                    </button>
-                    {openMenuId === area._id && (
-                      <div className="absolute right-0 mt-2 bg-white border rounded-md shadow-lg z-10 w-36">
-                        <button
-                          onClick={() => {
-                            setEditingId(area._id);
-                            setEditName(area.name || '');
-                            setOpenMenuId(null);
-                          }}
-                          className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2 text-sm"
-                        >
-                          <Pencil size={16} /> Đổi tên
-                        </button>
-                        <button
-                          onClick={() => {
-                            navigate(ROUTES.POST_MAP(area._id));
-                            setOpenMenuId(null);
-                          }}
-                          className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2 text-sm"
-                        >
-                          <MapPin size={16} /> Chỉnh sửa
-                        </button>
-                        <button
-                          onClick={() => handleDeleteArea(area._id)}
-                          className="w-full text-left px-4 py-2 hover:bg-red-100 text-red-600 flex items-center gap-2 text-sm"
-                        >
-                          <Trash2 size={16} /> Xóa
-                        </button>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Inline Edit Name */}
-                  {editingId === area._id && (
-                    <div className="absolute inset-0 bg-white bg-opacity-90 flex items-center justify-center p-4 rounded-lg">
-                      <div className="space-y-2 w-full">
+                  <div className="h-4 bg-gray-200 rounded w-3/4" />
+                  <div className="h-4 bg-gray-200 rounded w-3/5" />
+                  <div className="h-4 bg-gray-200 rounded w-1/2" />
+                  <div className="h-4 bg-gray-200 rounded w-1/3 justify-self-end" />
+                </div>
+              ))
+            : filtered.length === 0
+            ? (
+              <div className="text-center py-6 text-gray-500">
+                Không có khu vực nào
+              </div>
+            )
+            : filtered.map(area => (
+              <div
+                key={area._id}
+                className="group grid grid-cols-4 px-4 py-3 items-center border-b hover:bg-gray-50 transition relative"
+              >
+                {/* Name */}
+                <div className="truncate">
+                  {editingId === area._id
+                    ? (
+                      <div className="flex items-center gap-2">
                         <input
                           value={editName}
-                          onChange={(e) => setEditName(e.target.value)}
-                          className="w-full border px-2 py-1 rounded text-sm"
+                          onChange={e => setEditName(e.target.value)}
+                          className="border px-2 py-1 rounded w-full text-sm"
                         />
-                        <div className="flex justify-end gap-2">
-                          <button
-                            onClick={() => handleEditName(area._id)}
-                            className="text-green-600 text-sm hover:underline"
-                          >Lưu</button>
-                          <button
-                            onClick={() => setEditingId(null)}
-                            className="text-gray-500 text-sm hover:underline"
-                          >Hủy</button>
-                        </div>
+                        <button
+                          onClick={() => handleEditName(area._id)}
+                          className="text-green-600 text-xs hover:underline"
+                        >Lưu</button>
+                        <button
+                          onClick={() => setEditingId(null)}
+                          className="text-gray-500 text-xs hover:underline"
+                        >Hủy</button>
                       </div>
+                    )
+                    : (
+                      <span
+                        onClick={() => navigate(ROUTES.POST_MAP(area._id))}
+                        className="cursor-pointer text-blue-600 hover:underline"
+                      >
+                        {area.name?.trim() || 'Khu chưa đặt tên'}
+                      </span>
+                    )
+                  }
+                </div>
+
+                {/* Edit Link */}
+                <div
+                  onClick={() => navigate(ROUTES.POST_MAP(area._id))}
+                  className="cursor-pointer text-blue-600 hover:underline truncate"
+                >Chỉnh sửa vị trí</div>
+
+                {/* View Link */}
+                <div
+                  onClick={() => navigate(ROUTES.VIEW_MAP(area._id))}
+                  className="cursor-pointer text-blue-600 hover:underline truncate"
+                >Xem</div>
+
+                {/* Options Menu */}
+                <div className="absolute right-4">
+                  <button
+                    onClick={() => setOpenMenuId(openMenuId === area._id ? null : area._id)}
+                    className="p-1 rounded hover:bg-gray-200"
+                  >
+                    <MoreVertical size={20} />
+                  </button>
+                  {openMenuId === area._id && (
+                    <div className="absolute right-0 mt-2 bg-white border rounded-md shadow-lg z-10 w-36">
+                      <button
+                        onClick={() => { setEditingId(area._id); setEditName(area.name); setOpenMenuId(null); }}
+                        className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2 text-sm"
+                      >
+                        <Pencil size={16} /> Đổi tên
+                      </button>
+                      <button
+                        onClick={() => { navigate(ROUTES.POST_MAP(area._id)); setOpenMenuId(null); }}
+                        className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2 text-sm"
+                      >
+                        <MapPin size={16} /> Chỉnh sửa
+                      </button>
+                      <button
+                        onClick={() => { handleDeleteArea(area._id); setOpenMenuId(null); }}
+                        className="w-full text-left px-4 py-2 hover:bg-red-100 text-red-600 flex items-center gap-2 text-sm"
+                      >
+                        <Trash2 size={16} /> Xóa
+                      </button>
                     </div>
                   )}
                 </div>
-              ))}
+              </div>
+            ))}
         </div>
       </div>
     </div>
