@@ -95,8 +95,8 @@ const ManagerPage = () => {
         />
       </div>
 
-      {/* Table List */}
-      <div className="overflow-x-auto px-4 mt-6">
+      {/* Table for desktop (md+) */}
+      <div className="hidden md:block overflow-x-auto px-4 mt-6">
         <div className="max-w-6xl mx-auto border border-gray-200 rounded-lg shadow-sm bg-white">
           {/* Table Header */}
           <div className="grid grid-cols-4 text-gray-700 bg-gray-100 border-b px-4 py-3 font-medium text-sm">
@@ -132,47 +132,18 @@ const ManagerPage = () => {
               >
                 {/* Name */}
                 <div className="truncate">
-                  {editingId === area._id
-                    ? (
-                      <div className="flex items-center gap-2">
-                        <input
-                          value={editName}
-                          onChange={e => setEditName(e.target.value)}
-                          className="border px-2 py-1 rounded w-full text-sm"
-                        />
-                        <button
-                          onClick={() => handleEditName(area._id)}
-                          className="text-green-600 text-xs hover:underline"
-                        >Lưu</button>
-                        <button
-                          onClick={() => setEditingId(null)}
-                          className="text-gray-500 text-xs hover:underline"
-                        >Hủy</button>
-                      </div>
-                    )
-                    : (
-                      <span
-                        onClick={() => navigate(ROUTES.POST_MAP(area._id))}
-                        className="cursor-pointer text-blue-600 hover:underline"
-                      >
-                        {area.name?.trim() || 'Khu chưa đặt tên'}
-                      </span>
-                    )
-                  }
+                  {area.name?.trim() || 'Khu chưa đặt tên'}
                 </div>
-
                 {/* Edit Link */}
                 <div
                   onClick={() => navigate(ROUTES.POST_MAP(area._id))}
                   className="cursor-pointer text-blue-600 hover:underline truncate"
                 >Chỉnh sửa vị trí</div>
-
                 {/* View Link */}
                 <div
                   onClick={() => navigate(ROUTES.VIEW_MAP(area._id))}
                   className="cursor-pointer text-blue-600 hover:underline truncate"
                 >Xem</div>
-
                 {/* Options Menu */}
                 <div className="absolute right-4">
                   <button
@@ -206,6 +177,66 @@ const ManagerPage = () => {
                 </div>
               </div>
             ))}
+        </div>
+      </div>
+
+      {/* Card Grid for mobile (below md) */}
+      <div className="md:hidden max-w-6xl mx-auto px-4 mt-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {isLoading
+            ? Array(4).fill().map((_, idx) => (
+                <div key={idx} className="h-32 bg-gray-100 animate-pulse rounded-lg" />
+              ))
+            : filtered.map(area => (
+                <div
+                  key={area._id}
+                  className="bg-white border rounded-lg shadow hover:shadow-md transition relative flex flex-col justify-between p-4"
+                >
+                  <h3 className="text-base font-medium truncate">
+                    {area.name?.trim() || 'Khu chưa đặt tên'}
+                  </h3>
+                  <div className="mt-2 space-y-2 text-sm text-gray-600">
+                    <button
+                      onClick={() => navigate(ROUTES.POST_MAP(area._id))}
+                      className="underline"
+                    >Chỉnh sửa vị trí</button>
+                    <button
+                      onClick={() => navigate(ROUTES.VIEW_MAP(area._id))}
+                      className="underline"
+                    >Xem</button>
+                  </div>
+                  <div className="absolute top-3 right-3">
+                    <button
+                      onClick={() => setOpenMenuId(openMenuId === area._id ? null : area._id)}
+                      className="p-1 rounded hover:bg-gray-200"
+                    >
+                      <MoreVertical size={20} />
+                    </button>
+                    {openMenuId === area._id && (
+                      <div className="absolute right-0 mt-2 bg-white border rounded-md shadow-lg z-10 w-36">
+                        <button
+                          onClick={() => { setEditingId(area._id); setEditName(area.name); setOpenMenuId(null); }}
+                          className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2 text-sm"
+                        >
+                          <Pencil size={16} /> Đổi tên
+                        </button>
+                        <button
+                          onClick={() => { navigate(ROUTES.POST_MAP(area._id)); setOpenMenuId(null); }}
+                          className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2 text-sm"
+                        >
+                          <MapPin size={16} /> Chỉnh sửa
+                        </button>
+                        <button
+                          onClick={() => { handleDeleteArea(area._id); setOpenMenuId(null); }}
+                          className="w-full text-left px-4 py-2 hover:bg-red-100 text-red-600 flex items-center gap-2 text-sm"
+                        >
+                          <Trash2 size={16} /> Xóa
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
         </div>
       </div>
     </div>
