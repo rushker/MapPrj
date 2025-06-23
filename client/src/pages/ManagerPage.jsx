@@ -73,14 +73,13 @@ const ManagerPage = () => {
           <button
             onClick={handleCreateArea}
             type="button"
-            className="flex items-center gap-[15px] bg-[#2A5D87] px-4 py-2 rounded-[10px] text-white text-sm"
+            className="flex items-center gap-[15px] bg-[#2A5D87] px-4 py-2 rounded-[10px] text-white text-sm hover:bg-[#244f74] active:scale-95 transition"
           >
-            <span className="order-1">Tạo bản đồ</span>
-            <Plus size={16} className="order-2" />
+            <span className="order-1 text-white">Tạo bản đồ</span>
+            <Plus size={16} className="order-2 text-white" />
           </button>
         </div>
       </header>
-
 
       {/* Search Bar */}
       <div className="max-w-6xl mx-auto px-4 mt-6">
