@@ -51,3 +51,8 @@ html, body, #root {
   border: 3px solid red !important;
   background: yellow !important;
 }
+
+button span,
+button svg {
+  color: inherit !important;
+  fill: currentColor !important;}

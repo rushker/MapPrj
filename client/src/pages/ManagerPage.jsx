@@ -65,21 +65,22 @@ const ManagerPage = () => {
   const filtered = areas.filter(a => a.name?.toLowerCase().includes(searchTerm.toLowerCase()));
 
   return (
-    <div className="min-h-screen bg-white text-gray-800">
+    <div className="min-h-screen bg-white ">
       {/* Header */}
-      <header className="w-full h-[72px] bg-black bg-opacity-30 border-b border-black border-opacity-30">
-        <div className="max-w-6xl mx-auto h-full flex items-center justify-between px-4">
-          <h1 className="text-[20px] font-semibold text-white">Quản lý bản đồ</h1>
-          <button
-            onClick={handleCreateArea}
-            type="button"
-            className="flex items-center gap-[15px] bg-[#2A5D87] px-4 py-2 rounded-[10px] text-white text-sm hover:bg-[#244f74] active:scale-95 transition"
-          >
-            <span className="order-1 text-white">Tạo bản đồ</span>
-            <Plus size={16} className="order-2 text-white" />
-          </button>
-        </div>
-      </header>
+      <header className="w-full h-[72px] border-b border-black border-opacity-30 text-white">
+  <div className="max-w-6xl mx-auto h-full flex items-center justify-between px-4">
+    <h1 className="text-[20px] font-semibold">Quản lý bản đồ</h1>
+    <button
+  onClick={handleCreateArea}
+  className="flex items-center gap-[15px] bg-[#2A5D87] px-4 py-2 rounded-[10px] text-white text-sm hover:bg-[#244f74] active:scale-95 transition"
+    style={{ color: '#fff' }}
+>
+  <span className="order-1 text-white">Tạo bản đồ</span>
+  <Plus size={16} className="order-2 text-white" />
+</button>
+
+  </div>
+</header>
 
       {/* Search Bar */}
       <div className="max-w-6xl mx-auto px-4 mt-6">
