@@ -30,8 +30,7 @@ const ManagerPage = () => {
       try {
         const { data } = await getAllAreas();
         setAreas(Array.isArray(data) ? data : []);
-      } catch (err) {
-        console.error(err);
+      } catch {
         toast.error('Lỗi khi tải danh sách khu vực');
       } finally {
         setIsLoading(false);
@@ -43,16 +42,14 @@ const ManagerPage = () => {
   const handleCreateArea = () => navigate('/areas/edit');
 
   const handleDeleteArea = async (areaId) => {
-    const confirmed = window.confirm('Bạn có chắc muốn xoá khu vực này?');
-    if (!confirmed) return;
+    if (!window.confirm('Bạn có chắc muốn xóa khu vực này?')) return;
     try {
       await deleteArea(areaId);
       setAreas((prev) => prev.filter((a) => a._id !== areaId));
       if (areaId === tempAreaId) clearAreaId();
-      toast.success('Đã xoá khu vực');
-    } catch (err) {
-      console.error(err);
-      toast.error('Lỗi xoá khu vực');
+      toast.success('Đã xóa khu vực');
+    } catch {
+      toast.error('Lỗi xóa khu vực');
     }
   };
 
@@ -62,11 +59,10 @@ const ManagerPage = () => {
       setAreas((prev) =>
         prev.map((a) => (a._id === areaId ? { ...a, name: editName } : a))
       );
-      toast.success('Đổi tên khu vực thành công');
+      toast.success('Đổi tên thành công');
       setEditingId(null);
-    } catch (err) {
-      console.error(err);
-      toast.error('Lỗi khi đổi tên khu vực');
+    } catch {
+      toast.error('Lỗi đổi tên');
     }
   };
 
@@ -75,16 +71,16 @@ const ManagerPage = () => {
   );
 
   return (
-    <div className="min-h-screen bg-white text-sm text-gray-800">
+    <div className="min-h-screen bg-white text-gray-800">
       {/* Header */}
       <div className="w-full border-b bg-white shadow-sm">
         <div className="flex w-full max-w-6xl mx-auto px-4 h-16 items-center justify-between">
-          <h1 className="text-xl font-semibold">Quản lý bản đồ</h1>
+          <h2 className="text-lg font-semibold">Quản lý bản đồ</h2>
           <button
             onClick={handleCreateArea}
-            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition"
+            className="flex items-center gap-1 bg-blue-600 text-white px-3 py-1.5 rounded hover:bg-blue-700 transition text-sm"
           >
-            <Plus size={18} />
+            <Plus size={16} />
             Tạo bản đồ
           </button>
         </div>
@@ -94,138 +90,115 @@ const ManagerPage = () => {
       <div className="flex justify-center py-6">
         <input
           type="text"
-          placeholder="Tìm theo tên khu vực..."
+          placeholder="Search"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-80 px-4 py-2 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-400 text-sm"
+          className="w-64 px-4 py-2 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-400 text-sm"
         />
       </div>
 
-      {/* Table */}
-      <div className="overflow-x-auto px-4">
-        <div className="max-w-6xl mx-auto border border-gray-200 rounded-lg shadow-sm bg-white">
-          {/* Table Header */}
-          <div className="grid grid-cols-3 md:grid-cols-4 font-medium text-gray-700 bg-gray-100 border-b border-gray-200 h-12 items-center text-sm px-4">
-            <div>Tên khu vực</div>
-            <div>Chỉnh sửa vị trí</div>
-            <div>Xem</div>
-            <div className="text-right">Tùy chọn</div>
-          </div>
-
-          {/* Table Content */}
-          {isLoading ? (
-            Array(3).fill().map((_, idx) => (
-              <div key={idx} className="grid grid-cols-3 md:grid-cols-4 h-12 items-center px-4 border-b border-gray-100 animate-pulse">
-                <div className="h-4 bg-gray-200 rounded w-2/3" />
-                <div className="h-4 bg-gray-200 rounded w-4/5" />
-                <div className="h-4 bg-gray-200 rounded w-3/5" />
-                <div className="h-4 bg-gray-200 rounded w-2/3 justify-self-end" />
-              </div>
-            ))
-          ) : filteredAreas.length === 0 ? (
-            <div className="text-center py-6 text-gray-500">Không có khu vực nào</div>
-          ) : (
-            filteredAreas.map((area) => (
-              <div
-                key={area._id}
-                className="grid grid-cols-3 md:grid-cols-4 h-12 items-center px-4 border-b border-gray-100 hover:bg-gray-100 relative text-sm transition"
-              >
-                {/* Tên khu vực */}
-                <div className="truncate">
-                  {editingId === area._id ? (
-                    <div className="flex items-center gap-2">
-                      <input
-                        value={editName}
-                        onChange={(e) => setEditName(e.target.value)}
-                        className="border px-2 py-1 rounded w-full text-sm"
-                      />
-                      <button
-                        onClick={() => handleEditName(area._id)}
-                        className="text-green-600 text-xs hover:underline"
-                      >Lưu</button>
-                      <button
-                        onClick={() => setEditingId(null)}
-                        className="text-gray-500 text-xs hover:underline"
-                      >Huỷ</button>
-                    </div>
-                  ) : (
-                    <span
-                      onClick={() => navigate(ROUTES.VIEW_MAP(area._id))}
-                      className="cursor-pointer text-blue-600 hover:underline"
-                    >
+      {/* Card Grid */}
+      <div className="max-w-6xl mx-auto px-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {isLoading
+            ? Array(6)
+                .fill()
+                .map((_, i) => (
+                  <div
+                    key={i}
+                    className="h-36 bg-gray-100 animate-pulse rounded-lg"
+                  />
+                ))
+            : filteredAreas.map((area) => (
+                <div
+                  key={area._id}
+                  className="bg-white border rounded-lg shadow hover:shadow-md transition relative flex flex-col justify-between p-4"
+                >
+                  <div>
+                    <h3 className="text-base font-medium truncate">
                       {area.name?.trim() || 'Khu chưa đặt tên'}
-                    </span>
-                  )}
-                </div>
+                    </h3>
+                  </div>
 
-                {/* Điều hướng chỉnh sửa */}
-                <div
-                  onClick={() => navigate(ROUTES.POST_MAP(area._id))}
-                  className="text-blue-600 hover:underline cursor-pointer flex items-center gap-1 truncate"
-                >
-                  <MapPin size={16} />
-                  Đến khu vực
-                </div>
+                  <div className="mt-4 space-y-2 text-sm text-gray-600">
+                    <button
+                      onClick={() => navigate(ROUTES.POST_MAP(area._id))}
+                      className="underline"
+                    >
+                      Chỉnh sửa vị trí
+                    </button>
+                    <button
+                      onClick={() => navigate(ROUTES.VIEW_MAP(area._id))}
+                      className="underline"
+                    >
+                      Xem
+                    </button>
+                  </div>
 
-                {/* Xem */}
-                <div
-                  onClick={() => navigate(ROUTES.VIEW_MAP(area._id))}
-                  className="text-blue-600 hover:underline cursor-pointer flex items-center gap-1"
-                >
-                  <Eye size={16} />
-                  Xem
-                </div>
+                  <div className="absolute top-3 right-3">
+                    <button
+                      onClick={() =>
+                        setOpenMenuId(openMenuId === area._id ? null : area._id)
+                      }
+                      className="p-1 rounded hover:bg-gray-200"
+                    >
+                      <MoreVertical size={20} />
+                    </button>
+                    {openMenuId === area._id && (
+                      <div className="absolute right-0 mt-2 bg-white border rounded-md shadow-lg z-10 w-36">
+                        <button
+                          onClick={() => {
+                            setEditingId(area._id);
+                            setEditName(area.name || '');
+                            setOpenMenuId(null);
+                          }}
+                          className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2 text-sm"
+                        >
+                          <Pencil size={16} /> Đổi tên
+                        </button>
+                        <button
+                          onClick={() => {
+                            navigate(ROUTES.POST_MAP(area._id));
+                            setOpenMenuId(null);
+                          }}
+                          className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2 text-sm"
+                        >
+                          <MapPin size={16} /> Chỉnh sửa
+                        </button>
+                        <button
+                          onClick={() => handleDeleteArea(area._id)}
+                          className="w-full text-left px-4 py-2 hover:bg-red-100 text-red-600 flex items-center gap-2 text-sm"
+                        >
+                          <Trash2 size={16} /> Xóa
+                        </button>
+                      </div>
+                    )}
+                  </div>
 
-                {/* Dropdown */}
-                <div className="flex justify-end relative">
-                  <button
-                    onClick={() =>
-                      setOpenMenuId(openMenuId === area._id ? null : area._id)
-                    }
-                    className="p-1 rounded hover:bg-gray-200"
-                  >
-                    <MoreVertical size={20} />
-                  </button>
-
-                  {openMenuId === area._id && (
-                    <div className="absolute right-0 top-10 bg-white border rounded-md shadow-lg z-10 w-40">
-                      <button
-                        onClick={() => {
-                          setEditingId(area._id);
-                          setEditName(area.name || '');
-                          setOpenMenuId(null);
-                        }}
-                        className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2"
-                      >
-                        <Pencil size={16} />
-                        Đổi tên
-                      </button>
-                      <button
-                        onClick={() => {
-                          navigate(ROUTES.POST_MAP(area._id));
-                          setOpenMenuId(null);
-                        }}
-                        className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2"
-                      >
-                        <MapPin size={16} />
-                        Chỉnh sửa
-                      </button>
-                      <button
-                        onClick={() => {
-                          setOpenMenuId(null);
-                          handleDeleteArea(area._id);
-                        }}
-                        className="w-full text-left px-4 py-2 hover:bg-red-100 text-red-600 flex items-center gap-2"
-                      >
-                        <Trash2 size={16} />
-                        Xoá
-                      </button>
+                  {/* Inline Edit Name */}
+                  {editingId === area._id && (
+                    <div className="absolute inset-0 bg-white bg-opacity-90 flex items-center justify-center p-4 rounded-lg">
+                      <div className="space-y-2 w-full">
+                        <input
+                          value={editName}
+                          onChange={(e) => setEditName(e.target.value)}
+                          className="w-full border px-2 py-1 rounded text-sm"
+                        />
+                        <div className="flex justify-end gap-2">
+                          <button
+                            onClick={() => handleEditName(area._id)}
+                            className="text-green-600 text-sm hover:underline"
+                          >Lưu</button>
+                          <button
+                            onClick={() => setEditingId(null)}
+                            className="text-gray-500 text-sm hover:underline"
+                          >Hủy</button>
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>
-              </div>
-            ))
-          )}
+              ))}
         </div>
       </div>
     </div>
