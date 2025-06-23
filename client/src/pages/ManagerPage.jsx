@@ -33,7 +33,11 @@ const ManagerPage = () => {
     fetchAreas();
   }, []);
 
-  const handleCreateArea = () => navigate(ROUTES.POST_MAP());
+  
+  const handleCreateArea = () => {
+    navigate('/areas/edit');
+  };
+
 
   const handleDeleteArea = async (id) => {
     if (!window.confirm('Bạn có chắc muốn xóa khu vực này?')) return;
@@ -68,13 +72,15 @@ const ManagerPage = () => {
           <h1 className="text-[20px] font-semibold text-white">Quản lý bản đồ</h1>
           <button
             onClick={handleCreateArea}
+            type="button"
             className="flex items-center gap-[15px] bg-[#2A5D87] px-4 py-2 rounded-[10px] text-white text-sm"
           >
-            <Plus size={16} className="order-2" />
             <span className="order-1">Tạo bản đồ</span>
+            <Plus size={16} className="order-2" />
           </button>
         </div>
       </header>
+
 
       {/* Search Bar */}
       <div className="max-w-6xl mx-auto px-4 mt-6">
