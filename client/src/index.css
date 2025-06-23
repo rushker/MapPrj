@@ -3,13 +3,8 @@
 @tailwind components;
 @tailwind utilities;
 
-html,
-body,
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+html, body, #root {
+  @apply text-sm font-sans bg-white;
 }
 
 .leaflet-container {
