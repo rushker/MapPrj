@@ -6,21 +6,26 @@ import L from 'leaflet';
 import { useSafeAreaContext } from '../../../../context/useSafeAreaContext.js';
 import { isAreaIdReady } from '../../../../utils/areaUtils.js';
 
-const defaultStyle = {
-  color: '#3388ff',
-  weight: 2,
-  fill: false,            // 💥 Tắt fill
-  fillColor: 'transparent',
-  fillOpacity: 0,         // 💥 Đảm bảo không có fill
-   opacity: entity.metadata?.strokeOpacity ?? 1,
-};
-
 const selectedStyle = {
   color: '#ff5722',
   weight: 3,
   fill: false,
   fillColor: 'transparent',
   fillOpacity: 0,
+};
+
+// 🛠 Tạo hàm style động theo từng entity
+const getPolygonStyle = (entity, isSelected) => {
+  if (isSelected) return selectedStyle;
+
+  return {
+    color: '#3388ff',
+    weight: 2,
+    fill: false,
+    fillColor: 'transparent',
+    fillOpacity: 0,
+    opacity: entity?.metadata?.strokeOpacity ?? 1,
+  };
 };
 
 const PolygonLayer = ({ selectedEntityId, onSelectEntity, entities: overrideEntities }) => {
@@ -30,17 +35,21 @@ const PolygonLayer = ({ selectedEntityId, onSelectEntity, entities: overrideEnti
   if (!safeContext) return null;
 
   const { areaId, isEditMode, isCreatingArea, entities } = safeContext;
-  const polygons = (overrideEntities ?? entities).filter(e => e.type === 'polygon' && e.geometry?.coordinates);
+  const polygons = (overrideEntities ?? entities).filter(
+    (e) => e.type === 'polygon' && e.geometry?.coordinates
+  );
 
   useEffect(() => {
     if (!isAreaIdReady({ areaId, isEditMode }) || isCreatingArea) return;
     if (!isEditMode || !selectedEntityId) return;
 
-    const selected = polygons.find(e => e._id === selectedEntityId);
+    const selected = polygons.find((e) => e._id === selectedEntityId);
     if (selected?.geometry?.coordinates) {
       const latLngs = geoToLatLng(selected.geometry.coordinates);
       const bounds = L.latLngBounds(latLngs);
-      if (bounds.isValid()) map.flyToBounds(bounds, { padding: [50, 50], duration: 0.5 });
+      if (bounds.isValid()) {
+        map.flyToBounds(bounds, { padding: [50, 50], duration: 0.5 });
+      }
     }
 
     polygonRefs.current[selectedEntityId]?.openPopup();
@@ -48,13 +57,15 @@ const PolygonLayer = ({ selectedEntityId, onSelectEntity, entities: overrideEnti
 
   return (
     <>
-      {polygons.map(entity => {
+      {polygons.map((entity) => {
         const latlngs = geoToLatLng(entity.geometry.coordinates);
+        const style = getPolygonStyle(entity, entity._id === selectedEntityId);
+
         return (
           <Polygon
             key={entity._id}
             positions={latlngs}
-            pathOptions={entity._id === selectedEntityId ? selectedStyle : defaultStyle}
+            pathOptions={style}
             eventHandlers={
               isEditMode
                 ? {}
@@ -62,7 +73,7 @@ const PolygonLayer = ({ selectedEntityId, onSelectEntity, entities: overrideEnti
                     click: () => onSelectEntity?.(entity._id),
                   }
             }
-            ref={ref => {
+            ref={(ref) => {
               if (ref) polygonRefs.current[entity._id] = ref;
             }}
           >
