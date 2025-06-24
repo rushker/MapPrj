@@ -1,5 +1,5 @@
 // src/components/sidebars/SidebarContainer.jsx
-import { lazy, Suspense, memo } from 'react';
+import { lazy, Suspense, memo, useEffect } from 'react';
 import { useSidebarContext } from '../../../context/SidebarContext';
 import { useAreaContext } from '../../../context/AreaContext';
 import { isValidAreaId } from '../../../utils/areaUtils';
@@ -24,7 +24,10 @@ function SidebarContainer({ onSaveAreaMetadata, onSaveEntity }) {
 
   const { areaId, isEditMode } = useAreaContext();
 
-  // Nếu areaId không hợp lệ hoặc sidebar không mở → không render
+  useEffect(() => {
+  console.log('[SidebarContainer] type/data:', editingType, editingData);
+}, [editingType, editingData]);
+
   if (!isValidAreaId(areaId) || !sidebarOpen) return null;
 
   const SidebarComponent = SIDEBAR_COMPONENTS[editingType];

@@ -15,14 +15,26 @@ export function createPolygonEntityHandler({ areaId, addEntity, setSelectedEntit
         coordinates: [coordinates],
       };
 
-      const res = await createEntity(areaId, { type: 'polygon', geometry: payload });
-      if (!res.success) throw new Error();
+      const res = await createEntity(areaId, {
+        type: 'polygon',
+        geometry: payload,
+        name: 'Polygon mới',
+      });
 
-      addEntity(res.data);
-      setSelectedEntityId(res.data._id);
+      if (!res.success || !res.data) throw new Error('API trả về không hợp lệ');
+
+      // ✅ Patch dữ liệu nếu cần thiết
+      const entityData = {
+        ...res.data,
+        type: res.data.type ?? 'polygon', // fallback nếu API thiếu type
+        name: res.data.name ?? 'Polygon không tên',
+      };
+
+      addEntity(entityData);
+      setSelectedEntityId(entityData._id);
       toast.success('Đã thêm vùng (Polygon)');
     } catch (err) {
-      console.error(err);
+      console.error('[createPolygonEntityHandler] Failed:', err);
       toast.error('Tạo Polygon thất bại');
     }
   };
