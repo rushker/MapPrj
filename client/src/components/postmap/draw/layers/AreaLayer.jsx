@@ -8,9 +8,10 @@ const AreaLayer = ({ area }) => {
 
   const latlngs = geoToLatLng(geoCoords); // → [[lat, lng], ...]
   const style = {
-    color: '#FF5733',        // viền đỏ cam
-    fill: false,             // 🚫 bỏ fill hoàn toàn
-    weight: 2,
+     color: '#FF5733',     // stroke viền ngoài
+  fill: false,          // cố gắng tắt fill
+  fillOpacity: 0,       // đảm bảo không có độ trong suốt nào
+  weight: 2,
   };
   return <Polygon positions={latlngs} pathOptions={style} />;
 };
