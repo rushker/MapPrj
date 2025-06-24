@@ -36,15 +36,15 @@ export default function useAreaMetadata(onChange) {
   };
 
   const handleOpacityChange = (value) => {
-    if (!isEditMode) return;
-    const updated = { ...areaMetadata, opacity: value };
+  if (!isEditMode) return;
+    const updated = { ...areaMetadata, strokeOpacity: value }; // 👈 đổi key
     setAreaMetadata(updated);
     onChange?.(updated);
   };
 
   const isUnchanged = useMemo(() => {
     if (!initialMetadata || !areaMetadata) return false;
-    return ['name', 'type', 'description', 'opacity'].every(
+    return ['name', 'type', 'description', 'strokeOpacity'].every(
       (key) => areaMetadata[key] === initialMetadata[key]
     );
   }, [areaMetadata, initialMetadata]);

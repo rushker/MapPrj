@@ -44,7 +44,7 @@ export default function KhuASidebar({ onClose, isEditMode }) {
 
       {isEditMode && (
         <OpacitySlider
-          value={areaMetadata.opacity ?? 0.2}
+          value={areaMetadata.strokeOpacity ?? 1} // Mặc định không trong suốt
           onChange={handleOpacityChange}
         />
       )}
