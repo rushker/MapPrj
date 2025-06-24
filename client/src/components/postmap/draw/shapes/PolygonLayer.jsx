@@ -9,13 +9,18 @@ import { isAreaIdReady } from '../../../../utils/areaUtils.js';
 const defaultStyle = {
   color: '#3388ff',
   weight: 2,
-  fillOpacity: 0.2,
+  fill: false,            // 💥 Tắt fill
+  fillColor: 'transparent',
+  fillOpacity: 0,         // 💥 Đảm bảo không có fill
+   opacity: entity.metadata?.strokeOpacity ?? 1,
 };
 
 const selectedStyle = {
   color: '#ff5722',
   weight: 3,
-  fillOpacity: 0.4,
+  fill: false,
+  fillColor: 'transparent',
+  fillOpacity: 0,
 };
 
 const PolygonLayer = ({ selectedEntityId, onSelectEntity, entities: overrideEntities }) => {

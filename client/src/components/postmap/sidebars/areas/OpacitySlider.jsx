@@ -1,8 +1,8 @@
 // components/sidebars/areas/OpacitySlider.jsx
-export default function OpacitySlider({ value = 0.2, onChange }) {
+export default function OpacitySlider({ value = 0.2, onChange, label = 'Độ trong suốt viền:' }) {
   return (
     <div className="mt-4">
-      <label className="block mb-1 font-medium">Độ trong suốt viền Khu A:</label>
+      <label className="block mb-1 font-medium">{label}</label>
       <input
         type="range"
         min="0"

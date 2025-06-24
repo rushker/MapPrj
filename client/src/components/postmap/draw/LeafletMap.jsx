@@ -64,7 +64,7 @@ export default function LeafletMap({
       polygon: gj.geometry,
       maxZoom: map.getZoom(),
     });
-    // Không remove layer, chờ AreaLayer render
+    layer.remove();
      
   } else if ((shape === 'Polygon' || shape === 'Marker') && isValidAreaId(areaId)) {
   // Tạm giữ thông tin để user xác nhận
@@ -74,6 +74,7 @@ export default function LeafletMap({
     geometry: gj.geometry,
     layer, // ✅ giữ lại layer để hiển thị hoặc remove nếu huỷ
     geoJSON: gj, // phòng trường hợp cần
+    metadata: { strokeOpacity: 1 },
   });
   }
 };

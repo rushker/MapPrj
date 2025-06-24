@@ -4,13 +4,14 @@ import { useSidebarContext } from '../../../context/SidebarContext';
 import { useAreaContext } from '../../../context/AreaContext';
 import { isValidAreaId } from '../../../utils/areaUtils.js';
 
-
 const KhuASidebar = lazy(() => import('./areas/KhuASidebar'));
-const EntitySidebar = lazy(() => import('./entities/EntitySidebar'));
+const PolygonSidebar = lazy(() => import('./entities/PolygonSidebar'));
+const MarkerSidebar = lazy(() => import('./entities/MarkerSidebar'));
 
 const SIDEBAR_COMPONENTS = {
   area: KhuASidebar,
-  entity: EntitySidebar,
+  polygon: PolygonSidebar,
+  marker: MarkerSidebar,
 };
 
 function SidebarContainer({ onSaveAreaMetadata, onSaveEntity }) {
@@ -23,30 +24,29 @@ function SidebarContainer({ onSaveAreaMetadata, onSaveEntity }) {
     handleDelete,
   } = useSidebarContext();
 
-  const {areaId, isEditMode } = useAreaContext();
+  const { areaId, isEditMode } = useAreaContext();
   if (!isValidAreaId(areaId)) return null;
-
   if (!sidebarOpen) return null;
 
   const SidebarComponent = SIDEBAR_COMPONENTS[editingType];
 
   const commonProps = {
     onClose: closeSidebar,
-    onDelete: isEditMode ? handleDelete : null, // Chỉ cho phép xóa khi ở chế độ chỉnh sửa
-    isEditMode, // Truyền trạng thái chỉnh sửa xuống component con
+    onDelete: isEditMode ? handleDelete : null,
+    isEditMode,
   };
 
   const sidebarProps =
     editingType === 'area'
       ? {
           metadata: editingData,
-           onSave: isEditMode ? onSaveAreaMetadata : null, // Chỉ cho phép lưu khi chỉnh sửa
+          onSave: isEditMode ? onSaveAreaMetadata : null,
           ...commonProps,
         }
       : {
-           entity: editingData,
-          onChange: isEditMode ? setEditingData : null, // Chỉ cho phép thay đổi khi chỉnh sửa
-          onSave: isEditMode ? onSaveEntity : null, // Chỉ cho phép lưu khi chỉnh sửa
+          entity: editingData,
+          onChange: isEditMode ? setEditingData : null,
+          onSave: isEditMode ? onSaveEntity : null,
           ...commonProps,
         };
 
