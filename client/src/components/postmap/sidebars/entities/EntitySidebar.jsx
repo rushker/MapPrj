@@ -5,21 +5,9 @@ import MarkerSidebar from './MarkerSidebar';
 export default function EntitySidebar(props) {
   const { entity } = props;
 
-  if (!entity || typeof entity !== 'object') {
-    return (
-      <div className="p-4 text-red-500">
-        ❌ Không có dữ liệu entity.
-      </div>
-    );
-  }
-
-  if (!entity.type) {
-    return (
-      <div className="p-4 text-red-500">
-        ❌ Entity thiếu thuộc tính <code>type</code>.
-      </div>
-    );
-  }
+  if (!entity || !entity.type) {
+  return <div className="p-4 text-red-500">Không có thông tin entity hoặc thiếu 'type'</div>;
+}
 
   switch (entity.type) {
     case 'polygon':
