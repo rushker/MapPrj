@@ -2,16 +2,14 @@
 import { lazy, Suspense, memo } from 'react';
 import { useSidebarContext } from '../../../context/SidebarContext';
 import { useAreaContext } from '../../../context/AreaContext';
-import { isValidAreaId } from '../../../utils/areaUtils.js';
+import { isValidAreaId } from '../../../utils/areaUtils';
 
 const KhuASidebar = lazy(() => import('./areas/KhuASidebar'));
-const PolygonSidebar = lazy(() => import('./entities/PolygonSidebar'));
-const MarkerSidebar = lazy(() => import('./entities/MarkerSidebar'));
+const EntitySidebar = lazy(() => import('./entities/EntitySidebar'));
 
 const SIDEBAR_COMPONENTS = {
   area: KhuASidebar,
-  polygon: PolygonSidebar,
-  marker: MarkerSidebar,
+  entity: EntitySidebar,
 };
 
 function SidebarContainer({ onSaveAreaMetadata, onSaveEntity }) {
@@ -25,10 +23,19 @@ function SidebarContainer({ onSaveAreaMetadata, onSaveEntity }) {
   } = useSidebarContext();
 
   const { areaId, isEditMode } = useAreaContext();
-  if (!isValidAreaId(areaId)) return null;
-  if (!sidebarOpen) return null;
+
+  // Nếu areaId không hợp lệ hoặc sidebar không mở → không render
+  if (!isValidAreaId(areaId) || !sidebarOpen) return null;
 
   const SidebarComponent = SIDEBAR_COMPONENTS[editingType];
+
+  if (!SidebarComponent) {
+    return (
+      <div className="w-[320px] bg-white border-l h-full shadow-lg p-4 text-gray-500">
+        Không tìm thấy Sidebar phù hợp với type: {editingType}
+      </div>
+    );
+  }
 
   const commonProps = {
     onClose: closeSidebar,
@@ -53,11 +60,7 @@ function SidebarContainer({ onSaveAreaMetadata, onSaveEntity }) {
   return (
     <div className="w-[320px] bg-white border-l h-full shadow-lg">
       <Suspense fallback={<div className="p-4">Đang tải...</div>}>
-        {SidebarComponent ? (
-          <SidebarComponent {...sidebarProps} />
-        ) : (
-          <div className="p-4 text-gray-500">Chọn một đối tượng để chỉnh sửa.</div>
-        )}
+        <SidebarComponent {...sidebarProps} />
       </Suspense>
     </div>
   );

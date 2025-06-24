@@ -2,12 +2,16 @@
 import PolygonSidebar from './PolygonSidebar';
 import MarkerSidebar from './MarkerSidebar';
 
-/**
- * Wrapper xác định sidebar phù hợp theo entity.type
- */
 export default function EntitySidebar(props) {
   const { entity } = props;
-  if (!entity) return null;
+
+  if (!entity || !entity.type) {
+    return (
+      <div className="p-4 text-red-500">
+        Không có thông tin entity hoặc thiếu 'type'
+      </div>
+    );
+  }
 
   switch (entity.type) {
     case 'polygon':
@@ -15,6 +19,10 @@ export default function EntitySidebar(props) {
     case 'marker':
       return <MarkerSidebar {...props} />;
     default:
-      return <div className="p-4">Loại entity không hỗ trợ</div>;
+      return (
+        <div className="p-4 text-red-500">
+          Không hỗ trợ entity loại: <strong>{entity.type}</strong>
+        </div>
+      );
   }
 }
