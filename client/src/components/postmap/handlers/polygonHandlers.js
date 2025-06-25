@@ -26,7 +26,7 @@ export function createPolygonEntityHandler({ areaId, addEntity, setSelectedEntit
       // ✅ Patch dữ liệu nếu cần thiết
       const entityData = {
         ...res.data,
-        type: res.data.type ?? 'polygon', // fallback nếu API thiếu type
+        type: res.data.type ?? 'polygon', 
         name: res.data.name ?? 'Polygon không tên',
       };
 

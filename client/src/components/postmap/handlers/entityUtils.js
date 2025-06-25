@@ -1,4 +1,4 @@
-// src/components/postmap/handlers/sharedEntityUtils.js
+// src/components/postmap/handlers/entityUtils.js
 import toast from 'react-hot-toast';
 import {
   updateEntityGeometry,
@@ -6,7 +6,12 @@ import {
 } from '../../../services/entities';
 
 export function handleCreateEntityDispatcher({ areaId, addEntity, setSelectedEntityId, openSidebar }) {
-  return ({ type, coordinates, geometry }) => {
+  if (!areaId) {
+    console.warn('[handleCreateEntityDispatcher] areaId null');
+    return () => {}; // fallback no-op
+  }
+
+  return ({ type, geometry }) => {
     const tempId = `temp-${Date.now()}`;
     const entity = {
       _id: tempId,
@@ -14,15 +19,16 @@ export function handleCreateEntityDispatcher({ areaId, addEntity, setSelectedEnt
       type,
       geometry,
       name: '',
-      metadata: { strokeOpacity: 1 }, // default
+      metadata: { strokeOpacity: 1 },
       isTemp: true,
     };
 
     addEntity(entity);
     setSelectedEntityId(tempId);
-    openSidebar('entity', entity); // ← thêm dòng này để mở sidebar sau khi vẽ
+    openSidebar('entity', entity);
   };
 }
+
 
 
 export async function updateEntityGeometryHandler({

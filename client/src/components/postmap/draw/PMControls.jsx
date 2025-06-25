@@ -14,6 +14,7 @@ export default function PMControls({
   onCreateEntity,
   onUpdatePolygon,
   onUpdateEntityGeometry,
+  disableEntityCreation = false, // ✅ Thêm giá trị mặc định
 }) {
   const map = useMapEvent('pm:mounted', () => {}); // Chờ map mount xong
 
@@ -36,6 +37,15 @@ export default function PMControls({
       dragMode: isEditMode,
       removalMode: isEditMode,
     });
+
+    // ✅ Bật/tắt vẽ entity theo disableEntityCreation
+    if (disableEntityCreation) {
+      map.pm.disableDraw('Polygon');
+      map.pm.disableDraw('Marker');
+    } else {
+      map.pm.enableDraw('Polygon');
+      map.pm.enableDraw('Marker');
+    }
 
     // 🧮 Trích xuất toạ độ tùy theo hình vẽ
     const extractCoordinates = (geoJSON, shape) =>
@@ -61,7 +71,11 @@ export default function PMControls({
         return;
       }
 
-      if ((shape === 'Polygon' || shape === 'Marker') && isValidAreaId(areaId) && onCreateEntity) {
+      if (
+        (shape === 'Polygon' || shape === 'Marker') &&
+        isValidAreaId(areaId) &&
+        onCreateEntity
+      ) {
         onCreateEntity({
           type: shape.toLowerCase(),
           coordinates,
@@ -78,7 +92,11 @@ export default function PMControls({
       const geoJSON = e.layer.toGeoJSON();
 
       // Nếu là Area
-      if (geoJSON.geometry.type === 'Polygon' && e.layer.options?.isAreaLayer && onUpdatePolygon) {
+      if (
+        geoJSON.geometry.type === 'Polygon' &&
+        e.layer.options?.isAreaLayer &&
+        onUpdatePolygon
+      ) {
         onUpdatePolygon({ coordinates: geoJSON.geometry.coordinates });
       }
 
@@ -106,7 +124,7 @@ export default function PMControls({
       map.off('pm:update', handleUpdate);
       map.pm.removeControls();
     };
-  }, [map, isEditMode, areaId]);
+  }, [map, isEditMode, areaId, disableEntityCreation]);
 
   return null;
 }

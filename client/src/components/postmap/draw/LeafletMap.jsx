@@ -45,6 +45,7 @@ export default function LeafletMap({
         onCreateEntity={onCreateEntity}
         onUpdatePolygon={onUpdatePolygon}
         onUpdateEntityGeometry={onUpdateEntityGeometry}
+       disableEntityCreation={!areaId}
       />
 
       {/* Lớp khu vực (rectangle) */}
