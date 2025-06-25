@@ -18,6 +18,10 @@ const metadataSchema = new mongoose.Schema({
     type: locationSchema,
     default: undefined, // chỉ có nếu là marker
   },
+   strokeColor: { type: String, default: '#3388ff' },    // ← bổ sung
+  strokeOpacity: { type: Number, default: 1 },          // ← có rồi
+  fillColor: { type: String, default: '#3388ff' },      // ← bổ sung
+  fillOpacity: { type: Number, default: 0 },            // ← bổ sung
 }, { _id: false });
 
 const entitySchema = new mongoose.Schema({

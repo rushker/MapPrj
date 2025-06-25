@@ -5,20 +5,22 @@ import {
   updateEntityMetadata,
 } from '../../../services/entities';
 
-export function handleCreateEntityDispatcher({ addEntity, setSelectedEntityId, openSidebar }) {
+export function handleCreateEntityDispatcher({ areaId, addEntity, setSelectedEntityId, openSidebar }) {
   return ({ type, coordinates, geometry }) => {
     const tempId = `temp-${Date.now()}`;
-    const newEntity = {
+    const entity = {
       _id: tempId,
+      areaId,
       type,
       geometry,
-      metadata: { strokeOpacity: 1 },
+      name: '',
+      metadata: { strokeOpacity: 1 }, // default
       isTemp: true,
     };
 
-    addEntity(newEntity);
+    addEntity(entity);
     setSelectedEntityId(tempId);
-    openSidebar('entity', newEntity); // Mở sidebar cho Polygon/Marker
+    openSidebar('entity', entity); // ← thêm dòng này để mở sidebar sau khi vẽ
   };
 }
 

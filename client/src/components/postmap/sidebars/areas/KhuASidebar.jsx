@@ -1,5 +1,5 @@
-// components/sidebars/areas/KhuASidebar.jsx
-import OpacitySlider from './OpacitySlider';
+// src/components/sidebars/areas/KhuASidebar.jsx
+import ColorOpacityPicker from '../../../postmap/draw/ColorOpacityPicker';
 import useAreaMetadata from '../../../../hooks/local/metadata/useAreaMetadata';
 
 export default function KhuASidebar({ onClose, isEditMode }) {
@@ -7,8 +7,8 @@ export default function KhuASidebar({ onClose, isEditMode }) {
     areaMetadata,
     errors,
     handleInputChange,
-    handleOpacityChange,
-  } = useAreaMetadata(); // Lấy từ context, không truyền metadata
+    handleStyleChange,
+  } = useAreaMetadata();
 
   if (!areaMetadata) return <div className="p-4">Chưa chọn Khu A</div>;
 
@@ -43,11 +43,18 @@ export default function KhuASidebar({ onClose, isEditMode }) {
       {errors.type && <p className="text-red-600">{errors.type}</p>}
 
       {isEditMode && (
-        <OpacitySlider
-  value={areaMetadata.strokeOpacity ?? 1}
-  onChange={handleOpacityChange}
-  label="Độ trong suốt viền Khu A:"
-/>
+        <div className="space-y-4">
+          <ColorOpacityPicker
+            label="Viền (Stroke)"
+            color={areaMetadata.strokeColor || { r: 51, g: 136, b: 255, a: 1 }}
+            onChange={(val) => handleStyleChange('strokeColor', val)}
+          />
+          <ColorOpacityPicker
+            label="Màu nền (Fill)"
+            color={areaMetadata.fillColor || { r: 255, g: 0, b: 0, a: 0.4 }}
+            onChange={(val) => handleStyleChange('fillColor', val)}
+          />
+        </div>
       )}
 
       {isEditMode && (

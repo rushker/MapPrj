@@ -104,20 +104,22 @@ export function useEntityMetadata(entity, onChange) {
   };
 
   /**
-   * Cập nhật độ trong suốt của viền (strokeOpacity) — chỉ áp dụng cho polygon
+   * Cập nhật màu — chỉ áp dụng cho polygon , và Area(rectangle) có thể truyền field là strokeColor, strokeOpacity, fillColor, fillOpacity.
    */
-  const handleStrokeOpacityChange = (value) => {
-    if (!isEditMode) return;
+  const handleStyleChange = (field, value) => {
+  if (!isEditMode) return;
 
-    const updated = {
-      ...entity,
-      metadata: {
-        ...entity.metadata,
-        strokeOpacity: value,
-      },
-    };
-    onChange?.(updated);
+  const updated = {
+    ...entity,
+    metadata: {
+      ...entity.metadata,
+      [field]: value,
+    },
   };
+
+  if (onChange) onChange(updated);
+};
+
 
   /**
    * Đặt lại entity hiện tại thành giá trị "ban đầu"
@@ -159,5 +161,6 @@ export function useEntityMetadata(entity, onChange) {
     handleImagesChange,
     handleLocationChange,
     handleStrokeOpacityChange,
+    handleStyleChange,
   };
 }

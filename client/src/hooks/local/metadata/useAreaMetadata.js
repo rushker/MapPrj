@@ -34,13 +34,19 @@ export default function useAreaMetadata(onChange) {
     setAreaMetadata(updated);
     onChange?.(updated);
   };
-
-  const handleOpacityChange = (value) => {
+  /**
+ * Cập nhật màu sắc hoặc độ trong suốt (strokeColor, fillColor, strokeOpacity, fillOpacity)
+ */
+  const handleStyleChange = (field, value) => {
   if (!isEditMode) return;
-    const updated = { ...areaMetadata, strokeOpacity: value }; // 👈 đổi key
-    setAreaMetadata(updated);
-    onChange?.(updated);
+  const updated = {
+    ...areaMetadata,
+    [field]: value,
   };
+  setAreaMetadata(updated);
+  onChange?.(updated);
+};
+
 
   const isUnchanged = useMemo(() => {
     if (!initialMetadata || !areaMetadata) return false;
@@ -61,6 +67,6 @@ export default function useAreaMetadata(onChange) {
     isValid,
     isUnchanged,
     handleInputChange,
-    handleOpacityChange,
+    handleStyleChange,
   };
 }

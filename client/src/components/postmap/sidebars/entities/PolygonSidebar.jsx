@@ -1,6 +1,6 @@
 // src/components/sidebars/entities/PolygonSidebar.jsx
 import ImageUploader from './ImageUploader';
-import OpacitySlider from '../areas/OpacitySlider';
+import ColorOpacityPicker from '../../draw/ColorOpacityPicker';
 import { uploadImage, deleteImage } from '../../../../services/media';
 import { useEntityMetadata } from '../../../../hooks/local/metadata/useEntityMetadata';
 import { useState } from 'react';
@@ -90,12 +90,20 @@ export default function PolygonSidebar({ entity, onChange, onSave, onDelete, onC
       )}
 
       {isEditMode && (
-        <OpacitySlider
-        value={currentEntity.metadata?.strokeOpacity ?? 1}
-        onChange={handleStrokeOpacityChange}
-        label="Độ trong suốt viền Khu C:"
-      />
-      )}
+  <>
+    <ColorOpacityPicker
+      label="Màu viền (Stroke)"
+      color={currentEntity.metadata?.strokeColor || { r: 51, g: 136, b: 255, a: 1 }}
+      onChange={(val) => handleStyleChange('strokeColor', val)}
+    />
+    <ColorOpacityPicker
+      label="Màu nền (Fill)"
+      color={currentEntity.metadata?.fillColor || { r: 255, g: 0, b: 0, a: 0.4 }}
+      onChange={(val) => handleStyleChange('fillColor', val)}
+    />
+  </>
+)}
+
 
       {isEditMode && (
         <div className="flex justify-between mt-4">

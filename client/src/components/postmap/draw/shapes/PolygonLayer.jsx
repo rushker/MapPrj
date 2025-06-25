@@ -19,14 +19,15 @@ const getPolygonStyle = (entity, isSelected) => {
   if (isSelected) return selectedStyle;
 
   return {
-    color: '#3388ff',
+    color: entity?.metadata?.strokeColor || '#3388ff',
     weight: 2,
-    fill: false,
-    fillColor: 'transparent',
-    fillOpacity: 0,
     opacity: entity?.metadata?.strokeOpacity ?? 1,
+    fill: true,
+    fillColor: entity?.metadata?.fillColor || 'transparent',
+    fillOpacity: entity?.metadata?.fillOpacity ?? 0,
   };
 };
+
 
 const PolygonLayer = ({ selectedEntityId, onSelectEntity, entities: overrideEntities }) => {
   const map = useMap();

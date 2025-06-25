@@ -1,13 +1,17 @@
-//src/components/postmap/draw/LeafletMap
-import { MapContainer, TileLayer, useMapEvent } from 'react-leaflet';
+// src/components/postmap/draw/LeafletMap.jsx
+import { MapContainer, TileLayer } from 'react-leaflet';
 import '@geoman-io/leaflet-geoman-free';
 import '@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css';
+
 import AreaLayer from './layers/AreaLayer';
 import EntityLayer from './layers/EntityLayer';
-import { useAreaContext } from '../../../context/AreaContext';
-import { isValidAreaId } from '../../../utils/areaUtils';
-import { useEffect } from 'react';
+import PMControls from './PMControls';
 
+import { useAreaContext } from '../../../context/AreaContext';
+
+/**
+ * Component khởi tạo Leaflet map + xử lý sự kiện vẽ.
+ */
 export default function LeafletMap({
   areaMetadata,
   selectedEntityId,
@@ -16,104 +20,9 @@ export default function LeafletMap({
   onCreateEntity,
   onUpdatePolygon,
   onUpdateEntityGeometry,
-  mapRef, // ✅ Nhận prop từ PostMapWrapper
+  mapRef, // ref từ cha
 }) {
   const { areaId, isEditMode } = useAreaContext();
-
-  // Helper component that runs _once_ after the map is created:
-  function PMInit() {
-    const map = useMapEvent('pm:mounted', () => {});
-
-    useEffect(() => {
-      if (!map.pm) return;
-
-      // ✅ Gán map instance vào ref truyền từ cha
-      if (mapRef) {
-        mapRef.current = map;
-      }
-
-      // 1) Add toolbar
-      map.pm.addControls({
-        position: 'topleft',
-        drawCircle: false,
-        drawPolyline: false,
-        drawCircleMarker: false,
-        drawMarker: true,
-        drawPolygon: true,
-        drawRectangle: true,
-        editMode: isEditMode,
-        dragMode: isEditMode,
-        removalMode: isEditMode,
-      });
-
-      // 2) onCreate handler
-      const extractCoordinates = (gj, shape) =>
-        shape === 'Marker'
-          ? gj.geometry.coordinates
-          : gj.geometry.coordinates?.[0] ?? [];
-
-      const handleCreate = async (e) => {
-  const { layer, shape } = e;
-  const gj = layer.toGeoJSON();
-  const coords = extractCoordinates(gj, shape);
-
-  if (shape === 'Rectangle') {
-    await onCreateArea({
-      type: 'polygon',
-      coordinates: coords,
-      polygon: gj.geometry,
-      maxZoom: map.getZoom(),
-    });
-    layer.remove();
-     
-  } else if ((shape === 'Polygon' || shape === 'Marker') && isValidAreaId(areaId)) {
-  // Tạm giữ thông tin để user xác nhận
-  onCreateEntity({
-    type: shape.toLowerCase(),
-    coordinates: coords,
-    geometry: gj.geometry,
-    layer, // ✅ giữ lại layer để hiển thị hoặc remove nếu huỷ
-    geoJSON: gj, // phòng trường hợp cần
-    metadata: { strokeOpacity: 1 },
-  });
-  }
-};
-      // 3) onUpdate handler
-      const handleUpdate = (e) => {
-        const gj = e.layer.toGeoJSON();
-
-        if (
-          gj.geometry.type === 'Polygon' &&
-          e.layer.options.isAreaLayer &&
-          onUpdatePolygon
-        ) {
-          onUpdatePolygon({ coordinates: gj.geometry.coordinates });
-        }
-
-        if (gj.properties?.entityId && onUpdateEntityGeometry) {
-          const coords =
-            gj.geometry.type === 'Point'
-              ? gj.geometry.coordinates
-              : gj.geometry.coordinates[0];
-          onUpdateEntityGeometry({
-            entityId: gj.properties.entityId,
-            coordinates: coords,
-          });
-        }
-      };
-
-      map.on('pm:create', handleCreate);
-      map.on('pm:update', handleUpdate);
-
-      return () => {
-        map.off('pm:create', handleCreate);
-        map.off('pm:update', handleUpdate);
-        map.pm.removeControls();
-      };
-    }, [map, isEditMode, areaId]);
-
-    return null;
-  }
 
   return (
     <MapContainer
@@ -126,8 +35,22 @@ export default function LeafletMap({
         attribution='&copy; <a href="https://osm.org">OpenStreetMap</a>'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
-      <PMInit />
+
+      {/* Khởi tạo Geoman sau khi mount map */}
+      <PMControls
+        areaId={areaId}
+        isEditMode={isEditMode}
+        mapRef={mapRef}
+        onCreateArea={onCreateArea}
+        onCreateEntity={onCreateEntity}
+        onUpdatePolygon={onUpdatePolygon}
+        onUpdateEntityGeometry={onUpdateEntityGeometry}
+      />
+
+      {/* Lớp khu vực (rectangle) */}
       {areaMetadata && <AreaLayer area={areaMetadata} />}
+
+      {/* Lớp thực thể (polygon, marker) */}
       <EntityLayer
         selectedEntityId={selectedEntityId}
         onSelectEntity={onSelectEntity}
