@@ -7,7 +7,7 @@ import { useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 export default function PolygonSidebar({ entity, onChange, onDelete, onClose, isEditMode = false }) {
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading] = useState(false);
   const {
     entity: currentEntity,
     handleInputChange,

@@ -8,7 +8,7 @@ import { toast } from 'react-hot-toast';
 
 export default function MarkerSidebar(props) {
   const { entity, onChange,  onDelete, onClose, isEditMode = false } = props;
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading] = useState(false);
 
   const {
     entity: currentEntity,

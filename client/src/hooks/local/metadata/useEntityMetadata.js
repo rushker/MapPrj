@@ -160,7 +160,6 @@ export function useEntityMetadata(entity, onChange) {
     handleCheckboxChange,
     handleImagesChange,
     handleLocationChange,
-    handleStrokeOpacityChange,
     handleStyleChange,
   };
 }
