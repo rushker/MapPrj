@@ -93,9 +93,6 @@ export default function MarkerSidebar(props) {
         <div className="flex justify-between mt-4">
           <button className="btn btn-danger" onClick={onDelete} disabled={isLoading}>Xóa</button>
           <button className="btn btn-secondary" onClick={onClose} disabled={isLoading}>Đóng</button>
-          <button className={`btn btn-primary ${saveDisabled ? 'opacity-50 cursor-not-allowed' : ''}`} onClick={handleSaveClick} disabled={saveDisabled}>
-            {isLoading ? 'Đang lưu...' : 'Lưu'}
-          </button>
         </div>
       )}
     </div>

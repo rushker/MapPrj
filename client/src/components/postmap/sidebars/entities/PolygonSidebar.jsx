@@ -91,19 +91,16 @@ export default function PolygonSidebar({ entity, onChange, onSave, onDelete, onC
 
       {isEditMode && (
         <OpacitySlider
-          value={currentEntity.metadata?.strokeOpacity ?? 1}
-          onChange={(val) => handleInputChange('metadata.strokeOpacity')({ target: { value: val } })}
-          label="Độ trong suốt viền Khu C:"
-        />
+        value={currentEntity.metadata?.strokeOpacity ?? 1}
+        onChange={handleStrokeOpacityChange}
+        label="Độ trong suốt viền Khu C:"
+      />
       )}
 
       {isEditMode && (
         <div className="flex justify-between mt-4">
           <button className="btn btn-danger" onClick={onDelete} disabled={isLoading}>Xóa</button>
           <button className="btn btn-secondary" onClick={onClose} disabled={isLoading}>Đóng</button>
-          <button className={`btn btn-primary ${saveDisabled ? 'opacity-50 cursor-not-allowed' : ''}`} onClick={handleSaveClick} disabled={saveDisabled}>
-            {isLoading ? 'Đang lưu...' : 'Lưu'}
-          </button>
         </div>
       )}
     </div>
