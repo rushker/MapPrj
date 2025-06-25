@@ -6,15 +6,13 @@ import { useEntityMetadata } from '../../../../hooks/local/metadata/useEntityMet
 import { useState } from 'react';
 import { toast } from 'react-hot-toast';
 
-export default function PolygonSidebar({ entity, onChange, onSave, onDelete, onClose, isEditMode = false }) {
+export default function PolygonSidebar({ entity, onChange, onDelete, onClose, isEditMode = false }) {
   const [isLoading, setIsLoading] = useState(false);
   const {
     entity: currentEntity,
-    validate,
-    isValid,
-    isUnchanged,
     handleInputChange,
     handleImagesChange,
+    handleStyleChange,
   } = useEntityMetadata(entity, isEditMode ? onChange : null);
 
   if (!entity) return null;
@@ -43,22 +41,7 @@ export default function PolygonSidebar({ entity, onChange, onSave, onDelete, onC
       toast.error('Xóa ảnh thất bại: ' + err.message);
     }
   };
-
-  const handleSaveClick = async () => {
-    if (!isEditMode || !validate()) return;
-    setIsLoading(true);
-    try {
-      await onSave(currentEntity._id, currentEntity.metadata || {});
-      toast.success('Đã lưu thông tin thành công');
-    } catch (err) {
-      toast.error(`Lỗi khi lưu: ${err.message}`);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const saveDisabled = !isValid || isUnchanged || isLoading || !isEditMode;
-
+  
   return (
     <div className="sidebar p-4 w-80 bg-white border shadow-lg rounded-lg">
       <h2 className="text-xl font-semibold mb-4">Khu C</h2>
@@ -90,20 +73,19 @@ export default function PolygonSidebar({ entity, onChange, onSave, onDelete, onC
       )}
 
       {isEditMode && (
-  <>
-    <ColorOpacityPicker
-      label="Màu viền (Stroke)"
-      color={currentEntity.metadata?.strokeColor || { r: 51, g: 136, b: 255, a: 1 }}
-      onChange={(val) => handleStyleChange('strokeColor', val)}
-    />
-    <ColorOpacityPicker
-      label="Màu nền (Fill)"
-      color={currentEntity.metadata?.fillColor || { r: 255, g: 0, b: 0, a: 0.4 }}
-      onChange={(val) => handleStyleChange('fillColor', val)}
-    />
-  </>
-)}
-
+        <>
+          <ColorOpacityPicker
+            label="Màu viền (Stroke)"
+            color={currentEntity.metadata?.strokeColor || { r: 51, g: 136, b: 255, a: 1 }}
+            onChange={(val) => handleStyleChange('strokeColor', val)}
+          />
+          <ColorOpacityPicker
+            label="Màu nền (Fill)"
+            color={currentEntity.metadata?.fillColor || { r: 255, g: 0, b: 0, a: 0.4 }}
+            onChange={(val) => handleStyleChange('fillColor', val)}
+          />
+        </>
+      )}
 
       {isEditMode && (
         <div className="flex justify-between mt-4">

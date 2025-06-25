@@ -7,14 +7,11 @@ import { useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 export default function MarkerSidebar(props) {
-  const { entity, onChange, onSave, onDelete, onClose, isEditMode = false } = props;
+  const { entity, onChange,  onDelete, onClose, isEditMode = false } = props;
   const [isLoading, setIsLoading] = useState(false);
 
   const {
     entity: currentEntity,
-    validate,
-    isValid,
-    isUnchanged,
     handleInputChange,
     handleImagesChange,
   } = useEntityMetadata(entity, isEditMode ? onChange : null);
@@ -44,20 +41,7 @@ export default function MarkerSidebar(props) {
     }
   };
 
-  const handleSaveClick = async () => {
-    if (!isEditMode || !validate()) return;
-    setIsLoading(true);
-    try {
-      await onSave(currentEntity._id, currentEntity.metadata || {});
-      toast.success('Đã lưu thông tin thành công');
-    } catch (err) {
-      toast.error(`Lỗi khi lưu: ${err.message}`);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
-  const saveDisabled = !isValid || isUnchanged || isLoading || !isEditMode;
 
   return (
     <div className="sidebar p-4 w-80 bg-white border shadow-lg rounded-lg">
