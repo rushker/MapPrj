@@ -5,29 +5,28 @@ import {
   updateEntityMetadata,
 } from '../../../services/entities';
 
+import { createPolygonEntityHandler } from './polygonHandlers';
+import { createMarkerEntityHandler } from './markerHandlers';
+
 export function handleCreateEntityDispatcher({ areaId, addEntity, setSelectedEntityId, openSidebar }) {
   if (!areaId) {
     console.warn('[handleCreateEntityDispatcher] areaId null');
-    return () => {}; // fallback no-op
+    return () => {};
   }
 
-  return ({ type, geometry }) => {
-    const tempId = `temp-${Date.now()}`;
-    const entity = {
-      _id: tempId,
-      areaId,
-      type,
-      geometry,
-      name: '',
-      metadata: { strokeOpacity: 1 },
-      isTemp: true,
-    };
+  const commonProps = { areaId, addEntity, setSelectedEntityId, openSidebar };
 
-    addEntity(entity);
-    setSelectedEntityId(tempId);
-    openSidebar('entity', entity);
+  return ({ type, coordinates, geometry }) => {
+    if (type === 'polygon') {
+      return createPolygonEntityHandler(commonProps)({ coordinates, geometry });
+    } else if (type === 'marker') {
+      return createMarkerEntityHandler(commonProps)({ coordinates, geometry });
+    } else {
+      console.warn('[handleCreateEntityDispatcher] Không hỗ trợ type:', type);
+    }
   };
 }
+
 
 
 

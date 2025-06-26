@@ -2,8 +2,9 @@
 import toast from 'react-hot-toast';
 import { createEntity } from '../../../services/entities';
 
-export function createPolygonEntityHandler({ areaId, addEntity, setSelectedEntityId }) {
+export function createPolygonEntityHandler({ areaId, addEntity, setSelectedEntityId, openSidebar }) {
   return async ({ coordinates, geometry }) => {
+    if (!window.confirm('Bạn có muốn tạo mới vùng này không?')) return;
     if (!areaId) {
       toast.error('Vui lòng tạo khu vực trước');
       return;
@@ -23,15 +24,15 @@ export function createPolygonEntityHandler({ areaId, addEntity, setSelectedEntit
 
       if (!res.success || !res.data) throw new Error('API trả về không hợp lệ');
 
-      // ✅ Patch dữ liệu nếu cần thiết
       const entityData = {
         ...res.data,
-        type: res.data.type ?? 'polygon', 
+        type: res.data.type ?? 'polygon',
         name: res.data.name ?? 'Polygon không tên',
       };
 
       addEntity(entityData);
       setSelectedEntityId(entityData._id);
+      openSidebar?.('entity', entityData); // ✅ MỞ SIDEBAR SAU KHI TẠO
       toast.success('Đã thêm vùng (Polygon)');
     } catch (err) {
       console.error('[createPolygonEntityHandler] Failed:', err);

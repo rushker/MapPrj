@@ -10,8 +10,8 @@ const selectedStyle = {
   color: '#ff5722',
   weight: 3,
   fill: false,
-  fillColor: 'transparent',
-  fillOpacity: 0,
+ fillColor: '#ffffff',
+  fillOpacity: 0.2,
 };
 
 // 🛠 Tạo hàm style động theo từng entity
@@ -23,7 +23,7 @@ const getPolygonStyle = (entity, isSelected) => {
     weight: 2,
     opacity: entity?.metadata?.strokeOpacity ?? 1,
     fill: true,
-    fillColor: entity?.metadata?.fillColor || 'transparent',
+    fillColor: entity?.metadata?.fillColor || '#ffffff',
     fillOpacity: entity?.metadata?.fillOpacity ?? 0,
   };
 };
