@@ -1,37 +1,38 @@
 // src/components/postmap/handlers/markerHandlers.js
+//sử dụng mô hình Offline-first
+
 import toast from 'react-hot-toast';
-import { createEntity } from '../../../services/entities';
 
 export function createMarkerEntityHandler({ areaId, addEntity, setSelectedEntityId, openSidebar }) {
-  return async ({ coordinates, geometry }) => {
-    if (!window.confirm('Bạn có muốn tạo mới vùng này không?')) return;
+  return ({ coordinates, geometry }) => {
+    if (!window.confirm('Bạn có muốn tạo mới điểm này không?')) return;
     if (!areaId) {
       toast.error('Vui lòng tạo khu vực trước');
       return;
     }
 
-    try {
-      const payload = geometry ?? {
+    const tempId = `temp-${Date.now()}`;
+
+    const entityData = {
+      _id: tempId,
+      areaId,
+      type: 'marker',
+      geometry: geometry ?? {
         type: 'Point',
         coordinates,
-      };
+      },
+      name: 'Điểm tạm thời',
+      metadata: {
+        strokeOpacity: 1,
+        fillColor: '#ffffff',
+      },
+      isTemp: true,
+    };
 
-      const res = await createEntity(areaId, {
-        type: 'marker',
-        geometry: payload,
-        name: 'Điểm mới',
-      });
-
-      if (!res.success || !res.data) throw new Error('API trả về không hợp lệ');
-
-      addEntity(res.data);
-      setSelectedEntityId(res.data._id);
-      openSidebar?.('entity', res.data); // ✅ MỞ SIDEBAR
-      toast.success('Đã thêm marker mới');
-    } catch (err) {
-      console.error(err);
-      toast.error('Tạo Marker thất bại');
-    }
+    addEntity(entityData);
+    setSelectedEntityId(tempId);
+    openSidebar?.('entity', entityData); // Mở sidebar để chỉnh sửa
+    toast.success('Đã tạo marker tạm thời');
   };
 }
 

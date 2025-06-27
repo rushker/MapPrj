@@ -1,4 +1,5 @@
-// hooks/local/useAutoSave.js
+// ✅ Refactored useAutoSave.js để trả về danh sách entity đã chỉnh sửa chi tiết
+
 import { useEffect, useRef, useCallback } from 'react';
 import { updateArea } from '../../services/areas';
 import {
@@ -58,7 +59,10 @@ export default function useAutoSave() {
     if (!isValidAreaId(areaId) || !areaMetadata?.name || isSavingRef.current) return;
 
     isSavingRef.current = true;
-    const changes = { area: false, entities: [] };
+    const changes = {
+      area: false,
+      entities: [], // danh sách chi tiết các entity đã lưu
+    };
 
     try {
       // SAVE AREA
@@ -69,44 +73,56 @@ export default function useAutoSave() {
 
       // SAVE CHANGED ENTITIES
       const updatePromises = entities.flatMap(entity => {
-      const prev = prevEntityMapRef.current.get(entity._id);
-      const promises = [];
+        const prev = prevEntityMapRef.current.get(entity._id);
+        const entityChanges = {
+          _id: entity._id,
+          name: entity.name,
+          updated: false,
+          metadataUpdated: false,
+          geometryUpdated: false,
+        };
 
-      if (!isValidAreaId(entity.areaId)) return [];
+        const promises = [];
 
-      // FIX: THÊM entity.areaId
-      if (!isEqual(entity.metadata, prev?.metadata)) {
-        promises.push(
-          updateEntityMetadata(entity.areaId, entity._id, entity.metadata)
-            .then(() => entity._id)
-            .catch(err => {
-              console.error(`Metadata update failed for entity ${entity._id}`, err);
-              return null;
-            })
-        );
-      }
+        if (!isValidAreaId(entity.areaId)) return [];
 
-      // FIX: THÊM entity.areaId
-      if (!isEqual(entity.geometry, prev?.geometry)) {
-        promises.push(
-          updateEntityGeometry(entity.areaId, entity._id, entity.geometry)
-            .then(() => entity._id)
-            .catch(err => {
-              console.error(`Geometry update failed for entity ${entity._id}`, err);
-              return null;
-            })
-        );
-      }
+        if (!isEqual(entity.metadata, prev?.metadata)) {
+          entityChanges.metadataUpdated = true;
+          promises.push(
+            updateEntityMetadata(entity.areaId, entity._id, entity.metadata)
+              .then(() => {
+                entityChanges.updated = true;
+              })
+              .catch(err => {
+                console.error(`Metadata update failed for entity ${entity._id}`, err);
+              })
+          );
+        }
 
-      return promises;
-    });
+        if (!isEqual(entity.geometry, prev?.geometry)) {
+          entityChanges.geometryUpdated = true;
+          promises.push(
+            updateEntityGeometry(entity.areaId, entity._id, entity.geometry)
+              .then(() => {
+                entityChanges.updated = true;
+              })
+              .catch(err => {
+                console.error(`Geometry update failed for entity ${entity._id}`, err);
+              })
+          );
+        }
 
-      const updatedIds = (await Promise.all(updatePromises)).filter(Boolean);
-      changes.entities = updatedIds;
+        if (promises.length > 0) {
+          changes.entities.push(entityChanges);
+        }
 
-      // Success
+        return promises;
+      });
+
+      await Promise.all(updatePromises);
+
       if (changes.area || changes.entities.length > 0) {
-        toast.success('Đã tự động lưu bản nháp');
+        toast.success(`Đã lưu ${changes.entities.length} đối tượng`);
         prevAreaRef.current = { ...areaMetadata };
         prevEntityMapRef.current = new Map(
           entities.map(e => [e._id, { ...e }])
@@ -119,12 +135,13 @@ export default function useAutoSave() {
     } finally {
       isSavingRef.current = false;
     }
+
+    return changes;
   }, [areaId, areaMetadata, entities, hasAreaChanged]);
 
   useEffect(() => {
     if (!isValidAreaId(areaId) || !areaMetadata?.name) return;
 
-    // Init refs
     if (!prevAreaRef.current) {
       prevAreaRef.current = { ...areaMetadata };
     }
@@ -141,8 +158,9 @@ export default function useAutoSave() {
 
   const manualSave = useCallback(async () => {
     clearTimeout(debounceTimeoutRef.current);
-    await saveChanges();
+    const result = await saveChanges();
     wasManuallySavedRef.current = true;
+    return result;
   }, [saveChanges]);
 
   return {

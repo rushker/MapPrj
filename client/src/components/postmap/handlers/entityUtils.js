@@ -1,14 +1,15 @@
-// src/components/postmap/handlers/entityUtils.js
-import toast from 'react-hot-toast';
-import {
-  updateEntityGeometry,
-  updateEntityMetadata,
-} from '../../../services/entities';
 
+// src/components/postmap/handlers/entityUtils.js 
+import toast from 'react-hot-toast';
 import { createPolygonEntityHandler } from './polygonHandlers';
 import { createMarkerEntityHandler } from './markerHandlers';
 
-export function handleCreateEntityDispatcher({ areaId, addEntity, setSelectedEntityId, openSidebar }) {
+export function handleCreateEntityDispatcher({ 
+  areaId, 
+  addEntity, 
+  setSelectedEntityId, 
+  openSidebar 
+}) {
   if (!areaId) {
     console.warn('[handleCreateEntityDispatcher] areaId null');
     return () => {};
@@ -27,51 +28,34 @@ export function handleCreateEntityDispatcher({ areaId, addEntity, setSelectedEnt
   };
 }
 
-
-
-
-export async function updateEntityGeometryHandler({
-  areaId,
+// Cập nhật geometry chỉ thay đổi trong store local
+export function updateEntityGeometryHandler({
   entityId,
   coordinates,
-  contextUpdateEntityGeometry,
+  contextUpdateEntityGeometry, // Hàm cập nhật trong context
 }) {
-  if (!areaId) {
-    toast.error('Không tìm thấy areaId');
-    return;
-  }
   if (!entityId) {
     toast.error('Không tìm thấy entityId');
     return;
   }
 
-  try {
-    await updateEntityGeometry(areaId, entityId, { coordinates });
-    contextUpdateEntityGeometry(entityId, { coordinates });
-    toast.success('Đã cập nhật vị trí/thể hiện hình học của đối tượng');
-  } catch (err) {
-    console.error(err);
-    toast.error('Cập nhật hình học thất bại');
-  }
+  // Chỉ cập nhật local store, không gọi API
+  contextUpdateEntityGeometry(entityId, { coordinates });
+  toast.success('Đã cập nhật bản nháp');
 }
 
-export async function saveEntityMetadataHandler({
-  areaId,
+// Cập nhật metadata chỉ trong store local
+export function saveEntityMetadataHandler({
   entityId,
   metadata,
-  contextUpdateEntityMetadata,
+  contextUpdateEntityMetadata, // Hàm cập nhật trong context
 }) {
-  if (!areaId) {
-    toast.error('Vui lòng chọn khu vực trước');
+  if (!entityId) {
+    toast.error('Không tìm thấy entity');
     return;
   }
 
-  try {
-    await updateEntityMetadata(areaId, entityId, metadata);
-    contextUpdateEntityMetadata(entityId, metadata);
-    toast.success('Đã cập nhật thông tin đối tượng');
-  } catch (err) {
-    console.error('Lỗi khi lưu metadata:', err);
-    toast.error(`Lỗi: ${err.message}`);
-  }
+  // Chỉ cập nhật local store, không gọi API
+  contextUpdateEntityMetadata(entityId, metadata);
+  toast.success('Đã lưu thay đổi vào bản nháp');
 }

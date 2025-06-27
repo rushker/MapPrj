@@ -1,19 +1,21 @@
 // src/pages/PostMapPage.jsx
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ROUTES } from '../routes';
 import { AreaProvider, useAreaContext } from '../context/AreaContext';
 import useAutoSave from '../hooks/local/useAutoSave';
 import PostMapWrapper from '../components/postmap/PostMapWrapper';
 import { SidebarProvider, useSidebarContext } from '../context/SidebarContext';
 import { isValidAreaId } from '../utils/areaUtils';
-import * as api from '../services/areas'; // 🔧 đảm bảo đã import đúng
+import * as api from '../services/areas';
 import { openAreaEditorHandler } from '../components/postmap/handlers/areaHandlers';
+import EntityChangePanel from '../components/postmap/EntityChangePanel';
+
 export default function PostMapPage() {
   return (
-     <AreaProvider isEditMode={true}>
-      <SidebarProvider> {/* 👈 di chuyển lên đây */}
+    <AreaProvider isEditMode={true}>
+      <SidebarProvider>
         <PostMapContent />
       </SidebarProvider>
     </AreaProvider>
@@ -23,38 +25,65 @@ export default function PostMapPage() {
 function PostMapContent() {
   const navigate = useNavigate();
   const { areaId, areaMetadata } = useAreaContext();
-  const { manualSave } = useAutoSave();
-  const { sidebarOpen, editingType,openSidebar } = useSidebarContext();
+  const { manualSave, hasUnsavedChanges } = useAutoSave();
+  const { sidebarOpen, editingType, openSidebar } = useSidebarContext();
+
   const [uploading, setUploading] = useState(false);
+  const [selectedEntityId, setSelectedEntityId] = useState(null);
+  const [changes, setChanges] = useState(null);
+
   const handleOpenAreaEditor = openAreaEditorHandler({
     areaMetadata,
     openSidebar
   });
 
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (hasUnsavedChanges()) {
+        e.preventDefault();
+        e.returnValue = 'Bạn chưa lưu dữ liệu, chắc chắn muốn rời đi?';
+        return 'Bạn chưa lưu dữ liệu, chắc chắn muốn rời đi?';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasUnsavedChanges]);
+
   const handleUpload = async () => {
-  if (uploading) return;
-  setUploading(true);
-  await manualSave();
+    if (uploading) return;
+    setUploading(true);
 
-  if (!areaId) {
-    toast.error('Thiếu areaId để upload');
-    setUploading(false);
-    return;
-  }
+    const latestChanges = await manualSave();
+    setChanges(latestChanges);
 
-  try {
-    await api.publishArea(areaId);
-    toast.success('Upload bản đồ thành công');
-    navigate(ROUTES.VIEW_MAP(areaId));
-  } catch (error) {
-    console.error('Upload failed', error);
-    toast.error('Upload bản đồ thất bại');
-  } finally {
-    setUploading(false);
-  }
-};
+    if (!areaId) {
+      toast.error('Thiếu areaId để upload');
+      setUploading(false);
+      return;
+    }
+
+    if (latestChanges?.entities?.length === 0 && !latestChanges?.area) {
+      toast('Không có thay đổi mới để upload');
+      setUploading(false);
+      return;
+    }
+
+    try {
+      await api.publishArea(areaId);
+      toast.success('Upload bản đồ thành công');
+      navigate(ROUTES.VIEW_MAP(areaId));
+    } catch (error) {
+      console.error('Upload failed', error);
+      toast.error('Upload bản đồ thất bại');
+    } finally {
+      setUploading(false);
+    }
+  };
+
   return (
     <div className="flex flex-col h-screen">
+      {/* Header */}
       <header className="flex justify-between p-4 bg-gray-100 sticky top-0 z-50">
         <button
           onClick={() => navigate(ROUTES.MANAGER_PAGE)}
@@ -69,7 +98,7 @@ function PostMapContent() {
             disabled={!areaId || uploading}
             className="btn btn-primary"
           >
-          {uploading ? '⏳ Đang upload...' : '📤 Upload bản đồ'}
+            {uploading ? '⏳ Đang upload...' : '📤 Upload bản đồ'}
           </button>
           <button
             onClick={() => navigate(ROUTES.VIEW_MAP(areaId))}
@@ -81,7 +110,7 @@ function PostMapContent() {
         </div>
       </header>
 
-      {/* Nút chỉnh sửa Khu A */}
+      {/* Button chỉnh sửa khu vực */}
       {isValidAreaId(areaId) && !sidebarOpen && editingType !== 'area' && (
         <button
           onClick={handleOpenAreaEditor}
@@ -90,8 +119,17 @@ function PostMapContent() {
           ✏️ Chỉnh sửa Khu A
         </button>
       )}
+
+      {/* Main Content */}
       <main className="flex-1 relative">
-        <PostMapWrapper/>
+        <PostMapWrapper
+          selectedEntityId={selectedEntityId}
+          onSelectEntity={setSelectedEntityId}
+        />
+        <EntityChangePanel
+          changes={changes}
+          onSelectEntity={(id) => setSelectedEntityId(id)}
+        />
       </main>
     </div>
   );

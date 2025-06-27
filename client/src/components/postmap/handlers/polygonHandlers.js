@@ -1,42 +1,41 @@
 // src/components/postmap/handlers/polygonHandlers.js
+//sử dụng mô hình Offline-first
+
 import toast from 'react-hot-toast';
-import { createEntity } from '../../../services/entities';
+
 
 export function createPolygonEntityHandler({ areaId, addEntity, setSelectedEntityId, openSidebar }) {
-  return async ({ coordinates, geometry }) => {
+  return ({ coordinates, geometry }) => {
     if (!window.confirm('Bạn có muốn tạo mới vùng này không?')) return;
     if (!areaId) {
       toast.error('Vui lòng tạo khu vực trước');
       return;
     }
 
-    try {
-      const payload = geometry ?? {
+    const tempId = `temp-${Date.now()}`;
+
+    const entityData = {
+      _id: tempId,
+      areaId,
+      type: 'polygon',
+      name: 'Polygon tạm thời',
+      geometry: geometry ?? {
         type: 'Polygon',
         coordinates: [coordinates],
-      };
+      },
+      metadata: {
+        strokeColor: '#3388ff',
+        fillColor: '#ffffff',
+        strokeOpacity: 1,
+        fillOpacity: 0.2,
+      },
+      isTemp: true,
+    };
 
-      const res = await createEntity(areaId, {
-        type: 'polygon',
-        geometry: payload,
-        name: 'Polygon mới',
-      });
-
-      if (!res.success || !res.data) throw new Error('API trả về không hợp lệ');
-
-      const entityData = {
-        ...res.data,
-        type: res.data.type ?? 'polygon',
-        name: res.data.name ?? 'Polygon không tên',
-      };
-
-      addEntity(entityData);
-      setSelectedEntityId(entityData._id);
-      openSidebar?.('entity', entityData); // ✅ MỞ SIDEBAR SAU KHI TẠO
-      toast.success('Đã thêm vùng (Polygon)');
-    } catch (err) {
-      console.error('[createPolygonEntityHandler] Failed:', err);
-      toast.error('Tạo Polygon thất bại');
-    }
+    addEntity(entityData);
+    setSelectedEntityId(tempId);
+    openSidebar?.('entity', entityData); // Cho phép chỉnh sửa metadata
+    toast.success('Đã tạo vùng (polygon) tạm thời');
   };
 }
+
