@@ -1,8 +1,7 @@
 // src/components/postmap/EntityChangePanel.jsx
-
 import { useState, useRef, useEffect } from 'react';
 import { useAreaContext } from '../../context/AreaContext';
-import { ChevronDown, ChevronUp, ListChecks, Move, X } from 'lucide-react';
+import { ChevronDown, ChevronUp, ListChecks, X } from 'lucide-react';
 
 export default function EntityChangePanel({ changes, onSelectEntity }) {
   const { entities: allEntities } = useAreaContext();
@@ -15,12 +14,11 @@ export default function EntityChangePanel({ changes, onSelectEntity }) {
 
   const [open, setOpen] = useState(false);
   const [isAnimatingOut, setIsAnimatingOut] = useState(false);
-
   const [dragging, setDragging] = useState(false);
   const offset = useRef({ x: 0, y: 0 });
 
   const { area, entities: changedEntities = [] } = changes ?? {};
-  const changedIds = new Set(changedEntities?.map((e) => e._id));
+  const changedIds = new Set(changedEntities.map((e) => e._id));
 
   const handleMouseDown = (e) => {
     setDragging(true);
@@ -87,7 +85,7 @@ export default function EntityChangePanel({ changes, onSelectEntity }) {
       setTimeout(() => {
         setOpen(false);
         setIsAnimatingOut(false);
-      }, 300); // match animation duration
+      }, 300);
     } else {
       setOpen(true);
     }
@@ -110,13 +108,11 @@ export default function EntityChangePanel({ changes, onSelectEntity }) {
         onClick={handleTogglePanel}
         className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-full shadow hover:bg-blue-700 transition cursor-move touch-none"
       >
-        <Move className="w-4 h-4 opacity-70" />
         <ListChecks className="w-4 h-4" />
         {open && !isAnimatingOut ? 'Ẩn thay đổi' : 'Xem thay đổi'}
         {open && !isAnimatingOut ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
       </button>
 
-      {/* Panel content */}
       {open && (
         <div
           className={`
@@ -141,13 +137,14 @@ export default function EntityChangePanel({ changes, onSelectEntity }) {
               <h2 className="font-bold mb-1">📝 Entity đã chỉnh sửa ({changedEntities.length})</h2>
               <ul className="list-disc pl-6 space-y-1">
                 {changedEntities.map((e) => (
-                  <li
-                    key={e._id}
-                    className="cursor-pointer hover:underline text-blue-600"
-                    onClick={() => onSelectEntity?.(e._id)}
-                  >
-                    {e.name || 'Không tên'}{' '}
-                    <span className="text-xs text-gray-500">
+                  <li key={e._id}>
+                    <button
+                      className="text-left text-blue-600 hover:underline"
+                      onClick={() => onSelectEntity?.(e._id)}
+                    >
+                      {e.name || 'Không tên'}
+                    </button>
+                    <span className="text-xs text-gray-500 ml-1">
                       ({e.metadataUpdated ? 'metadata' : ''} {e.geometryUpdated ? 'geometry' : ''})
                     </span>
                   </li>
@@ -163,9 +160,14 @@ export default function EntityChangePanel({ changes, onSelectEntity }) {
             <ul className="list-disc pl-6 text-gray-600 space-y-1">
               {allEntities.map((e) => (
                 <li key={e._id}>
-                  {e.name || 'Không tên'}{' '}
+                  <button
+                    className="text-left text-blue-600 hover:underline"
+                    onClick={() => onSelectEntity?.(e._id)}
+                  >
+                    {e.name || 'Không tên'}
+                  </button>
                   {changedIds.has(e._id) && (
-                    <span className="text-orange-500 text-sm">(đã chỉnh)</span>
+                    <span className="text-orange-500 text-sm ml-1">(đã chỉnh)</span>
                   )}
                 </li>
               ))}

@@ -1,8 +1,6 @@
 // src/components/postmap/handlers/polygonHandlers.js
 //sử dụng mô hình Offline-first
-
 import toast from 'react-hot-toast';
-
 
 export function createPolygonEntityHandler({ areaId, addEntity, setSelectedEntityId, openSidebar }) {
   return ({ coordinates, geometry }) => {
@@ -36,6 +34,10 @@ export function createPolygonEntityHandler({ areaId, addEntity, setSelectedEntit
     setSelectedEntityId(tempId);
     openSidebar?.('entity', entityData); // Cho phép chỉnh sửa metadata
     toast.success('Đã tạo vùng (polygon) tạm thời');
+
+    // ✅ Gọi panel nếu chưa hiện
+    if (typeof window.__triggerEntityPanelOnce === 'function') {
+      window.__triggerEntityPanelOnce();
+    }
   };
 }
-

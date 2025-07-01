@@ -24,18 +24,34 @@ export default function PostMapPage() {
 
 function PostMapContent() {
   const navigate = useNavigate();
-  const { areaId, areaMetadata } = useAreaContext();
+  const { areaId, areaMetadata, entities, area } = useAreaContext();
   const { manualSave, hasUnsavedChanges } = useAutoSave();
   const { sidebarOpen, editingType, openSidebar } = useSidebarContext();
 
   const [uploading, setUploading] = useState(false);
   const [selectedEntityId, setSelectedEntityId] = useState(null);
   const [changes, setChanges] = useState(null);
-
-  const handleOpenAreaEditor = openAreaEditorHandler({
-    areaMetadata,
-    openSidebar
+  const [showChangePanel, setShowChangePanel] = useState(() => {
+    return localStorage.getItem('entityChangePanelShown') === 'true';
   });
+
+  // 🔁 Gọi hàm này trong handler khi tạo entity xong
+  const showEntityPanelOnce = () => {
+    if (!localStorage.getItem('entityChangePanelShown')) {
+      const tempChanges = {
+        area,
+        entities,
+      };
+      setChanges(tempChanges);
+      setShowChangePanel(true);
+      localStorage.setItem('entityChangePanelShown', 'true');
+    }
+  };
+
+  // Gắn global (ví dụ trong window) nếu cần gọi từ handler bên ngoài
+  useEffect(() => {
+    window.__triggerEntityPanelOnce = showEntityPanelOnce;
+  }, [entities, area]);
 
   useEffect(() => {
     const handleBeforeUnload = (e) => {
@@ -45,7 +61,6 @@ function PostMapContent() {
         return 'Bạn chưa lưu dữ liệu, chắc chắn muốn rời đi?';
       }
     };
-
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [hasUnsavedChanges]);
@@ -113,7 +128,7 @@ function PostMapContent() {
       {/* Button chỉnh sửa khu vực */}
       {isValidAreaId(areaId) && !sidebarOpen && editingType !== 'area' && (
         <button
-          onClick={handleOpenAreaEditor}
+          onClick={openAreaEditorHandler({ areaMetadata, openSidebar })}
           className="absolute top-4 left-4 z-[1000] bg-white border border-gray-300 px-4 py-2 rounded shadow hover:bg-gray-100 transition"
         >
           ✏️ Chỉnh sửa Khu A
@@ -126,10 +141,12 @@ function PostMapContent() {
           selectedEntityId={selectedEntityId}
           onSelectEntity={setSelectedEntityId}
         />
-        <EntityChangePanel
-          changes={changes}
-          onSelectEntity={(id) => setSelectedEntityId(id)}
-        />
+        {showChangePanel && (
+          <EntityChangePanel
+            changes={changes}
+            onSelectEntity={(id) => setSelectedEntityId(id)}
+          />
+        )}
       </main>
     </div>
   );

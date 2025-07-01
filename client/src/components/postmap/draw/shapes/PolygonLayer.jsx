@@ -41,21 +41,22 @@ const PolygonLayer = ({ selectedEntityId, onSelectEntity, entities: overrideEnti
   );
 
   useEffect(() => {
-    if (!isAreaIdReady({ areaId, isEditMode }) || isCreatingArea) return;
-    if (!isEditMode || !selectedEntityId) return;
+  if (!isAreaIdReady({ areaId, isEditMode }) || isCreatingArea) return;
 
-    const selected = polygons.find((e) => e._id === selectedEntityId);
-    if (selected?.geometry?.coordinates) {
-      const latLngs = geoToLatLng(selected.geometry.coordinates);
-      const bounds = L.latLngBounds(latLngs);
-      if (bounds.isValid()) {
-        map.flyToBounds(bounds, { padding: [50, 50], duration: 0.5 });
-      }
-    }
+  const selected = polygons.find((e) => e._id === selectedEntityId);
+  if (!selected?.geometry?.coordinates) return;
 
-    polygonRefs.current[selectedEntityId]?.openPopup();
-  }, [selectedEntityId, polygons, map, isEditMode, areaId, isCreatingArea]);
+  // 🛑 Chặn tự động focus nếu là entity tạm thời
+  if (selected?.isTemp) return;
 
+  const latLngs = geoToLatLng(selected.geometry.coordinates);
+  const bounds = L.latLngBounds(latLngs);
+  if (bounds.isValid()) {
+    map.flyToBounds(bounds, { padding: [50, 50], duration: 0.5 });
+  }
+
+  polygonRefs.current[selectedEntityId]?.openPopup();
+}, [selectedEntityId, polygons, map, isEditMode, areaId, isCreatingArea]);
   return (
     <>
       {polygons.map((entity) => {

@@ -1,6 +1,5 @@
 // src/components/postmap/handlers/markerHandlers.js
 //sử dụng mô hình Offline-first
-
 import toast from 'react-hot-toast';
 
 export function createMarkerEntityHandler({ areaId, addEntity, setSelectedEntityId, openSidebar }) {
@@ -33,6 +32,10 @@ export function createMarkerEntityHandler({ areaId, addEntity, setSelectedEntity
     setSelectedEntityId(tempId);
     openSidebar?.('entity', entityData); // Mở sidebar để chỉnh sửa
     toast.success('Đã tạo marker tạm thời');
+
+    // ✅ Gọi panel nếu chưa hiện
+    if (typeof window.__triggerEntityPanelOnce === 'function') {
+      window.__triggerEntityPanelOnce();
+    }
   };
 }
-
