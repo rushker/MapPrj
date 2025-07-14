@@ -1,4 +1,6 @@
 /**hooks/useSyncAreaIdOnLoad.js
+ * test load system  when 
+ * 
 import { useEffect } from 'react';
 import { useAreaContext } from '../../context/AreaContext';
 

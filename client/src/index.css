@@ -47,10 +47,6 @@ html, body, #root {
   font-size: 22px;
   line-height: 1;
 }
-.leaflet-pm-toolbar {
-  border: 3px solid red !important;
-  background: yellow !important;
-}
 
 button span,
 button svg {

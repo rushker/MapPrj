@@ -1,5 +1,6 @@
 // utils/geometry.js
 import * as turf from '@turf/turf';
+import L from 'leaflet';
 
 export function metersToDegrees(meters) {
   return meters / 111320;
@@ -43,3 +44,20 @@ export function createBufferedMask(khuAPolygon, zoom = 18) {
   };
 }
 
+/**
+ * Tính center từ geoJSON polygon coordinates.
+ * @param {Array} geoCoords - geoJSON [ [lng, lat], ... ]
+ * @returns {L.LatLng | null}
+ */
+export function getPolygonCenter(geoCoords) {
+  if (!Array.isArray(geoCoords) || geoCoords.length === 0) return null;
+
+  try {
+    const latlngs = geoCoords.map(([lng, lat]) => [lat, lng]);
+    const bounds = L.latLngBounds(latlngs);
+    return bounds.getCenter();
+  } catch (err) {
+    console.warn('Lỗi khi tính center:', err);
+    return null;
+  }
+}
