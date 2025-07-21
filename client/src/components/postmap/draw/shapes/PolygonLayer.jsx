@@ -2,9 +2,11 @@
 import { Polygon, Popup, useMap } from 'react-leaflet';
 import { useEffect, useRef } from 'react';
 import L from 'leaflet';
-import { geoToLatLng, getPolygonCenter } from '../../../../utils/geometry';
+import { geoToLatLng } from '../../../../utils/geometry';
 import { useSafeAreaContext } from '../../../../context/useSafeAreaContext.js';
 import { isAreaIdReady } from '../../../../utils/areaUtils.js';
+import centroid from '@turf/centroid';
+import * as turf from '@turf/turf';
 
 const selectedStyle = {
   color: '#ff5722',
@@ -27,6 +29,24 @@ const getPolygonStyle = (entity, isSelected) => {
   };
 };
 
+/**
+ * Tính center từ geoJSON polygon bằng @turf/centroid
+ * @param {Array} coordinates - geoJSON Polygon coordinates ([[lng, lat], ...])
+ * @returns {L.LatLng | null}
+ */
+const getPolygonCenterFromTurf = (coordinates) => {
+  if (!Array.isArray(coordinates) || coordinates.length === 0) return null;
+
+  try {
+    const turfPolygon = turf.polygon([coordinates]);
+    const [lng, lat] = centroid(turfPolygon).geometry.coordinates;
+    return L.latLng(lat, lng);
+  } catch (err) {
+    console.warn('Lỗi khi tính center bằng turf:', err);
+    return null;
+  }
+};
+
 const PolygonLayer = ({ selectedEntityId, onSelectEntity, entities: overrideEntities }) => {
   const map = useMap();
   const polygonRefs = useRef({});
@@ -42,8 +62,7 @@ const PolygonLayer = ({ selectedEntityId, onSelectEntity, entities: overrideEnti
     if (!isAreaIdReady({ areaId, isEditMode }) || isCreatingArea) return;
 
     const selected = polygons.find((e) => e._id === selectedEntityId);
-    if (!selected?.geometry?.coordinates) return;
-    if (selected?.isTemp) return;
+    if (!selected?.geometry?.coordinates || selected?.isTemp) return;
 
     const latLngs = geoToLatLng(selected.geometry.coordinates);
     const bounds = L.latLngBounds(latLngs);
@@ -59,7 +78,8 @@ const PolygonLayer = ({ selectedEntityId, onSelectEntity, entities: overrideEnti
       {polygons.map((entity) => {
         const latlngs = geoToLatLng(entity.geometry.coordinates);
         const style = getPolygonStyle(entity, entity._id === selectedEntityId);
-        const center = getPolygonCenter(entity.geometry.coordinates?.[0] ?? []);
+        const rawGeoCoords = entity.geometry.coordinates?.[0] ?? []; // geoJSON [lng, lat]
+        const center = getPolygonCenterFromTurf(rawGeoCoords);
 
         return (
           <Polygon
