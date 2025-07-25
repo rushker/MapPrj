@@ -8,6 +8,7 @@ import { isAreaIdReady } from '../../../../utils/areaUtils.js';
 import centroid from '@turf/centroid';
 import * as turf from '@turf/turf';
 
+// Style khi được chọn
 const selectedStyle = {
   color: '#ff5722',
   weight: 3,
@@ -16,6 +17,7 @@ const selectedStyle = {
   fillOpacity: 0.2,
 };
 
+// Style mặc định
 const getPolygonStyle = (entity, isSelected) => {
   if (isSelected) return selectedStyle;
 
@@ -30,7 +32,7 @@ const getPolygonStyle = (entity, isSelected) => {
 };
 
 /**
- * Tính center từ geoJSON polygon bằng @turf/centroid
+ * Tính tâm polygon từ geoJSON coordinates bằng @turf/centroid
  * @param {Array} coordinates - geoJSON Polygon coordinates ([[lng, lat], ...])
  * @returns {L.LatLng | null}
  */
@@ -54,10 +56,12 @@ const PolygonLayer = ({ selectedEntityId, onSelectEntity, entities: overrideEnti
   if (!safeContext) return null;
 
   const { areaId, isEditMode, isCreatingArea, entities } = safeContext;
+
   const polygons = (overrideEntities ?? entities).filter(
-    (e) => e.type === 'polygon' && e.geometry?.coordinates
+    (e) => e.type === 'polygon' && Array.isArray(e.geometry?.coordinates)
   );
 
+  // Zoom tới polygon đang được chọn
   useEffect(() => {
     if (!isAreaIdReady({ areaId, isEditMode }) || isCreatingArea) return;
 
@@ -78,8 +82,8 @@ const PolygonLayer = ({ selectedEntityId, onSelectEntity, entities: overrideEnti
       {polygons.map((entity) => {
         const latlngs = geoToLatLng(entity.geometry.coordinates);
         const style = getPolygonStyle(entity, entity._id === selectedEntityId);
-        const rawGeoCoords = entity.geometry.coordinates?.[0] ?? []; // geoJSON [lng, lat]
-        const center = getPolygonCenterFromTurf(rawGeoCoords);
+        const rawCoords = entity.geometry.coordinates?.[0] ?? [];
+        const center = getPolygonCenterFromTurf(rawCoords);
 
         return (
           <Polygon

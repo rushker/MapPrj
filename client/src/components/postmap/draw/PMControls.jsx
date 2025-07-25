@@ -76,14 +76,19 @@ export default function PMControls({
         isValidAreaId(areaId) &&
         onCreateEntity
       ) {
-        onCreateEntity({
-          type: shape.toLowerCase(),
-          coordinates,
-          geometry: geoJSON.geometry,
-          layer,
-          geoJSON,
-          metadata: { strokeOpacity: 1 }, // default opacity
-        });
+       const tempId = `temp-${Date.now()}`;
+layer.options.entityId = tempId;
+layer.feature = { properties: { entityId: tempId } };
+
+onCreateEntity({
+  _id: tempId, // phòng khi cần trong context
+  type: shape.toLowerCase(),
+  coordinates,
+  geometry: geoJSON.geometry,
+  layer,
+  geoJSON,
+  metadata: { strokeOpacity: 1 },
+});
       }
     };
 
